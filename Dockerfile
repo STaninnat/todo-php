@@ -1,0 +1,13 @@
+FROM php:8.2-fpm-alpine
+
+RUN apk add --no-cache mariadb-connector-c-dev \
+    && docker-php-ext-install pdo pdo_mysql \
+    && apk add --no-cache bash
+
+WORKDIR /app
+
+COPY ./src ./src
+COPY ./public ./public
+COPY ./vendor ./vendor
+
+WORKDIR /app/public

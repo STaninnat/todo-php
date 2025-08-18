@@ -1,6 +1,5 @@
 <?php
-require_once '../db/db.php';
-require_once '../db/TaskQueries.php';
+require_once __DIR__ . '/../db/TaskQueries.php';
 
 function calculateTotalPages(TaskQueries $taskObj, int $perPage = 10): int
 {

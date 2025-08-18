@@ -7,6 +7,6 @@
     "phpunit/phpunit": "^12.3"
   },
   "scripts": {
-    "test": "phpunit --colors=always --coverage-text tests"
+    "test": "phpunit"
   }
 }

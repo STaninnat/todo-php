@@ -1,9 +1,12 @@
 <?php
-require_once '../db/db.php';
-require_once '../db/TaskQueries.php';
-require_once '../utils/formate_date.php';
-require_once '../utils/pagination.php';
-require_once '../utils/response.php';
+require_once __DIR__ . '/../db/Database.php';
+require_once __DIR__ . '/../db/TaskQueries.php';
+require_once __DIR__ . '/../utils/formate_date.php';
+require_once __DIR__ . '/../utils/pagination.php';
+require_once __DIR__ . '/../utils/response.php';
+
+$dbInstance = new Database();
+$pdo = $dbInstance->getConnection();
 
 try {
     $taskObj = new TaskQueries($pdo);

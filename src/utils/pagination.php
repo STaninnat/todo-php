@@ -1,8 +1,8 @@
 <?php
 require_once '../db/db.php';
-require_once '../db/queries.php';
+require_once '../db/TaskQueries.php';
 
-function calculateTotalPages(Task $taskObj, int $perPage = 10): int
+function calculateTotalPages(TaskQueries $taskObj, int $perPage = 10): int
 {
     try {
         $totalTasks = $taskObj->getTotalTasks();

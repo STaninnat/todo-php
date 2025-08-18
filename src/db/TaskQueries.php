@@ -10,7 +10,7 @@
  * @author humblegod
  * @version 1.0
  */
-class Task
+class TaskQueries
 {
     /**
      * @var PDO PDO instance for database connection

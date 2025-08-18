@@ -1,10 +1,10 @@
 <?php
 require_once '../db/db.php';
-require_once '../db/queries.php';
+require_once '../db/TaskQueries.php';
 require_once '../utils/response.php';
 
 try {
-    $taskObj = new Task($pdo);
+    $taskObj = new TaskQueries($pdo);
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $tasks = $taskObj->getAllTasks();

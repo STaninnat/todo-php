@@ -1,12 +1,12 @@
 <?php
 require_once '../db/db.php';
-require_once '../db/queries.php';
+require_once '../db/TaskQueries.php';
 require_once '../utils/formate_date.php';
 require_once '../utils/pagination.php';
 require_once '../utils/response.php';
 
 try {
-    $taskObj = new Task($pdo);
+    $taskObj = new TaskQueries($pdo);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'], $_POST['title'])) {
         $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);

@@ -1,245 +1,130 @@
 <?php
+require_once __DIR__ . '/QueryResult.php';
 
-/**
- * Class Task
- *
- * Handles CRUD operations for tasks in the database.
- * Uses PDO for database interactions.
- *
- * @package todo-php
- * @author humblegod
- * @version 1.0
- */
 class TaskQueries
 {
-    /**
-     * @var PDO PDO instance for database connection
-     */
     private $pdo;
 
-    /**
-     * Constructor to initialize PDO instance
-     *
-     * @param PDO $pdo A PDO database connection object
-     */
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
     }
 
-    /**
-     * Add a new task with title and description
-     *
-     * @param string $title Task title (cannot be empty)
-     * @param string $description Task description (optional)
-     * @throws InvalidArgumentException If title is empty after trimming
-     * @return int|null ID of the newly inserted task, or null on failure
-     */
-    public function addTasks(string $title, string $description): ?int
+    public function addTask(string $title, string $description): QueryResult
     {
-        $title = trim($title);
-        if ($title === '') {
-            throw new InvalidArgumentException("Title cannot be empty.");
+        $query = "INSERT INTO tasks (title, description) VALUES (?, ?)";
+
+        $stmt = $this->pdo->prepare($query);
+        if (!$stmt->execute([$title, $description])) {
+            return QueryResult::fail();
         }
-
-        try {
-            $query = "INSERT INTO tasks (title, description) VALUES (?, ?)";
-
-            $stmt = $this->pdo->prepare($query);
-            $stmt->bindParam(1, $title, PDO::PARAM_STR);
-            $stmt->bindParam(2, $description, PDO::PARAM_STR);
-            $stmt->execute();
-
-            return (int)$this->pdo->lastInsertId();
-        } catch (PDOException $e) {
-            error_log("Error adding task: " . $e->getMessage());
-            return null;
-        }
+        return QueryResult::ok((int)$this->pdo->lastInsertId(), 1);
     }
 
-    /**
-     * Retrieve all tasks ordered by last updated timestamp descending
-     *
-     * @return array An array of associative arrays, each representing a task
-     */
-    public function getAllTasks(): array
+    public function getAllTasks(): QueryResult
     {
-        try {
-            $query = "SELECT * FROM tasks ORDER BY is_done ASC, updated_at DESC";
+        $query = "SELECT * FROM tasks ORDER BY is_done ASC, updated_at DESC";
 
-            $stmt = $this->pdo->prepare($query);
-            $stmt->execute();
-
-            $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return $tasks;
-        } catch (PDOException $e) {
-            error_log("Error fetching tasks: " . $e->getMessage());
-            return [];
+        $stmt = $this->pdo->prepare($query);
+        if (!$stmt->execute()) {
+            return QueryResult::fail();
         }
+
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return QueryResult::ok($data, $stmt->rowCount());
     }
 
-    /**
-     * Retrieve a single task by its ID
-     *
-     * @param int $id Task ID to fetch
-     * @return array|null Associative array of the task data, or null if not found
-     */
-    public function getTasksByID(int $id): ?array
+    public function getTaskByID(int $id): QueryResult
     {
-        try {
-            $query = "SELECT * FROM tasks WHERE id = ? LIMIT 1";
+        $query = "SELECT * FROM tasks WHERE id = ? LIMIT 1";
 
-            $stmt = $this->pdo->prepare($query);
-            $stmt->bindParam(1, $id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $task = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $task === false ? null : $task;
-        } catch (PDOException $e) {
-            error_log("Error fetching task by id: " . $e->getMessage());
-            return null;
+        $stmt = $this->pdo->prepare($query);
+        if (!$stmt->execute([$id])) {
+            return QueryResult::fail();
         }
+
+        $task = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $task ? QueryResult::ok($task, 1) : QueryResult::ok(null, 0);
     }
 
-    /**
-     * Retrieve a paginated list of tasks.
-     *
-     * Tasks are ordered first by completion status (`is_done` ascending),
-     * then by last updated time (`updated_at` descending).
-     *
-     * @param int $page Current page number (1-based)
-     * @param int $perPage Number of tasks per page, default is 10
-     * @return array Array of associative arrays representing tasks
-     */
-    public function getTasksByPage(int $page, int $perPage = 10): array
+    public function getTasksByPage(int $page, int $perPage = 10): QueryResult
     {
-        try {
-            $offset = ($page - 1) * $perPage;
+        $offset = ($page - 1) * $perPage;
 
-            $query = "SELECT * FROM tasks ORDER BY is_done ASC, updated_at DESC LIMIT :limit OFFSET :offset";
-            $stmt = $this->pdo->prepare($query);
-            $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            $stmt->execute();
+        $query = "SELECT * 
+                FROM tasks 
+                ORDER BY is_done ASC, updated_at DESC 
+                LIMIT :limit OFFSET :offset";
 
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error fetching paginated tasks: " . $e->getMessage());
-            return [];
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        if (!$stmt->execute()) {
+            return QueryResult::fail();
         }
+
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return QueryResult::ok($data, $stmt->rowCount());
     }
 
-    /**
-     * Get the total number of tasks in the database.
-     *
-     * @return int Total count of tasks
-     */
-    public function getTotalTasks(): int
+    public function getTotalTasks(): QueryResult
     {
-        try {
-            return (int) $this->pdo->query("SELECT COUNT(*) FROM tasks")->fetchColumn();
-        } catch (PDOException $e) {
-            error_log("Error counting tasks: " . $e->getMessage());
-            return 0;
-        }
+        $query = "SELECT COUNT(*) FROM tasks";
+
+        $stmt = $this->pdo->prepare($query);
+        $count = (int) $stmt->fetchColumn();
+
+        return QueryResult::ok($count, $count);
     }
 
-    /**
-     * Mark a task as done or undone
-     *
-     * @param int $id Task ID to update
-     * @param bool $isDone True to mark done, false to mark undone
-     * @return bool True if the update affected at least one row, false otherwise
-     */
-    public function markDone(int $id, bool $isDone): bool
+    public function markDone(int $id, bool $isDone): QueryResult
     {
-        try {
-            $isDoneInt = $isDone ? 1 : 0;
+        $query = "UPDATE tasks SET is_done = ? WHERE id = ?";
 
-            $query = "UPDATE tasks SET is_done = ? WHERE id = ?";
-
-            $stmt = $this->pdo->prepare($query);
-            $stmt->bindParam(1, $isDoneInt, PDO::PARAM_INT);
-            $stmt->bindParam(2, $id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            return $stmt->rowCount() > 0;
-        } catch (PDOException $e) {
-            error_log("Error updating task: " . $e->getMessage());
-            return false;
+        $stmt = $this->pdo->prepare($query);
+        if (!$stmt->execute([$isDone ? 1 : 0, $id])) {
+            return QueryResult::fail();
         }
+
+        return QueryResult::ok(null, $stmt->rowCount());
     }
 
-    /**
-     * Update a task's title and description by its ID
-     *
-     * @param int $id Task ID to update
-     * @param string $title New title (cannot be empty)
-     * @param string $description New description
-     * @param int $is_done New status (or same as before)
-     * @throws InvalidArgumentException If title is empty after trimming
-     * @return bool True if the update affected at least one row, false otherwise
-     */
-    public function updateTask(int $id, string $title, string $description, int $isDone): bool
+    public function updateTask(int $id, string $title, string $description, bool $isDone): QueryResult
     {
-        $oldTask = $this->getTasksByID($id);
-        if (!$oldTask) {
+        $old = $this->getTaskByID($id);
+        if (!$old) {
             throw new InvalidArgumentException("Task not found.");
         }
 
         if (
-            $oldTask['title'] === $title &&
-            $oldTask['description'] === $description &&
-            (int)$oldTask['is_done'] === $isDone
+            $old['title'] === $title &&
+            $old['description'] === $description &&
+            (int)$old['is_done'] === $isDone
         ) {
-            return false;
+            return QueryResult::ok($old->data, 0);
         }
 
-        $title = trim($title);
-        if ($title === '') {
-            throw new InvalidArgumentException("Title cannot be empty.");
-        }
-
-        $isDone === 1 ? 1 : 0;
-
-        try {
-            $query = "UPDATE tasks 
+        $query = "UPDATE tasks 
                 SET title = ?, description = ?, is_done = ?
                 WHERE id = ?";
 
-            $stmt = $this->pdo->prepare($query);
-            $stmt->bindParam(1, $title, PDO::PARAM_STR);
-            $stmt->bindParam(2, $description, PDO::PARAM_STR);
-            $stmt->bindParam(3, $isDone, PDO::PARAM_INT);
-            $stmt->bindParam(4, $id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            return $stmt->rowCount() > 0;
-        } catch (PDOException $e) {
-            error_log("Error updating task: " . $e->getMessage());
-            return false;
+        $stmt = $this->pdo->prepare($query);
+        if (!$stmt->execute([$title, $description, $isDone ? 1 : 0, $id])) {
+            return QueryResult::fail();
         }
+
+        return QueryResult::ok(null, $stmt->rowCount());
     }
 
-    /**
-     * Delete a task by its ID
-     *
-     * @param int $id Task ID to delete
-     * @return bool True if a task was deleted, false otherwise
-     */
-    public function deleteTask(int $id): bool
+    public function deleteTask(int $id): QueryResult
     {
-        try {
-            $query = "DELETE FROM tasks WHERE id = ?";
+        $query = "DELETE FROM tasks WHERE id = ?";
 
-            $stmt = $this->pdo->prepare($query);
-            $stmt->bindParam(1, $id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            return $stmt->rowCount() > 0;
-        } catch (PDOException $e) {
-            error_log("Error deleting task: " . $e->getMessage());
-            return false;
+        $stmt = $this->pdo->prepare($query);
+        if (!$stmt->execute([$id])) {
+            return QueryResult::fail();
         }
+
+        return QueryResult::ok(null, $stmt->rowCount());
     }
 }

@@ -1,28 +1,26 @@
 <?php
-require_once __DIR__ . '/../../db/Database.php';
-require_once __DIR__ . '/../../db/TaskQueries.php';
-require_once __DIR__ . '/../../db/QueryResult.php';
 require_once __DIR__ . '/../../utils/response.php';
 require_once __DIR__ . '/../../utils/pagination.php';
 require_once __DIR__ . '/../../utils/formate_date.php';
 
-// Initialize database and get PDO connection
-$dbInstance = new Database();
-$pdo = $dbInstance->getConnection();
+/**
+ * Handle updating a task based on provided action
+ *
+ * @param TaskQueries $taskObj Instance of TaskQueries for database operations
+ * @param array|null $data Optional data array (default: $_POST)
+ *
+ * @throws InvalidArgumentException If required fields are missing or invalid
+ * @throws Exception If database operations fail
+ */
+function handleUpdateTask(TaskQueries $taskObj, ?array $data = null)
+{
+    // Use provided data or fallback to $_POST
+    $input = $data ?? $_POST;
 
-try {
-    // Create TaskQueries instance for task operations
-    $taskObj = new TaskQueries($pdo);
+    // Extract action and task ID from input
+    $action = $input['action'] ?? null;
+    $id = filter_var($input['id'] ?? null, FILTER_VALIDATE_INT);
 
-    // Validate request method and required action parameter
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['action'])) {
-        throw new InvalidArgumentException('Invalid request.');
-    }
-
-    $action = $_POST['action'];
-    $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
-
-    // Validate task ID
     if ($id === null) {
         throw new InvalidArgumentException('Task ID is required.');
     }
@@ -30,7 +28,7 @@ try {
         throw new InvalidArgumentException('Invalid task ID format.');
     }
 
-    // Fetch task by ID to ensure it exists
+    // Retrieve existing task
     $taskResult = $taskObj->getTaskByID($id);
     if (!$taskResult->success || !$taskResult->hasData()) {
         throw new Exception('No task found.');
@@ -38,37 +36,35 @@ try {
 
     $result = null;
 
-    // Handle action types: mark_done or update
+    // Perform action based on inpu
     switch ($action) {
         case 'mark_done':
-            $is_done = filter_input(INPUT_POST, 'is_done', FILTER_VALIDATE_INT);
-
-            // Validate status value (0 or 1)
+            // Validate status value
+            $is_done = filter_var($input['is_done'] ?? null, FILTER_VALIDATE_INT);
             if (!in_array($is_done, [0, 1], true)) {
                 throw new InvalidArgumentException('Invalid status value.');
             }
 
-            // Mark the task as done or not done
+            // Mark the task as done or undone
             $result = $taskObj->markDone($id, (bool)$is_done);
             break;
 
         case 'update':
-            // Sanitize input for title and description
+            // Sanitize and retrieve input fields
             $title = trim(strip_tags(filter_input(INPUT_POST, 'title', FILTER_UNSAFE_RAW)));
             $description = trim(strip_tags(filter_input(INPUT_POST, 'description', FILTER_UNSAFE_RAW)));
             $is_done = filter_input(INPUT_POST, 'is_done', FILTER_VALIDATE_INT);
 
-            // Validate required title
-            if ($title === null || $title === '') {
+            if ($title === '') {
                 throw new InvalidArgumentException('Task title is required.');
             }
 
-            // Default status to 0 if invalid
+            // Ensure status is either 0 or 1
             if (!in_array($is_done, [0, 1], true)) {
                 $is_done = 0;
             }
 
-            // Update the task
+            // Update the task in the database
             $result = $taskObj->updateTask($id, $title, $description, (bool)$is_done);
             break;
 
@@ -76,7 +72,7 @@ try {
             throw new InvalidArgumentException('Unknown action.');
     }
 
-    // Check if operation succeeded and made changes
+    // Check if the update succeeded
     if (!$result->success || !$result->isChanged()) {
         $errorMsg = $result->error ? implode(' | ', $result->error) : 'No changes were made.';
         throw new Exception($errorMsg);
@@ -90,15 +86,12 @@ try {
 
     $updatedTask = $updatedTaskResult->data;
 
-    // Calculate total pages for pagination (assuming 10 tasks per page)
+    // Calculate total pages for pagination (assuming 10 items per page)
     $totalPages = calculateTotalPages($taskObj, 10);
 
-    // Send JSON success response with updated task data and formatted updated_at
+    // Return JSON response with updated task and formatted update timestamp
     jsonResponse(true, 'success', 'Task updated successfully.', [
         'task' => $updatedTask,
         'updated_at' => formateDateBkk($updatedTask['updated_at'])
     ], $totalPages);
-} catch (Exception $e) {
-    // Send JSON error response with exception message
-    jsonResponse(false, 'error', $e->getMessage());
 }

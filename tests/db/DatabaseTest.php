@@ -3,13 +3,28 @@ require_once __DIR__ . '/../../src/db/Database.php';
 
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Unit tests for the Database class.
+ *
+ * This test suite verifies:
+ * - Database constructor behavior with and without environment variables
+ * - getConnection() method returns the expected PDO instance
+ * - Proper exception handling when environment variables are missing
+ *
+ * Uses PDO mocks to avoid real database connections.
+ */
 class DatabaseTest extends TestCase
 {
     /**
-     * Helper: Create Database instance using PDO mock and optional env vars.
-     * 
-     * - Injects a PDO mock to avoid real DB connection
-     * - Optionally applies environment variables for testing constructor logic
+     * Helper method to create a Database instance with a PDO mock.
+     *
+     * - Replaces real DB connection with a mock PDO object
+     * - Optionally applies temporary environment variables
+     * - Restores original $_ENV after test
+     *
+     * @param PDO   $mockPdo Mock PDO object to inject
+     * @param array $envVars Optional environment variables
+     * @return Database Database instance with mocked connection
      */
     private function createDatabaseMock(PDO $mockPdo, array $envVars = []): Database
     {
@@ -37,7 +52,7 @@ class DatabaseTest extends TestCase
     }
 
     /**
-     * Test that getConnection() returns the injected PDO mock
+     * Test: getConnection should return the injected PDO mock instance.
      */
     public function testGetConnectionReturnsPdoMock()
     {
@@ -54,7 +69,8 @@ class DatabaseTest extends TestCase
     }
 
     /**
-     * Test constructor logic when environment variables are provided
+     * Test: Constructor should accept environment variables
+     * and still return the mock PDO connection.
      */
     public function testConstructorWithEnvVars()
     {
@@ -76,7 +92,8 @@ class DatabaseTest extends TestCase
     }
 
     /**
-     * Test that missing required environment variables triggers an exception
+     * Test: Constructor should throw exception if required
+     * environment variables are missing.
      */
     public function testThrowsExceptionIfEnvVarsMissing()
     {
@@ -99,7 +116,8 @@ class DatabaseTest extends TestCase
     }
 
     /**
-     * Test constructor works with custom parameters (mocked PDO)
+     * Test: Constructor should work with directly injected
+     * PDO mock (without environment variables).
      */
     public function testConstructorWithCustomParams()
     {

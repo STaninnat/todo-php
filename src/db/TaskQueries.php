@@ -84,6 +84,11 @@ class TaskQueries
         }
 
         $task = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($task === false) {
+            $task = null;
+        }
+
         return QueryResult::ok($task, $task ? 1 : 0);
     }
 

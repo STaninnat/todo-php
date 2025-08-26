@@ -24,7 +24,12 @@ class Database
     {
         // If DSN is not provided, load environment variables
         if ($dsn === null) {
-            $dotenv = Dotenv::createImmutable(dirname(__DIR__));
+            $envFile = '.env'; // default
+            if (getenv('APP_ENV') === 'testing') {
+                $envFile = '.env.test';
+            }
+
+            $dotenv = Dotenv::createImmutable(dirname(__DIR__), $envFile);
             $dotenv->safeLoad();
 
             $host = $_ENV['DB_HOST'] ?? null;

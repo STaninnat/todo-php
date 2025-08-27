@@ -27,7 +27,6 @@ function clearAccessTokenCookie(): void
     ]);
 }
 
-
 function getAccessTokenCookie(): ?string
 {
     return $_COOKIE['access_token'] ?? null;

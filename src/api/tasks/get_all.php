@@ -9,10 +9,15 @@ require_once __DIR__ . '/../../utils/pagination.php';
  *
  * @throws RuntimeException If retrieving tasks fails or no tasks exist
  */
-function handleGetTasks(TaskQueries $taskObj)
+function handleGetTasks(TaskQueries $taskObj, array $input): void
 {
+    $userID = trim(strip_tags($input['user_id'] ?? ''));
+    if ($userID === '') {
+        throw new InvalidArgumentException('User ID is required.');
+    }
+
     // Fetch all tasks from the database
-    $result = $taskObj->getAllTasks();
+    $result = $taskObj->getTasksByUserID($userID);
 
     // Check if the database operation was successful
     if (!$result->success) {

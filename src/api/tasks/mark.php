@@ -1,10 +1,9 @@
 <?php
 require_once __DIR__ . '/../../utils/response.php';
 require_once __DIR__ . '/../../utils/pagination.php';
-require_once __DIR__ . '/../../utils/formate_date.php';
 
 /**
- * Update task title/description/status
+ * Mark a task as done or undone
  *
  * @param TaskQueries $taskObj
  * @param array $input
@@ -12,22 +11,17 @@ require_once __DIR__ . '/../../utils/formate_date.php';
  * @throws InvalidArgumentException
  * @throws Exception
  */
-function handleUpdateTask(TaskQueries $taskObj, array $input): void
+function handleMarkDoneTask(TaskQueries $taskObj, array $input): void
 {
     $id = trim(strip_tags($input['id'] ?? ''));
     $userID = trim(strip_tags($input['user_id'] ?? ''));
-    $title = trim(strip_tags($input['title'] ?? ''));
-    $description = trim(strip_tags($input['description'] ?? ''));
     $is_done = isset($input['is_done']) ? (int)$input['is_done'] : 0;
 
     if ($id === '' || $userID === '') {
         throw new InvalidArgumentException('Task ID and User ID are required.');
     }
-    if ($title === '') {
-        throw new InvalidArgumentException('Task title is required.');
-    }
     if (!in_array($is_done, [0, 1], true)) {
-        $is_done = 0;
+        throw new InvalidArgumentException('Invalid status value.');
     }
 
     // Retrieve existing task
@@ -36,7 +30,7 @@ function handleUpdateTask(TaskQueries $taskObj, array $input): void
         throw new Exception('No task found.');
     }
 
-    $result = $taskObj->updateTask($id, $title, $description, (bool)$is_done, $userID);
+    $result = $taskObj->markDone($id, (bool)$is_done, $userID);
 
     if (!$result->success || !$result->isChanged()) {
         $errorMsg = $result->error ? implode(' | ', $result->error) : 'No changes were made.';
@@ -45,7 +39,7 @@ function handleUpdateTask(TaskQueries $taskObj, array $input): void
 
     $totalPages = calculateTotalPages($taskObj, 10);
 
-    jsonResponse(true, 'success', 'Task updated successfully.', [
+    jsonResponse(true, 'success', 'Task status updated successfully.', [
         'task' => $result->data
     ], $totalPages);
 }

@@ -1,63 +1,71 @@
 <?php
+require_once __DIR__ . '/Request.php';
 
-/**
- * Simple Router class for handling HTTP requests and actions.
- */
 class Router
 {
-    // Stores all registered routes in the format [METHOD][ACTION] => handler
-    private array $routes = [];
-
-    // Stores middleware functions to be executed before route handlers
-    private array $middlewares = [];
+    private array $routes = []; // [METHOD][PATH] => ['handler' => callable, 'middlewares' => []]
+    private array $globalMiddlewares = [];
 
     /**
-     * Register a route with a specific HTTP method and action.
-     *
-     * @param string   $method  HTTP method (GET, POST, etc.)
-     * @param string   $action  Action name to match
-     * @param callable $handler Function to execute when route is matched
+     * Register a route with HTTP method and path
      */
-    public function register(string $method, string $action, callable $handler): void
+    public function register(string $method, string $path, callable $handler, array $middlewares = []): void
     {
         $method = strtoupper($method);
-        $this->routes[$method][$action] = $handler;
+        $path = rtrim($path, '/'); // normalize path
+        if ($path === '') $path = '/';
+
+        $this->routes[$method][$path] = [
+            'handler' => $handler,
+            'middlewares' => $middlewares
+        ];
     }
 
     /**
-     * Add a middleware function to be executed before route handlers.
-     *
-     * @param callable $middleware Middleware function accepting ($method, $action)
+     * Add global middleware
      */
     public function addMiddleware(callable $middleware): void
     {
-        $this->middlewares[] = $middleware;
+        $this->globalMiddlewares[] = $middleware;
     }
 
     /**
-     * Dispatch the request by executing the matched route handler.
-     * Executes all middlewares before calling the handler.
+     * Dispatch the incoming request
      */
     public function dispatch(): void
     {
-        $method = $_SERVER['REQUEST_METHOD'];   // Current HTTP method
-        $action = $_GET['action'] ?? $_POST['action'] ?? null;  // Determine action from GET or POST
+        $request = new Request();
+        $method = $request->method;
+        $path = rtrim($request->path, '/');
+        if ($path === '') $path = '/';
 
         try {
-            // Check if the route exists for the given method and action
-            if (!isset($this->routes[$method][$action])) {
-                throw new InvalidArgumentException("Unknown action: $action for method: $method");
+            if (!isset($this->routes[$method][$path])) {
+                throw new InvalidArgumentException("Route not found: $method $path");
             }
 
-            // Execute all registered middlewares
-            foreach ($this->middlewares as $middleware) {
-                $middleware($method, $action);
+            $route = $this->routes[$method][$path];
+
+            // Run global middlewares
+            foreach ($this->globalMiddlewares as $mw) {
+                $mw($request);
             }
 
-            // Call the registered route handler
-            call_user_func($this->routes[$method][$action]);
+            // Run route-specific middlewares
+            foreach ($route['middlewares'] as $mw) {
+                $mw($request);
+            }
+
+            // Call handler
+            $handler = $route['handler'];
+            $reflection = new ReflectionFunction($handler);
+            if ($reflection->getNumberOfParameters() > 0) {
+                $handler($request);
+            } else {
+                $handler();
+            }
         } catch (Exception $e) {
-            // Handle exceptions with JSON error response
+            // You can add HTTP status code here if needed
             jsonResponse(false, 'error', $e->getMessage());
         }
     }

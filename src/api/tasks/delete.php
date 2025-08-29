@@ -11,24 +11,20 @@ require_once __DIR__ . '/../../utils/pagination.php';
  * @throws InvalidArgumentException If task ID is missing or invalid
  * @throws RuntimeException If deleting the task fails
  */
-function handleDeleteTask(TaskQueries $taskObj, ?array $data = null)
+function handleDeleteTask(TaskQueries $taskObj, array $input): void
 {
-    // Use provided data or fallback to $_POST
-    $input = $data ?? $_POST;
+    $id = trim(strip_tags($input['id'] ?? ''));
+    $userID = trim(strip_tags($input['user_id'] ?? ''));
 
-    // Use provided data or fallback to $_POST
-
-    $id = filter_var($input['id'] ?? null, FILTER_VALIDATE_INT);
-
-    if ($id === null) {
+    if ($id === '') {
         throw new InvalidArgumentException('Task ID is required.');
     }
-    if ($id === false) {
-        throw new InvalidArgumentException('Invalid task ID format.');
+    if ($userID === '') {
+        throw new InvalidArgumentException('User ID is required.');
     }
 
     // Attempt to delete the task from the database
-    $result = $taskObj->deleteTask($id);
+    $result = $taskObj->deleteTask($id, $userID);
 
     // Check if the database operation was successful
     if (!$result->success) {

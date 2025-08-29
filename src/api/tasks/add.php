@@ -10,18 +10,22 @@ require_once __DIR__ . '/../../utils/pagination.php';
  * @throws InvalidArgumentException If task title is missing
  * @throws RuntimeException If adding the task fails
  */
-function handleAddTask(TaskQueries $taskObj)
+function handleAddTask(TaskQueries $taskObj, array $input): void
 {
     // Sanitize and retrieve POST inputs
-    $title = trim(strip_tags(filter_input(INPUT_POST, 'title', FILTER_UNSAFE_RAW)));
-    $description = trim(strip_tags(filter_input(INPUT_POST, 'description', FILTER_UNSAFE_RAW)));
+    $title       = trim(strip_tags($input['title'] ?? ''));
+    $description = trim(strip_tags($input['description'] ?? ''));
+    $userID = trim(strip_tags($input['user_id'] ?? ''));
 
     if ($title === '') {
         throw new InvalidArgumentException('Task title is required.');
     }
+    if ($userID === '') {
+        throw new InvalidArgumentException('User ID is required.');
+    }
 
     // Attempt to add the task to the database
-    $result = $taskObj->addTask($title, $description);
+    $result = $taskObj->addTask($title, $description, $userID);
 
     // Check if the database operation was successful
     if (!$result->success) {

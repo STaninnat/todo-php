@@ -26,8 +26,3 @@ function clearAccessTokenCookie(): void
         'samesite' => 'Strict',
     ]);
 }
-
-function getAccessTokenCookie(): ?string
-{
-    return $_COOKIE['access_token'] ?? null;
-}

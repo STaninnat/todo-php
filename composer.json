@@ -9,8 +9,13 @@
     "phpunit/phpunit": "^12.3"
   },
   "scripts": {
-    "test": "phpunit -c phpunit.xml.dist && phpunit -c phpunit.integration.xml.dist",
-    "test:unit": "phpunit -c phpunit.xml.dist",
+    "test": "phpunit -c phpunit.xml.dist",
+    "test:unit": "phpunit -c phpunit.unit.xml.dist",
     "test:integration": "phpunit -c phpunit.integration.xml.dist"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
   }
 }

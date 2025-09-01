@@ -1,5 +1,9 @@
 <?php
-require_once __DIR__ . '/QueryResult.php';
+
+namespace App\db;
+
+use PDO;
+use PDOStatement;
 
 class UserQueries
 {

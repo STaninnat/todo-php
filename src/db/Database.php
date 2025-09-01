@@ -1,7 +1,11 @@
 <?php
-require __DIR__ . '/../../vendor/autoload.php';
+
+namespace App\db;
 
 use Dotenv\Dotenv;
+use PDO;
+use PDOException;
+use Exception;
 
 /**
  * Database class for managing PDO connection

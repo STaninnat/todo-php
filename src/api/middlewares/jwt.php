@@ -1,6 +1,15 @@
 <?php
-require_once __DIR__ . '/../../utils/jwt.php';
-require_once __DIR__ . '/../../utils/cookies.php';
+
+namespace App\api\middlewares;
+
+use App\api\Request;
+use function App\utils\getAccessTokenFromCookie;
+use function App\utils\setAccessTokenCookie;
+use function App\utils\verifyJwt;
+use function App\utils\shouldRefresh;
+use function App\utils\refreshFromPayload;
+use const App\utils\JWT_EXPIRE;
+use RuntimeException;
 
 function refreshJwtMiddleware(Request $req): void
 {

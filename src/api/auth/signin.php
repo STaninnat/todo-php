@@ -1,7 +1,14 @@
 <?php
-require_once __DIR__ . '/../../utils/jwt.php';
-require_once __DIR__ . '/../../utils/cookies.php';
-require_once __DIR__ . '/../../utils/response.php';
+
+namespace App\api\auth;
+
+use function App\utils\createJwt;
+use function App\utils\setAccessTokenCookie;
+use function App\utils\jsonResponse;
+use const App\utils\JWT_EXPIRE;
+use App\db\UserQueries;
+use InvalidArgumentException;
+use RuntimeException;
 
 function handleSignin(UserQueries $userObj, array $input): void
 {

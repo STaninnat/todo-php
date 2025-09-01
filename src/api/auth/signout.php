@@ -1,6 +1,9 @@
 <?php
-require_once __DIR__ . '/../../utils/cookies.php';
-require_once __DIR__ . '/../../utils/response.php';
+
+namespace App\api\auth;
+
+use function App\utils\clearAccessTokenCookie;
+use function App\utils\jsonResponse;
 
 function handleSignout(): void
 {

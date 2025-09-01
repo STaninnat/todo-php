@@ -1,5 +1,7 @@
 <?php
 
+namespace App\api;
+
 class Request
 {
     public string $method;

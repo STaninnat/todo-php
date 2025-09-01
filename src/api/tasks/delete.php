@@ -1,6 +1,12 @@
 <?php
-require_once __DIR__ . '/../../utils/response.php';
-require_once __DIR__ . '/../../utils/pagination.php';
+
+namespace App\api\tasks;
+
+use function App\utils\calculateTotalPages;
+use function App\utils\jsonResponse;
+use App\db\TaskQueries;
+use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * Handle deleting a task via POST request or provided data

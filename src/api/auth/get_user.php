@@ -1,7 +1,11 @@
 <?php
-require_once __DIR__ . '/../../utils/jwt.php';
-require_once __DIR__ . '/../../utils/cookies.php';
-require_once __DIR__ . '/../../utils/response.php';
+
+namespace App\api\auth;
+
+use function App\utils\jsonResponse;
+use App\db\UserQueries;
+use InvalidArgumentException;
+use RuntimeException;
 
 function handleGetUser(UserQueries $userObj, array $input): void
 {

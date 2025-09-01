@@ -1,23 +1,21 @@
 <?php
-require_once __DIR__ . '/../db/Database.php';
-require_once __DIR__ . '/../db/TaskQueries.php';
-require_once __DIR__ . '/../utils/response.php';
-require_once __DIR__ . '/middlewares/jwt.php';
-require_once __DIR__ . '/Router.php';
 
-// include handlers
-require_once __DIR__ . '/tasks/add.php';
-require_once __DIR__ . '/tasks/delete.php';
-require_once __DIR__ . '/tasks/get_all.php';
-require_once __DIR__ . '/tasks/update.php';
-require_once __DIR__ . '/tasks/mark.php';
+namespace App\api;
 
-require_once __DIR__ . '/users/signup.php';
-require_once __DIR__ . '/users/signin.php';
-require_once __DIR__ . '/users/signout.php';
-require_once __DIR__ . '/users/get_user.php';
-require_once __DIR__ . '/users/update_user.php';
-require_once __DIR__ . '/users/delete_user.php';
+use App\db\Database;
+use App\db\TaskQueries;
+use App\db\UserQueries;
+use function App\api\auth\handleSignup;
+use function App\api\auth\handleSignin;
+use function App\api\auth\handleSignout;
+use function App\api\auth\handleUpdateUser;
+use function App\api\auth\handleDeleteUser;
+use function App\api\auth\handleGetUser;
+use function App\api\tasks\handleAddTask;
+use function App\api\tasks\handleMarkDoneTask;
+use function App\api\tasks\handleUpdateTask;
+use function App\api\tasks\handleDeleteTask;
+use function App\api\tasks\handleGetTasks;
 
 $db = new Database();
 $pdo = $db->getConnection();

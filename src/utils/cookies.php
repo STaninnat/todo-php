@@ -1,5 +1,7 @@
 <?php
 
+namespace App\utils;
+
 function getAccessTokenFromCookie(): ?string
 {
     return $_COOKIE['access_token'] ?? null;

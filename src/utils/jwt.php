@@ -1,9 +1,12 @@
 <?php
-require_once __DIR__ . '/../../vendor/autoload.php';
+
+namespace App\utils;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Dotenv\Dotenv;
+use RuntimeException;
+use Throwable;
 
 const JWT_ALGO = 'HS256';
 const JWT_EXPIRE = 3600;

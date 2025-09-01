@@ -1,5 +1,10 @@
 <?php
 
+namespace App\utils;
+
+use DateTime;
+use DateTimeZone;
+
 /**
  * Convert a UTC datetime string to Bangkok timezone and format it.
  *

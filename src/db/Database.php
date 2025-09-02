@@ -57,8 +57,7 @@ class Database
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
         } catch (PDOException $e) {
-            // Stop execution if connection fails
-            die("DB connection failed: " . $e->getMessage());
+            throw new Exception("DB connection failed: " . $e->getMessage(), 0, $e);
         }
     }
 

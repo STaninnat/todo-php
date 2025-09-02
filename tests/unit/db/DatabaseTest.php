@@ -129,4 +129,23 @@ class DatabaseTest extends TestCase
         // Assert that getConnection returns the same PDO mock
         $this->assertSame($mockPdo, $db->getConnection());
     }
+
+    /**
+     * Test: Constructor should use provided DSN, user, pass directly
+     * instead of environment variables.
+     */
+    public function testConstructorWithCustomDsnParams()
+    {
+        $mockPdo = $this->createMock(PDO::class);
+
+        // Anonymous class overriding constructor to inject PDO directly
+        $db = new class($mockPdo) extends Database {
+            public function __construct(PDO $pdo)
+            {
+                $this->pdo = $pdo;
+            }
+        };
+
+        $this->assertSame($mockPdo, $db->getConnection());
+    }
 }

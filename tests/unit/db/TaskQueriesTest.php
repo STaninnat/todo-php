@@ -91,6 +91,23 @@ class TaskQueriesTest extends TestCase
         ], $result->error);
     }
 
+    /**
+     * Test: addTask returns ok but fetch() after insert gives false (no task found).
+     */
+    public function testAddTaskInsertedButNotFetched()
+    {
+        // Mock successful execute
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('fetch')->willReturn(false); // simulate no row found
+
+        // Call addTask
+        $result = $this->taskQueries->addTask('Title', 'Desc', 'testuserid');
+
+        $this->assertTrue($result->success);
+        $this->assertNull($result->data);
+        $this->assertEquals(0, $result->affected);
+    }
+
     /** ----------------- getAllTasks ----------------- */
     /**
      * Test: getAllTasks should return all tasks successfully.
@@ -126,6 +143,23 @@ class TaskQueriesTest extends TestCase
 
         // Assert failure
         $this->assertFalse($result->success);
+    }
+
+    /**
+     * Test: failFromStmt with errorInfo missing keys (edge case).
+     */
+    public function testFailFromStmtIncompleteErrorInfo()
+    {
+        // Mock execute failure
+        $this->stmt->method('execute')->willReturn(false);
+        $this->stmt->method('errorInfo')->willReturn(['oops']);
+
+        // Call getAllTasks
+        $result = $this->taskQueries->getAllTasks();
+
+        // Assert failure
+        $this->assertFalse($result->success);
+        $this->assertEquals(['oops'], $result->error);
     }
 
     /** ----------------- getTaskByID ----------------- */
@@ -219,6 +253,54 @@ class TaskQueriesTest extends TestCase
         $this->assertFalse($result->success);
     }
 
+    /**
+     * Test: getTasksByPage with page=0 should calculate negative offset (edge case).
+     */
+    public function testGetTasksByPageZeroPage()
+    {
+        $tasks = [];
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('fetchAll')->willReturn($tasks);
+
+        // Call getTasksByPage
+        $result = $this->taskQueries->getTasksByPage(0, 10);
+
+        $this->assertTrue($result->success);
+        $this->assertSame([], $result->data);
+    }
+
+    /**
+     * Test: getTasksByPage with perPage=0 should return empty results.
+     */
+    public function testGetTasksByPagePerPageZero()
+    {
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('fetchAll')->willReturn([]);
+
+        // Call getTasksByPage
+        $result = $this->taskQueries->getTasksByPage(1, 0);
+
+        $this->assertTrue($result->success);
+        $this->assertSame([], $result->data);
+        $this->assertEquals(0, $result->affected);
+    }
+
+    /**
+     * Test: getTasksByPage with userId filter.
+     */
+    public function testGetTasksByPageWithUserId()
+    {
+        $tasks = [['id' => 10, 'user_id' => 'u1']];
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('fetchAll')->willReturn($tasks);
+
+        // Call getTasksByPage
+        $result = $this->taskQueries->getTasksByPage(1, 5, 'u1');
+
+        $this->assertTrue($result->success);
+        $this->assertEquals($tasks, $result->data);
+    }
+
     /** ----------------- getTotalTasks ----------------- */
     /**
      * Test: getTotalTasks should return total number of tasks successfully.
@@ -252,6 +334,22 @@ class TaskQueriesTest extends TestCase
 
         // Assert failure
         $this->assertFalse($result->success);
+    }
+
+    /**
+     * Test: getTotalTasks returns 0 when table is empty.
+     */
+    public function testGetTotalTasksZero()
+    {
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('fetchColumn')->willReturn(0);
+
+        // Call getTotalTasks
+        $result = $this->taskQueries->getTotalTasks();
+
+        $this->assertTrue($result->success);
+        $this->assertEquals(0, $result->data);
+        $this->assertEquals(0, $result->affected);
     }
 
     /** ----------------- markDone ----------------- */
@@ -289,6 +387,22 @@ class TaskQueriesTest extends TestCase
         $this->assertFalse($result->success);
     }
 
+    /**
+     * Test: markDone with isDone=false should map to 0.
+     */
+    public function testMarkDoneFalse()
+    {
+        $task = ['id' => 2, 'title' => 'T2', 'is_done' => 0];
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('fetch')->willReturn($task);
+
+        // Call getTotalTasks
+        $result = $this->taskQueries->markDone(2, false, 'testuserid');
+
+        $this->assertTrue($result->success);
+        $this->assertEquals(0, $result->data['is_done']);
+    }
+
     /** ----------------- updateTask ----------------- */
     /**
      * Test: updateTask should modify task details successfully.
@@ -324,6 +438,23 @@ class TaskQueriesTest extends TestCase
         $this->assertFalse($result->success);
     }
 
+    /**
+     * Test: updateTask returns ok but affected=0 (no row updated).
+     */
+    public function testUpdateTaskNoRowAffected()
+    {
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('fetch')->willReturn(false);
+
+        // Call updateTask
+        $result = $this->taskQueries->updateTask(99, 'Nope', 'N/A', false, 'testuserid');
+
+        // Assert success and correct updated task
+        $this->assertTrue($result->success);
+        $this->assertNull($result->data);
+        $this->assertEquals(0, $result->affected);
+    }
+
     /** ----------------- deleteTask ----------------- */
     /**
      * Test: deleteTask should remove task successfully.
@@ -356,5 +487,22 @@ class TaskQueriesTest extends TestCase
 
         // Assert failure
         $this->assertFalse($result->success);
+    }
+
+    /**
+     * Test: deleteTask executes successfully but no rows deleted.
+     */
+    public function testDeleteTaskNoRows()
+    {
+        // Mock execute success and affected row count
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('rowCount')->willReturn(0);
+
+        // Call deleteTask
+        $result = $this->taskQueries->deleteTask(123, 'testuserid');
+
+        // Assert success and correct affected rows
+        $this->assertTrue($result->success);
+        $this->assertEquals(0, $result->affected);
     }
 }

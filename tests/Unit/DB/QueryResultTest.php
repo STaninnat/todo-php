@@ -1,7 +1,9 @@
 <?php
-require_once __DIR__ . '/../../src/db/QueryResult.php';
+
+namespace Tests\Unit\DB;
 
 use PHPUnit\Framework\TestCase;
+use App\DB\QueryResult;
 
 /**
  * Unit tests for the QueryResult class.
@@ -73,6 +75,59 @@ class QueryResultTest extends TestCase
     }
 
     /**
+     * Test: ok() with both data and affected rows.
+     */
+    public function testOkWithDataAndAffected()
+    {
+        $data = ['id' => 1];
+        $result = QueryResult::ok($data, 5);
+
+        // Should mark as success
+        $this->assertTrue($result->success);
+
+        // Number of affected rows should be set
+        $this->assertSame(5, $result->affected);
+        $this->assertSame($data, $result->data);
+
+        // isChanged() should return true when affected > 0
+        $this->assertTrue($result->isChanged());
+
+        // hasData() should detect non-empty dataset
+        $this->assertTrue($result->hasData());
+    }
+
+    /**
+     * Test: hasData() should treat 0, false, and empty string as no data.
+     */
+    public function testHasDataWithFalsyValues()
+    {
+        $this->assertFalse(QueryResult::ok(0)->hasData());
+        $this->assertFalse(QueryResult::ok(false)->hasData());
+        $this->assertFalse(QueryResult::ok('')->hasData());
+    }
+
+    /**
+     * Test: hasData() should treat object with properties as data.
+     */
+    public function testHasDataWithObject()
+    {
+        $obj = (object)['a' => 1];
+        $result = QueryResult::ok($obj);
+        $this->assertTrue($result->hasData());
+    }
+
+    /**
+     * Test: fail() with unexpected error type (should still accept null or array)
+     */
+    public function testFailWithNonArrayError()
+    {
+        // PHP type hint will prevent non-array, so only null or array allowed
+        $result = QueryResult::fail(null);
+        $this->assertFalse($result->success);
+        $this->assertNull($result->error);
+    }
+
+    /**
      * Test: fail() without error should produce an unsuccessful result
      * with no data, no error, and no changes.
      */
@@ -109,7 +164,6 @@ class QueryResultTest extends TestCase
         // Error info should be preserved
         $this->assertSame($error, $result->error);
     }
-
 
     /**
      * Test: hasData() should return false for empty array.

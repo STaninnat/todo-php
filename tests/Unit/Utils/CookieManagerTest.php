@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Unit\Utils;
+
 use PHPUnit\Framework\TestCase;
 use App\Utils\CookieManager;
 use App\Utils\CookieStorageInterface;

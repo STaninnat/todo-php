@@ -1,7 +1,11 @@
 <?php
 
+namespace Tests\Unit\DB;
+
 use PHPUnit\Framework\TestCase;
 use App\DB\TaskQueries;
+use PDOStatement;
+use PDO;
 
 /**
  * Unit tests for the TaskQueries class.

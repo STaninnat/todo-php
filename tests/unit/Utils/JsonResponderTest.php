@@ -1,0 +1,196 @@
+<?php
+
+use PHPUnit\Framework\TestCase;
+use App\Utils\JsonResponder;
+
+/**
+ * JsonResponderTest
+ *
+ * Unit tests for App\Utils\JsonResponder, covering response creation, type handling, 
+ * data/payload inclusion, pagination, HTTP status, CLI mode, and quick helper methods.
+ */
+class JsonResponderTest extends TestCase
+{
+    /**
+     * Set up before each test.
+     * Here we expect any output to match a regex to avoid PHPUnit warnings for echo/print.
+     */
+    protected function setUp(): void
+    {
+        $this->expectOutputRegex('/.*/');
+    }
+
+    /**
+     * Test the success() factory method with default type and HTTP status.
+     * Ensures 'success' response is correctly built.
+     */
+    public function testSuccessConstructorDefaultTypeAndHttpStatus(): void
+    {
+        // Create a success response with default type/status
+        $responder = JsonResponder::success('OK message');
+        $array = $responder->toArray();
+
+        // Assert success response structure
+        $this->assertTrue($array['success']);
+        $this->assertSame('success', $array['type']);
+        $this->assertSame('OK message', $array['message']);
+    }
+
+    /**
+     * Test the error() factory method with default type and HTTP status.
+     * Ensures 'error' response is correctly built.
+     */
+    public function testErrorConstructorDefaultTypeAndHttpStatus(): void
+    {
+        // Create an error response with default type/status
+        $responder = JsonResponder::error('Error occurred');
+        $array = $responder->toArray();
+
+        // Assert error response structure
+        $this->assertFalse($array['success']);
+        $this->assertSame('error', $array['type']);
+        $this->assertSame('Error occurred', $array['message']);
+    }
+
+    /**
+     * Test the info() factory method.
+     * Ensures 'info' response is correctly built and defaults to unsuccessful.
+     */
+    public function testInfoConstructorDefaultType(): void
+    {
+        // Create an info response
+        $responder = JsonResponder::info('Just info');
+        $array = $responder->toArray();
+
+        // Info defaults to unsuccessful
+        $this->assertFalse($array['success']);
+        $this->assertSame('info', $array['type']);
+        $this->assertSame('Just info', $array['message']);
+    }
+
+    /**
+     * Test that an invalid type passed to success() defaults to 'info'.
+     */
+    public function testInvalidTypeFallbackToInfo(): void
+    {
+        // Pass an invalid type; should fallback to 'info'
+        $responder = JsonResponder::success('Weird type', 'weird');
+        $array = $responder->toArray();
+
+        $this->assertSame('info', $array['type']);
+    }
+
+    /**
+     * Test adding data and payload to the response.
+     * Ensures the last call to withPayload() overrides previous data correctly.
+     */
+    public function testWithDataAndPayload(): void
+    {
+        // Attach data first, then override with payload
+        $responder = JsonResponder::success('With data')
+            ->withData(['foo' => 'bar'])
+            ->withPayload(['baz' => 123]);
+
+        $array = $responder->toArray();
+
+        // Payload should replace data
+        $this->assertArrayHasKey('data', $array);
+        $this->assertSame(['baz' => 123], $array['data']);
+    }
+
+    /**
+     * Test adding totalPages to the response.
+     * Common for paginated API responses.
+     */
+    public function testWithTotalPages(): void
+    {
+        // Add total pages (for paginated responses)
+        $responder = JsonResponder::success('Paged')->withTotalPages(10);
+        $array = $responder->toArray();
+
+        $this->assertSame(10, $array['totalPages']);
+    }
+
+    /**
+     * Test forcing the type of the response using withType().
+     * Should correctly override initial type.
+     */
+    public function testWithTypeValid(): void
+    {
+        // Force change type from error to success
+        $responder = JsonResponder::error('Force type')->withType('success');
+        $array = $responder->toArray();
+
+        $this->assertSame('success', $array['type']);
+    }
+
+    /**
+     * Test setting a custom HTTP status code.
+     * Uses reflection to access private property for verification.
+     */
+    public function testWithHttpStatus(): void
+    {
+        // Set custom HTTP status
+        $responder = JsonResponder::success('Custom')->withHttpStatus(201);
+
+        // Use reflection to access private property for verification
+        $ref = new \ReflectionClass($responder);
+        $prop = $ref->getProperty('httpStatus');
+        $prop->setAccessible(true);
+
+        $this->assertSame(201, $prop->getValue($responder));
+    }
+
+    /**
+     * Test sending the response in CLI mode (non-output mode).
+     * Should return the array representation instead of echoing JSON.
+     */
+    public function testSendReturnsArrayCliMode(): void
+    {
+        // In CLI mode, send() should return array instead of output
+        $responder = JsonResponder::success('Send test')->withData(['x' => 1]);
+        $result = $responder->send(false);
+
+        $this->assertIsArray($result);
+        $this->assertSame('Send test', $result['message']);
+        $this->assertSame(['x' => 1], $result['data']);
+    }
+
+    /**
+     * Test quickSuccess() static helper.
+     * Returns an array immediately without sending HTTP response.
+     */
+    public function testQuickSuccessReturnsArray(): void
+    {
+        // Quick helper for success, returns array directly
+        $result = JsonResponder::quickSuccess('Q message', false);
+
+        $this->assertSame('Q message', $result['message']);
+        $this->assertTrue($result['success']);
+    }
+
+    /**
+     * Test quickError() static helper.
+     */
+    public function testQuickErrorReturnsArray(): void
+    {
+        // Quick helper for error
+        $result = JsonResponder::quickError('Bad thing', false);
+
+        $this->assertSame('Bad thing', $result['message']);
+        $this->assertFalse($result['success']);
+    }
+
+    /**
+     * Test quickInfo() static helper.
+     * Should return array with type 'info'.
+     */
+    public function testQuickInfoReturnsArray(): void
+    {
+        // Quick helper for info
+        $result = JsonResponder::quickInfo('FYI', false);
+
+        $this->assertSame('FYI', $result['message']);
+        $this->assertSame('info', $result['type']);
+    }
+}

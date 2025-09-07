@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\Utils;
 
 use App\Utils\JwtService;
@@ -15,7 +17,7 @@ use Throwable;
  *
  * Each test is self-contained with controlled timestamps.
  */
-final class JwtServiceTest extends TestCase
+class JwtServiceTest extends TestCase
 {
     /**
      * Test that constructor throws RuntimeException when no secret is set

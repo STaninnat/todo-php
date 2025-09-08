@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\DB;
 
 use PHPUnit\Framework\TestCase;
@@ -8,6 +10,8 @@ use PDOStatement;
 use PDO;
 
 /**
+ * Class TaskQueriesTest
+ *
  * Unit tests for the TaskQueries class.
  *
  * This test suite verifies CRUD and task management operations:
@@ -15,6 +19,8 @@ use PDO;
  * - getTotalTasks(), markDone(), updateTask(), deleteTask()
  *
  * Uses PDOStatement and PDO mocks to avoid real database connections.
+ *
+ * @package Tests\Unit\DB
  */
 class TaskQueriesTest extends TestCase
 {
@@ -25,8 +31,10 @@ class TaskQueriesTest extends TestCase
     /**
      * Setup mocks for PDO and PDOStatement before each test.
      *
-     * - Mock execute, fetch, fetchAll, rowCount, fetchColumn, lastInsertId
-     * - Inject mocked PDO into TaskQueries instance
+     * Mocks execute, fetch, fetchAll, rowCount, fetchColumn, and lastInsertId.
+     * Injects mocked PDO into TaskQueries instance.
+     *
+     * @return void
      */
     protected function setUp(): void
     {
@@ -49,8 +57,10 @@ class TaskQueriesTest extends TestCase
     /** ----------------- addTask ----------------- */
     /**
      * Test: addTask should return success with proper data when execute succeeds.
+     * 
+     * @return void
      */
-    public function testAddTaskSuccess()
+    public function testAddTaskSuccess(): void
     {
         // Mock successful execute and return a sample task
         $this->stmt->method('execute')->willReturn(true);
@@ -74,8 +84,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: addTask should return failure with error info when execute fails.
+     * 
+     * @return void
      */
-    public function testAddTaskFail()
+    public function testAddTaskFail(): void
     {
         // Mock execute failure and return error info
         $this->stmt->method('execute')->willReturn(false);
@@ -97,8 +109,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: addTask returns ok but fetch() after insert gives false (no task found).
+     * 
+     * @return void
      */
-    public function testAddTaskInsertedButNotFetched()
+    public function testAddTaskInsertedButNotFetched(): void
     {
         // Mock successful execute
         $this->stmt->method('execute')->willReturn(true);
@@ -115,8 +129,10 @@ class TaskQueriesTest extends TestCase
     /** ----------------- getAllTasks ----------------- */
     /**
      * Test: getAllTasks should return all tasks successfully.
+     * 
+     * @return void
      */
-    public function testGetAllTasksSuccess()
+    public function testGetAllTasksSuccess(): void
     {
         // Prepare mock data and behavior
         $tasks = [['id' => 1, 'title' => 'T1'], ['id' => 2, 'title' => 'T2']];
@@ -135,8 +151,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: getAllTasks should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testGetAllTasksFail()
+    public function testGetAllTasksFail(): void
     {
         // Mock execute failure
         $this->stmt->method('execute')->willReturn(false);
@@ -151,8 +169,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: failFromStmt with errorInfo missing keys (edge case).
+     * 
+     * @return void
      */
-    public function testFailFromStmtIncompleteErrorInfo()
+    public function testFailFromStmtIncompleteErrorInfo(): void
     {
         // Mock execute failure
         $this->stmt->method('execute')->willReturn(false);
@@ -169,8 +189,10 @@ class TaskQueriesTest extends TestCase
     /** ----------------- getTaskByID ----------------- */
     /**
      * Test: getTaskByID should return task when found.
+     * 
+     * @return void
      */
-    public function testGetTaskByIDFound()
+    public function testGetTaskByIDFound(): void
     {
         // Mock execute success and return a single task
         $task = ['id' => 1, 'title' => 'T1'];
@@ -188,8 +210,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: getTaskByID should return null data if task not found.
+     * 
+     * @return void
      */
-    public function testGetTaskByIDNotFound()
+    public function testGetTaskByIDNotFound(): void
     {
         // Mock execute success but no task found
         $this->stmt->method('execute')->willReturn(true);
@@ -206,8 +230,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: getTaskByID should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testGetTaskByIDFail()
+    public function testGetTaskByIDFail(): void
     {
         // Mock execute failure
         $this->stmt->method('execute')->willReturn(false);
@@ -223,8 +249,10 @@ class TaskQueriesTest extends TestCase
     /** ----------------- getTasksByPage ----------------- */
     /**
      * Test: getTasksByPage should return tasks for a page successfully.
+     * 
+     * @return void
      */
-    public function testGetTasksByPageSuccess()
+    public function testGetTasksByPageSuccess(): void
     {
         // Mock tasks for pagination
         $tasks = [['id' => 1, 'title' => 'T1']];
@@ -243,8 +271,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: getTasksByPage should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testGetTasksByPageFail()
+    public function testGetTasksByPageFail(): void
     {
         // Mock execute failure
         $this->stmt->method('execute')->willReturn(false);
@@ -259,8 +289,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: getTasksByPage with page=0 should calculate negative offset (edge case).
+     * 
+     * @return void
      */
-    public function testGetTasksByPageZeroPage()
+    public function testGetTasksByPageZeroPage(): void
     {
         $tasks = [];
         $this->stmt->method('execute')->willReturn(true);
@@ -275,8 +307,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: getTasksByPage with perPage=0 should return empty results.
+     * 
+     * @return void
      */
-    public function testGetTasksByPagePerPageZero()
+    public function testGetTasksByPagePerPageZero(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('fetchAll')->willReturn([]);
@@ -291,8 +325,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: getTasksByPage with userId filter.
+     * 
+     * @return void
      */
-    public function testGetTasksByPageWithUserId()
+    public function testGetTasksByPageWithUserId(): void
     {
         $tasks = [['id' => 10, 'user_id' => 'u1']];
         $this->stmt->method('execute')->willReturn(true);
@@ -308,8 +344,10 @@ class TaskQueriesTest extends TestCase
     /** ----------------- getTotalTasks ----------------- */
     /**
      * Test: getTotalTasks should return total number of tasks successfully.
+     * 
+     * @return void
      */
-    public function testGetTotalTasksSuccess()
+    public function testGetTotalTasksSuccess(): void
     {
         // Mock execute success and total count
         $this->stmt->method('execute')->willReturn(true);
@@ -326,8 +364,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: getTotalTasks should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testGetTotalTasksFail()
+    public function testGetTotalTasksFail(): void
     {
         // Mock execute failure
         $this->stmt->method('execute')->willReturn(false);
@@ -342,8 +382,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: getTotalTasks returns 0 when table is empty.
+     * 
+     * @return void
      */
-    public function testGetTotalTasksZero()
+    public function testGetTotalTasksZero(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('fetchColumn')->willReturn(0);
@@ -359,8 +401,10 @@ class TaskQueriesTest extends TestCase
     /** ----------------- markDone ----------------- */
     /**
      * Test: markDone should update task completion status successfully.
+     * 
+     * @return void
      */
-    public function testMarkDoneSuccess()
+    public function testMarkDoneSuccess(): void
     {
         // Mock execute success and returned updated task
         $task = ['id' => 1, 'title' => 'T1', 'is_done' => 1];
@@ -377,8 +421,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: markDone should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testMarkDoneFail()
+    public function testMarkDoneFail(): void
     {
         // Mock execute failure
         $this->stmt->method('execute')->willReturn(false);
@@ -393,8 +439,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: markDone with isDone=false should map to 0.
+     * 
+     * @return void
      */
-    public function testMarkDoneFalse()
+    public function testMarkDoneFalse(): void
     {
         $task = ['id' => 2, 'title' => 'T2', 'is_done' => 0];
         $this->stmt->method('execute')->willReturn(true);
@@ -410,8 +458,10 @@ class TaskQueriesTest extends TestCase
     /** ----------------- updateTask ----------------- */
     /**
      * Test: updateTask should modify task details successfully.
+     * 
+     * @return void
      */
-    public function testUpdateTaskSuccess()
+    public function testUpdateTaskSuccess(): void
     {
         // Mock execute success and returned updated task
         $task = ['id' => 1, 'title' => 'New', 'is_done' => 1];
@@ -428,8 +478,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: updateTask should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testUpdateTaskFail()
+    public function testUpdateTaskFail(): void
     {
         // Mock execute failure
         $this->stmt->method('execute')->willReturn(false);
@@ -444,8 +496,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: updateTask returns ok but affected=0 (no row updated).
+     * 
+     * @return void
      */
-    public function testUpdateTaskNoRowAffected()
+    public function testUpdateTaskNoRowAffected(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('fetch')->willReturn(false);
@@ -462,8 +516,10 @@ class TaskQueriesTest extends TestCase
     /** ----------------- deleteTask ----------------- */
     /**
      * Test: deleteTask should remove task successfully.
+     * 
+     * @return void
      */
-    public function testDeleteTaskSuccess()
+    public function testDeleteTaskSuccess(): void
     {
         // Mock execute success and affected row count
         $this->stmt->method('execute')->willReturn(true);
@@ -479,8 +535,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: deleteTask should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testDeleteTaskFail()
+    public function testDeleteTaskFail(): void
     {
         // Mock execute failure
         $this->stmt->method('execute')->willReturn(false);
@@ -495,8 +553,10 @@ class TaskQueriesTest extends TestCase
 
     /**
      * Test: deleteTask executes successfully but no rows deleted.
+     * 
+     * @return void
      */
-    public function testDeleteTaskNoRows()
+    public function testDeleteTaskNoRows(): void
     {
         // Mock execute success and affected row count
         $this->stmt->method('execute')->willReturn(true);

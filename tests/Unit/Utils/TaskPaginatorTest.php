@@ -5,28 +5,34 @@ declare(strict_types=1);
 namespace Tests\Unit\Utils;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use App\Utils\TaskPaginator;
 use App\DB\TaskQueries;
 use App\DB\QueryResult;
 
 /**
- * Unit tests for TaskPaginator
+ * Class TaskPaginatorTest
+ *
+ * Unit tests for the TaskPaginator class.
  *
  * Covers calculation of total pages based on:
- * 1. Query failure or invalid data (fallback to 1 page)
- * 2. Valid total task counts with different per-page values
+ * - Query failure or invalid data (fallback to 1 page)
+ * - Valid total task counts with different per-page values
+ *
  * Uses data providers to test multiple scenarios efficiently.
+ *
+ * @package Tests\Unit\Utils
  */
 class TaskPaginatorTest extends TestCase
 {
     /**
-     * Test calculateTotalPages() when query fails or returns invalid data
+     * Test that calculateTotalPages() returns 1 when query fails or returns invalid data.
      *
-     * - Uses a stub of TaskQueries that always fails
-     * - Expects minimum 1 page as fallback
+     * @param string $description Description of the fail case.
      *
-     * @dataProvider failCasesProvider
+     * @return void
      */
+    #[DataProvider('failCasesProvider')]
     public function testCalculateTotalPagesFailCase($description = ''): void
     {
         $stub = $this->createStub(TaskQueries::class);
@@ -39,13 +45,16 @@ class TaskPaginatorTest extends TestCase
     }
 
     /**
-     * Test calculateTotalPages() with valid or edge-case total tasks
+     * Test that calculateTotalPages() works with valid or edge-case total task counts.
      *
-     * - Uses data provider to test multiple combinations of totalTasks and perPage
-     * - Verifies correct number of pages calculated
+     * @param mixed  $totalTasks     Simulated total task count.
+     * @param int    $perPage        Number of tasks per page.
+     * @param int    $expectedPages  Expected number of calculated pages.
+     * @param string $description    Description of the test case.
      *
-     * @dataProvider okCasesProvider
+     * @return void
      */
+    #[DataProvider('okCasesProvider')]
     public function testCalculateTotalPagesOkCases($totalTasks = null, $perPage = 10, $expectedPages = 1, $description = ''): void
     {
         $stub = $this->createStub(TaskQueries::class);
@@ -58,12 +67,11 @@ class TaskPaginatorTest extends TestCase
     }
 
     /**
-     * Data provider for fail cases
+     * Provides fail cases for calculateTotalPages().
      *
-     * - Simulates scenarios where query fails
-     * - Each array element represents one test case
+     * Each case simulates a scenario where the query fails.
      *
-     * @return array[]
+     * @return array<int, array{0:string}>
      */
     public static function failCasesProvider(): array
     {
@@ -73,18 +81,20 @@ class TaskPaginatorTest extends TestCase
     }
 
     /**
-     * Data provider for OK/valid cases
+     * Provides valid and edge-case scenarios for calculateTotalPages().
      *
      * Each test case array contains:
-     * - totalTasks: simulated total task count returned by query
+     * - totalTasks: simulated total task count
      * - perPage: number of tasks per page
-     * - expectedPages: expected output from calculateTotalPages()
-     * - description: optional string to describe the case
+     * - expectedPages: expected calculated pages
+     * - description: description of the case
      *
      * Covers edge cases:
      * - Non-integer data
-     * - Zero or negative total tasks
+     * - Zero or negative task counts
      * - Exact multiples and remainders for per-page division
+     *
+     * @return array<int, array{0:mixed,1:int,2:int,3:string}>
      */
     public static function okCasesProvider(): array
     {

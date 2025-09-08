@@ -8,16 +8,28 @@ use PHPUnit\Framework\TestCase;
 use App\Utils\JsonResponder;
 
 /**
- * JsonResponderTest
+ * Class JsonResponderTest
  *
- * Unit tests for App\Utils\JsonResponder, covering response creation, type handling, 
- * data/payload inclusion, pagination, HTTP status, CLI mode, and quick helper methods.
+ * Unit tests for the JsonResponder class.
+ *
+ * This test suite verifies:
+ * - Response creation and type handling
+ * - Data/payload inclusion and overriding
+ * - Pagination and HTTP status handling
+ * - Behavior in CLI mode
+ * - Quick helper methods (quickSuccess, quickError, quickInfo)
+ *
+ * @package Tests\Unit\Utils
  */
 class JsonResponderTest extends TestCase
 {
     /**
      * Set up before each test.
-     * Here we expect any output to match a regex to avoid PHPUnit warnings for echo/print.
+     *
+     * Ensures that any output will match a regex pattern to
+     * avoid PHPUnit warnings for echo/print usage.
+     *
+     * @return void
      */
     protected function setUp(): void
     {
@@ -26,7 +38,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test the success() factory method with default type and HTTP status.
+     * 
      * Ensures 'success' response is correctly built.
+     * 
+     * @return void
      */
     public function testSuccessConstructorDefaultTypeAndHttpStatus(): void
     {
@@ -42,7 +57,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test the error() factory method with default type and HTTP status.
+     * 
      * Ensures 'error' response is correctly built.
+     * 
+     * @return void
      */
     public function testErrorConstructorDefaultTypeAndHttpStatus(): void
     {
@@ -58,7 +76,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test the info() factory method.
+     * 
      * Ensures 'info' response is correctly built and defaults to unsuccessful.
+     * 
+     * @return void
      */
     public function testInfoConstructorDefaultType(): void
     {
@@ -74,6 +95,8 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test that an invalid type passed to success() defaults to 'info'.
+     * 
+     * @return void
      */
     public function testInvalidTypeFallbackToInfo(): void
     {
@@ -86,7 +109,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test adding data and payload to the response.
+     * 
      * Ensures the last call to withPayload() overrides previous data correctly.
+     * 
+     * @return void
      */
     public function testWithDataAndPayload(): void
     {
@@ -104,7 +130,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test adding totalPages to the response.
+     * 
      * Common for paginated API responses.
+     * 
+     * @return void
      */
     public function testWithTotalPages(): void
     {
@@ -117,7 +146,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test forcing the type of the response using withType().
+     * 
      * Should correctly override initial type.
+     * 
+     * @return void
      */
     public function testWithTypeValid(): void
     {
@@ -130,7 +162,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test setting a custom HTTP status code.
+     * 
      * Uses reflection to access private property for verification.
+     * 
+     * @return void
      */
     public function testWithHttpStatus(): void
     {
@@ -147,7 +182,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test sending the response in CLI mode (non-output mode).
+     * 
      * Should return the array representation instead of echoing JSON.
+     * 
+     * @return void
      */
     public function testSendReturnsArrayCliMode(): void
     {
@@ -162,7 +200,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test quickSuccess() static helper.
+     * 
      * Returns an array immediately without sending HTTP response.
+     * 
+     * @return void
      */
     public function testQuickSuccessReturnsArray(): void
     {
@@ -175,6 +216,8 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test quickError() static helper.
+     * 
+     * @return void
      */
     public function testQuickErrorReturnsArray(): void
     {
@@ -187,7 +230,10 @@ class JsonResponderTest extends TestCase
 
     /**
      * Test quickInfo() static helper.
+     * 
      * Should return array with type 'info'.
+     * 
+     * @return void
      */
     public function testQuickInfoReturnsArray(): void
     {

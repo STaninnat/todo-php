@@ -9,10 +9,16 @@ use App\Utils\CookieManager;
 use App\Utils\CookieStorageInterface;
 
 /**
- * Unit tests for CookieManager.
+ * Class CookieManagerTest
  *
- * This test class verifies the behavior of CookieManager methods related to
- * getting, setting, and clearing the 'access_token' cookie.
+ * Unit tests for the CookieManager class.
+ *
+ * This test suite verifies the behavior of CookieManager methods related to:
+ * - Getting the 'access_token' cookie
+ * - Setting the 'access_token' cookie
+ * - Clearing the 'access_token' cookie
+ *
+ * @package Tests\Unit\Utils
  */
 class CookieManagerTest extends TestCase
 {
@@ -21,7 +27,10 @@ class CookieManagerTest extends TestCase
 
     /**
      * Set up the test environment before each test.
+     *
      * Creates a mock storage and a CookieManager instance with setCookie mocked.
+     *
+     * @return void
      */
     protected function setUp(): void
     {
@@ -38,6 +47,8 @@ class CookieManagerTest extends TestCase
 
     /**
      * Test that getAccessToken returns null if the cookie is not set.
+     * 
+     * @return void
      */
     public function testGetAccessTokenReturnsNullWhenNotSet(): void
     {
@@ -50,6 +61,8 @@ class CookieManagerTest extends TestCase
 
     /**
      * Test that getAccessToken returns the correct token if set.
+     * 
+     * @return void
      */
     public function testGetAccessTokenReturnsValidToken(): void
     {
@@ -62,6 +75,8 @@ class CookieManagerTest extends TestCase
 
     /**
      * Test that setAccessToken calls setCookie with correct arguments.
+     * 
+     * @return void
      */
     public function testSetAccessTokenCallsSetCookieWithCorrectArgs(): void
     {
@@ -85,6 +100,8 @@ class CookieManagerTest extends TestCase
 
     /**
      * Test that clearAccessToken calls setCookie with an expired timestamp.
+     * 
+     * @return void
      */
     public function testClearAccessTokenCallsSetCookieWithExpiredTime(): void
     {
@@ -108,6 +125,8 @@ class CookieManagerTest extends TestCase
 
     /**
      * Test that setting and then clearing the access token produces the correct call order.
+     * 
+     * @return void
      */
     public function testSetThenClearAccessTokenOrder(): void
     {
@@ -139,6 +158,8 @@ class CookieManagerTest extends TestCase
 
     /**
      * Test that multiple calls to setAccessToken overwrite the previous values correctly.
+     * 
+     * @return void
      */
     public function testMultipleSetAccessTokenOverwritesEachTime(): void
     {

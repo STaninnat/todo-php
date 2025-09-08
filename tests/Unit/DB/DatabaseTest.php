@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\DB;
 
 use PHPUnit\Framework\TestCase;
@@ -8,27 +10,31 @@ use Exception;
 use PDO;
 
 /**
- * Unit tests for the Database class.
+ * Class DatabaseTest
  *
+ * Unit tests for the Database class.
+ * 
  * This test suite verifies:
  * - Database constructor behavior with and without environment variables
  * - getConnection() method returns the expected PDO instance
  * - Proper exception handling when environment variables are missing
  *
  * Uses PDO mocks to avoid real database connections.
+ *
+ * @package Tests\Unit\DB
  */
 class DatabaseTest extends TestCase
 {
     /**
      * Helper method to create a Database instance with a PDO mock.
      *
-     * - Replaces real DB connection with a mock PDO object
-     * - Optionally applies temporary environment variables
-     * - Restores original $_ENV after test
+     * Replaces real DB connection with a mock PDO object, optionally applies
+     * temporary environment variables, and restores original $_ENV after test.
      *
-     * @param PDO   $mockPdo Mock PDO object to inject
-     * @param array $envVars Optional environment variables
-     * @return Database Database instance with mocked connection
+     * @param PDO   $mockPdo Mock PDO object to inject.
+     * @param array $envVars Optional environment variables.
+     *
+     * @return Database Database instance with mocked connection.
      */
     private function createDatabaseMock(PDO $mockPdo, array $envVars = []): Database
     {
@@ -57,8 +63,10 @@ class DatabaseTest extends TestCase
 
     /**
      * Test: getConnection should return the injected PDO mock instance.
+     * 
+     * @return void
      */
-    public function testGetConnectionReturnsPdoMock()
+    public function testGetConnectionReturnsPdoMock(): void
     {
         $mockPdo = $this->createMock(PDO::class);
 
@@ -75,8 +83,10 @@ class DatabaseTest extends TestCase
     /**
      * Test: Constructor should accept environment variables
      * and still return the mock PDO connection.
+     * 
+     * @return void
      */
-    public function testConstructorWithEnvVars()
+    public function testConstructorWithEnvVars(): void
     {
         // Mock environment variables
         $envVars = [
@@ -98,8 +108,10 @@ class DatabaseTest extends TestCase
     /**
      * Test: Constructor should throw exception if required
      * environment variables are missing.
+     * 
+     * @return void
      */
-    public function testThrowsExceptionIfEnvVarsMissing()
+    public function testThrowsExceptionIfEnvVarsMissing(): void
     {
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('DB environment variables are not set.');
@@ -122,8 +134,10 @@ class DatabaseTest extends TestCase
     /**
      * Test: Constructor should work with directly injected
      * PDO mock (without environment variables).
+     * 
+     * @return void
      */
-    public function testConstructorWithCustomParams()
+    public function testConstructorWithCustomParams(): void
     {
         $mockPdo = $this->createMock(PDO::class);
 
@@ -137,8 +151,10 @@ class DatabaseTest extends TestCase
     /**
      * Test: Constructor should use provided DSN, user, pass directly
      * instead of environment variables.
+     * 
+     * @return void
      */
-    public function testConstructorWithCustomDsnParams()
+    public function testConstructorWithCustomDsnParams(): void
     {
         $mockPdo = $this->createMock(PDO::class);
 
@@ -150,6 +166,28 @@ class DatabaseTest extends TestCase
             }
         };
 
+        $this->assertSame($mockPdo, $db->getConnection());
+    }
+
+    /**
+     * Test that getConnection still returns PDO instance
+     * when using a mock PDO object
+     * 
+     * @return void
+     */
+    public function testGetConnectionWithMock(): void
+    {
+        $mockPdo = $this->createMock(PDO::class);
+
+        // Anonymous class to inject PDO mock directly
+        $db = new class($mockPdo) extends Database {
+            public function __construct(PDO $pdo)
+            {
+                $this->pdo = $pdo;
+            }
+        };
+
+        $this->assertInstanceOf(PDO::class, $db->getConnection());
         $this->assertSame($mockPdo, $db->getConnection());
     }
 }

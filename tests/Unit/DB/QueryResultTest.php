@@ -1,25 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\DB;
 
 use PHPUnit\Framework\TestCase;
 use App\DB\QueryResult;
 
+
 /**
+ * Class QueryResultTest
+ *
  * Unit tests for the QueryResult class.
  *
  * This test suite verifies:
- * - Success and failure factory methods (ok/fail)
- * - Behavior of utility methods (isChanged, hasData)
- * - Handling of affected rows, data, and error information
+ * - Success and failure factory methods (ok/fail).
+ * - Behavior of utility methods (isChanged, hasData).
+ * - Handling of affected rows, data, and error information.
+ *
+ * @package Tests\Unit\DB
  */
 class QueryResultTest extends TestCase
 {
     /**
      * Test: ok() without data should produce a successful result
      * with no data, no error, and no affected changes.
+     * 
+     * @return void
      */
-    public function testOkWithoutData()
+    public function testOkWithoutData(): void
     {
         $result = QueryResult::ok();
 
@@ -41,8 +50,10 @@ class QueryResultTest extends TestCase
     /**
      * Test: ok() with data should produce a successful result
      * containing the provided data and hasData() should return true.
+     * 
+     * @return void
      */
-    public function testOkWithData()
+    public function testOkWithData(): void
     {
         $data = ['id' => 1, 'name' => 'Test'];
         $result = QueryResult::ok($data);
@@ -59,8 +70,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: ok() with affected rows should mark result as changed.
+     * 
+     * @return void
      */
-    public function testOkWithAffectedRows()
+    public function testOkWithAffectedRows(): void
     {
         $result = QueryResult::ok(null, 3);
 
@@ -76,8 +89,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: ok() with both data and affected rows.
+     * 
+     * @return void
      */
-    public function testOkWithDataAndAffected()
+    public function testOkWithDataAndAffected(): void
     {
         $data = ['id' => 1];
         $result = QueryResult::ok($data, 5);
@@ -98,8 +113,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: hasData() should treat 0, false, and empty string as no data.
+     * 
+     * @return void
      */
-    public function testHasDataWithFalsyValues()
+    public function testHasDataWithFalsyValues(): void
     {
         $this->assertFalse(QueryResult::ok(0)->hasData());
         $this->assertFalse(QueryResult::ok(false)->hasData());
@@ -108,8 +125,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: hasData() should treat object with properties as data.
+     * 
+     * @return void
      */
-    public function testHasDataWithObject()
+    public function testHasDataWithObject(): void
     {
         $obj = (object)['a' => 1];
         $result = QueryResult::ok($obj);
@@ -118,8 +137,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: fail() with unexpected error type (should still accept null or array)
+     * 
+     * @return void
      */
-    public function testFailWithNonArrayError()
+    public function testFailWithNonArrayError(): void
     {
         // PHP type hint will prevent non-array, so only null or array allowed
         $result = QueryResult::fail(null);
@@ -130,8 +151,10 @@ class QueryResultTest extends TestCase
     /**
      * Test: fail() without error should produce an unsuccessful result
      * with no data, no error, and no changes.
+     * 
+     * @return void
      */
-    public function testFailWithoutError()
+    public function testFailWithoutError(): void
     {
         $result = QueryResult::fail();
 
@@ -152,8 +175,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: fail() with error should include error information.
+     * 
+     * @return void
      */
-    public function testFailWithError()
+    public function testFailWithError(): void
     {
         $error = ['code' => '123', 'message' => 'DB error'];
         $result = QueryResult::fail($error);
@@ -167,8 +192,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: hasData() should return false for empty array.
+     * 
+     * @return void
      */
-    public function testHasDataWithEmptyData()
+    public function testHasDataWithEmptyData(): void
     {
         $result = QueryResult::ok([]);
 
@@ -178,8 +205,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: hasData() should return true for non-empty array.
+     * 
+     * @return void
      */
-    public function testHasDataWithNonEmptyData()
+    public function testHasDataWithNonEmptyData(): void
     {
         $result = QueryResult::ok(['foo' => 'bar']);
 
@@ -189,8 +218,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: isChanged() should return false when affected = 0.
+     * 
+     * @return void
      */
-    public function testIsChangedWhenAffectedZero()
+    public function testIsChangedWhenAffectedZero(): void
     {
         $result = QueryResult::ok(null, 0);
 
@@ -200,8 +231,10 @@ class QueryResultTest extends TestCase
 
     /**
      * Test: isChanged() should return true when affected > 0.
+     * 
+     * @return void
      */
-    public function testIsChangedWhenAffectedPositive()
+    public function testIsChangedWhenAffectedPositive(): void
     {
         $result = QueryResult::ok(null, 2);
 

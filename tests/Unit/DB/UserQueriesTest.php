@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\DB;
 
 use PHPUnit\Framework\TestCase;
@@ -8,6 +10,8 @@ use PDOStatement;
 use PDO;
 
 /**
+ * Class UserQueriesTest
+ *
  * Unit tests for the UserQueries class.
  *
  * This test suite verifies CRUD and user management operations:
@@ -15,6 +19,8 @@ use PDO;
  * - checkUserExists(), updateUser(), deleteUser()
  *
  * Uses PDOStatement and PDO mocks to avoid real database connections.
+ *
+ * @package Tests\Unit\DB
  */
 class UserQueriesTest extends TestCase
 {
@@ -25,8 +31,10 @@ class UserQueriesTest extends TestCase
     /**
      * Setup mocks for PDO and PDOStatement before each test.
      *
-     * - Mock execute, fetch, fetchAll, rowCount, fetchColumn
-     * - Inject mocked PDO into UserQueries instance
+     * Mocks execute, fetch, fetchAll, rowCount, and fetchColumn methods,
+     * then injects the mocked PDO into UserQueries instance.
+     *
+     * @return void
      */
     protected function setUp(): void
     {
@@ -46,8 +54,10 @@ class UserQueriesTest extends TestCase
     /** ----------------- createUser ----------------- */
     /**
      * Test: createUser should return success with proper user data when execute succeeds.
+     * 
+     * @return void
      */
-    public function testCreateUserSuccess()
+    public function testCreateUserSuccess(): void
     {
         $user = ['id' => '1', 'username' => 'test', 'email' => 't@test.com', 'password' => 'pass'];
         $this->stmt->method('execute')->willReturn(true);
@@ -61,8 +71,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: createUser should return failure with error info when execute fails.
+     * 
+     * @return void
      */
-    public function testCreateUserFail()
+    public function testCreateUserFail(): void
     {
         $error = ['code' => '123', 'message' => 'DB error'];
         $this->stmt->method('execute')->willReturn(false);
@@ -76,8 +88,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: createUser returns ok but getUserByID fetch returns null (no user found).
+     * 
+     * @return void
      */
-    public function testCreateUserButGetUserByIdReturnsNull()
+    public function testCreateUserButGetUserByIdReturnsNull(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('fetch')->willReturn(false);
@@ -92,8 +106,10 @@ class UserQueriesTest extends TestCase
     /** ----------------- getUserByName ----------------- */
     /**
      * Test: getUserByName should return user when found.
+     * 
+     * @return void
      */
-    public function testGetUserByNameFound()
+    public function testGetUserByNameFound(): void
     {
         $user = ['id' => '1', 'username' => 'test', 'email' => 't@test.com'];
         $this->stmt->method('execute')->willReturn(true);
@@ -108,8 +124,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: getUserByName should return null if not found.
+     * 
+     * @return void
      */
-    public function testGetUserByNameNotFound()
+    public function testGetUserByNameNotFound(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('fetch')->willReturn(false);
@@ -123,8 +141,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: getUserByName should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testGetUserByNameFail()
+    public function testGetUserByNameFail(): void
     {
         $error = ['code' => 'err', 'message' => 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
@@ -139,8 +159,10 @@ class UserQueriesTest extends TestCase
     /** ----------------- getUserByID ----------------- */
     /**
      * Test: getUserByID should return user when found.
+     * 
+     * @return void
      */
-    public function testGetUserByIDFound()
+    public function testGetUserByIDFound(): void
     {
         $user = ['id' => '1', 'username' => 'test', 'email' => 't@test.com'];
         $this->stmt->method('execute')->willReturn(true);
@@ -155,8 +177,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: getUserByID should return null if not found.
+     * 
+     * @return void
      */
-    public function testGetUserByIDNotFound()
+    public function testGetUserByIDNotFound(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('fetch')->willReturn(false);
@@ -170,8 +194,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: getUserByID should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testGetUserByIDFail()
+    public function testGetUserByIDFail(): void
     {
         $error = ['code' => 'err', 'message' => 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
@@ -186,8 +212,10 @@ class UserQueriesTest extends TestCase
     /** ----------------- checkUserExists ----------------- */
     /**
      * Test: checkUserExists should return true if a user exists.
+     * 
+     * @return void
      */
-    public function testCheckUserExistsTrue()
+    public function testCheckUserExistsTrue(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('fetchColumn')->willReturn(1);
@@ -201,8 +229,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: checkUserExists should return false if user not found.
+     * 
+     * @return void
      */
-    public function testCheckUserExistsFalse()
+    public function testCheckUserExistsFalse(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('fetchColumn')->willReturn(0);
@@ -216,8 +246,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: checkUserExists should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testCheckUserExistsFail()
+    public function testCheckUserExistsFail(): void
     {
         $error = ['code' => 'err', 'message' => 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
@@ -232,8 +264,10 @@ class UserQueriesTest extends TestCase
     /** ----------------- updateUser ----------------- */
     /**
      * Test: updateUser should modify user details successfully.
+     * 
+     * @return void
      */
-    public function testUpdateUserSuccess()
+    public function testUpdateUserSuccess(): void
     {
         $user = ['id' => '1', 'username' => 'new', 'email' => 'new@test.com'];
         $this->stmt->method('execute')->willReturn(true);
@@ -247,8 +281,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: updateUser should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testUpdateUserFail()
+    public function testUpdateUserFail(): void
     {
         $error = ['code' => 'err', 'message' => 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
@@ -262,8 +298,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: updateUser returns ok but no user found (no row updated).
+     * 
+     * @return void
      */
-    public function testUpdateUserNotFound()
+    public function testUpdateUserNotFound(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('fetch')->willReturn(false);
@@ -278,8 +316,10 @@ class UserQueriesTest extends TestCase
     /** ----------------- deleteUser ----------------- */
     /**
      * Test: deleteUser should remove user successfully.
+     * 
+     * @return void
      */
-    public function testDeleteUserSuccess()
+    public function testDeleteUserSuccess(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('rowCount')->willReturn(1);
@@ -292,8 +332,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: deleteUser should return failure if execute fails.
+     * 
+     * @return void
      */
-    public function testDeleteUserFail()
+    public function testDeleteUserFail(): void
     {
         $error = ['code' => 'err', 'message' => 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
@@ -307,8 +349,10 @@ class UserQueriesTest extends TestCase
 
     /**
      * Test: deleteUser executes successfully but no rows deleted.
+     * 
+     * @return void
      */
-    public function testDeleteUserNotFound()
+    public function testDeleteUserNotFound(): void
     {
         $this->stmt->method('execute')->willReturn(true);
         $this->stmt->method('rowCount')->willReturn(0);

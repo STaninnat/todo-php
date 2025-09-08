@@ -10,12 +10,16 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Unit tests for JwtService
+ * Class JwtServiceTest
  *
- * Covers constructor, token creation, decoding, verification,
- * refresh logic, and refresh threshold behavior.
+ * Unit tests for the JwtService class.
+ *
+ * Covers constructor behavior, token creation, decoding, verification,
+ * refresh logic, and refresh threshold handling.
  *
  * Each test is self-contained with controlled timestamps.
+ *
+ * @package Tests\Unit\Utils
  */
 class JwtServiceTest extends TestCase
 {
@@ -25,6 +29,8 @@ class JwtServiceTest extends TestCase
      * - Temporarily unsets JWT_SECRET environment variable
      * - Expects a RuntimeException to be thrown with a specific message
      * - Restores environment variable after test
+     * 
+     * @return void
      */
     public function testConstructorThrowsWhenNoSecret(): void
     {
@@ -52,6 +58,8 @@ class JwtServiceTest extends TestCase
      * - Creates a token with custom claims ('sub', 'role')
      * - Sets a controlled "now" timestamp for predictable iat, nbf, exp
      * - Decodes token to verify both custom and standard claims
+     * 
+     * @return void
      */
     public function testCreateBuildsJwtWithClaimsAndTimestamps(): void
     {
@@ -80,6 +88,8 @@ class JwtServiceTest extends TestCase
      * - Creates a token with one secret
      * - Attempts to decode with a different secret
      * - Expects an exception due to invalid signature
+     * 
+     * @return void
      */
     public function testDecodeStrictThrowsOnBadSignature(): void
     {
@@ -100,6 +110,8 @@ class JwtServiceTest extends TestCase
      * - Handles null or empty string gracefully
      * - Ensures no exception is thrown
      * - Returns null as expected
+     * 
+     * @return void
      */
     public function testVerifyReturnsNullWhenTokenMissing(): void
     {
@@ -114,6 +126,8 @@ class JwtServiceTest extends TestCase
      * - Creates a valid JWT with custom claim
      * - Calls verify() which internally decodes token
      * - Ensures returned payload is an array and custom claim is preserved
+     * 
+     * @return void
      */
     public function testVerifyReturnsPayloadForValidToken(): void
     {
@@ -132,6 +146,8 @@ class JwtServiceTest extends TestCase
      *
      * - Passes a malformed string
      * - Ensures verify() handles it gracefully without exception
+     * 
+     * @return void
      */
     public function testVerifyReturnsNullForInvalidToken(): void
     {
@@ -144,6 +160,8 @@ class JwtServiceTest extends TestCase
      *
      * - Tests payload within threshold and outside threshold
      * - Ensures refresh decision logic is correct
+     * 
+     * @return void
      */
     public function testShouldRefreshTrueWhenCloseToExpiry(): void
     {
@@ -163,6 +181,8 @@ class JwtServiceTest extends TestCase
      *
      * - Covers edge case where exp is missing
      * - Should always suggest refresh
+     * 
+     * @return void
      */
     public function testShouldRefreshTrueWhenNoExpInPayload(): void
     {
@@ -181,6 +201,8 @@ class JwtServiceTest extends TestCase
      * - Ensures custom claims are preserved
      * - Verifies timestamps updated correctly
      * - Confirms new token string is different from old token
+     * 
+     * @return void
      */
     public function testRefreshReissuesNewTokenAndPreservesCustomClaims(): void
     {

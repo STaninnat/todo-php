@@ -87,16 +87,26 @@ class JsonResponder
     // Quick shortcuts for immediate response (bypass fluent chaining)
     // -------------------------------------------------------------------------
 
+    /**
+     * Create a quick success response
+     */
     public static function quickSuccess(string $message, bool $exitAfter = true): array
     {
         return self::success($message)->send($exitAfter);
     }
 
+    /**
+     * Create a quick error response
+     */
     public static function quickError(string $message, bool $exitAfter = true): array
     {
         return self::error($message)->send($exitAfter);
     }
 
+    /**
+     * Create a quick info
+     *  response
+     */
     public static function quickInfo(string $message, bool $exitAfter = true): array
     {
         return self::info($message)->send($exitAfter);

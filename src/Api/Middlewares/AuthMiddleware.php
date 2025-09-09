@@ -10,9 +10,17 @@ use App\Utils\JwtService;
 use RuntimeException;
 
 /**
+ * Class AuthMiddleware
+ *
  * Middleware responsible for handling authentication via JWT.
- * - Refreshes JWT tokens when needed.
- * - Ensures that requests are authenticated before proceeding.
+ *
+ * This middleware provides:
+ * - refreshJwt(): Verifies JWT tokens, refreshes them when required,
+ *   and attaches the decoded payload to the Request.
+ * - requireAuth(): Ensures that a request is authenticated,
+ *   throwing a RuntimeException if not.
+ *
+ * @package App\Api\Middlewares
  */
 class AuthMiddleware
 {
@@ -20,7 +28,7 @@ class AuthMiddleware
     private JwtService $jwt;
 
     /**
-     * Constructor.
+     * Constructor
      *
      * @param CookieManager $cookieManager Handles access token storage and retrieval via cookies.
      * @param JwtService    $jwt           Service responsible for verifying and refreshing JWT tokens.
@@ -34,7 +42,13 @@ class AuthMiddleware
     /**
      * Refresh JWT token if needed and attach payload to the request.
      *
-     * @param Request $req The incoming request instance, which will be enriched with authentication data.
+     * Process:
+     * - Retrieve current access token from cookies.
+     * - Verify token and decode payload.
+     * - Attach payload to the Request object.
+     * - Refresh token and update cookies if near expiration.
+     *
+     * @param Request $req The incoming request instance, enriched with authentication data.
      *
      * @return void
      */
@@ -66,6 +80,7 @@ class AuthMiddleware
      * @param Request $req The incoming request that should contain an auth payload.
      *
      * @throws RuntimeException If the request is not authenticated.
+     *
      * @return void
      */
     public function requireAuth(Request $req): void

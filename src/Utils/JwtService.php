@@ -85,7 +85,6 @@ class JwtService
         return (array) $decoded;
     }
 
-
     /**
      * Verify a JWT and return payload or null if invalid
      *

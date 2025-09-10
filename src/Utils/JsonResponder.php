@@ -60,7 +60,13 @@ class JsonResponder
     // -------------------------------------------------------------------------
 
     /**
-     * Create a success response
+     * Create a success response.
+     *
+     * @param string $message The success message.
+     * @param string $type The response type.
+     * @param int|null $httpStatus Optional HTTP status code.
+     *
+     * @return self
      */
     public static function success(string $message, string $type = '', ?int $httpStatus = null): self
     {
@@ -68,7 +74,13 @@ class JsonResponder
     }
 
     /**
-     * Create an error response
+     * Create an error response.
+     *
+     * @param string $message The error message.
+     * @param string $type The response type.
+     * @param int|null $httpStatus Optional HTTP status code.
+     *
+     * @return self
      */
     public static function error(string $message, string $type = '', ?int $httpStatus = null): self
     {
@@ -76,7 +88,13 @@ class JsonResponder
     }
 
     /**
-     * Create an info response
+     * Create an info response.
+     *
+     * @param string $message The info message.
+     * @param string $type The response type (default 'info').
+     * @param int|null $httpStatus Optional HTTP status code.
+     *
+     * @return self
      */
     public static function info(string $message, string $type = '', ?int $httpStatus = null): self
     {
@@ -88,28 +106,44 @@ class JsonResponder
     // -------------------------------------------------------------------------
 
     /**
-     * Create a quick success response
+     * Create a quick success response.
+     *
+     * @param string $message The success message.
+     * @param bool $exitAfter Whether to exit immediately after sending the response.
+     * @param bool $forTest Whether the response is for testing.
+     *
+     * @return array
      */
-    public static function quickSuccess(string $message, bool $exitAfter = true): array
+    public static function quickSuccess(string $message, bool $exitAfter = true, bool $forTest = false): array
     {
-        return self::success($message)->send($exitAfter);
+        return self::success($message)->send($exitAfter, $forTest);
+    }
+    /**
+     * Create a quick error response.
+     *
+     * @param string $message The error message.
+     * @param bool $exitAfter Whether to exit immediately after sending the response.
+     * @param bool $forTest Whether the response is for testing.
+     *
+     * @return array
+     */
+    public static function quickError(string $message, bool $exitAfter = true, bool $forTest = false): array
+    {
+        return self::error($message)->send($exitAfter, $forTest);
     }
 
     /**
-     * Create a quick error response
+     * Create a quick info response.
+     *
+     * @param string $message The info message.
+     * @param bool $exitAfter Whether to exit immediately after sending the response.
+     * @param bool $forTest Whether the response is for testing.
+     *
+     * @return array
      */
-    public static function quickError(string $message, bool $exitAfter = true): array
+    public static function quickInfo(string $message, bool $exitAfter = true, bool $forTest = false): array
     {
-        return self::error($message)->send($exitAfter);
-    }
-
-    /**
-     * Create a quick info
-     *  response
-     */
-    public static function quickInfo(string $message, bool $exitAfter = true): array
-    {
-        return self::info($message)->send($exitAfter);
+        return self::info($message)->send($exitAfter, $forTest);
     }
 
     // -------------------------------------------------------------------------
@@ -117,7 +151,11 @@ class JsonResponder
     // -------------------------------------------------------------------------
 
     /**
-     * Set the response data
+     * Set the response data.
+     *
+     * @param array $data The data to include in the response.
+     *
+     * @return self
      */
     public function withData(array $data): self
     {
@@ -126,7 +164,11 @@ class JsonResponder
     }
 
     /**
-     * Alias for withData
+     * Alias for withData().
+     *
+     * @param array $data The data to include in the response.
+     *
+     * @return self
      */
     public function withPayload(array $data): self
     {
@@ -134,7 +176,11 @@ class JsonResponder
     }
 
     /**
-     * Set total pages for paginated responses
+     * Set total pages for paginated responses.
+     *
+     * @param int $totalPages The total number of pages.
+     *
+     * @return self
      */
     public function withTotalPages(int $totalPages): self
     {
@@ -143,7 +189,11 @@ class JsonResponder
     }
 
     /**
-     * Set response type (success, error, info)
+     * Set response type (success, error, info).
+     *
+     * @param string $type The response type.
+     *
+     * @return self
      */
     public function withType(string $type): self
     {
@@ -154,7 +204,11 @@ class JsonResponder
     }
 
     /**
-     * Set HTTP status code
+     * Set HTTP status code.
+     *
+     * @param int $status The HTTP status code.
+     *
+     * @return self
      */
     public function withHttpStatus(int $status): self
     {
@@ -197,20 +251,28 @@ class JsonResponder
     // -------------------------------------------------------------------------
 
     /**
-     * Output JSON response and optionally exit
+     * Output JSON response, optionally exit, and optionally suppress output for testing
      *
-     * @param bool $exitAfter If true, calls exit after sending
-     * @return array The response array (useful for testing)
+     * @param bool $exitAfter If true, calls exit after sending (ignored in test mode)
+     * @param bool $forTest   If true, suppresses echo and returns response array for testing
+     * 
+     * @return array          The response array (useful for testing)
      */
-    public function send(bool $exitAfter = true): array
+    public function send(bool $exitAfter = true, bool $forTest = false): array
     {
+        $response = $this->toArray();
+
+        // If in test mode, do not echo or exit.
+        if ($forTest) {
+            return $response;
+        }
+
         // Only set HTTP headers if not running in CLI
         if (php_sapi_name() !== 'cli') {
             http_response_code($this->httpStatus);
             header('Content-Type: application/json');
         }
 
-        $response = $this->toArray();
         echo json_encode($response);
 
         if ($exitAfter) {

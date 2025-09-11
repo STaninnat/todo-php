@@ -27,6 +27,7 @@ class QueryResultTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the affected as a string instead of an int will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         QueryResult::ok(null, "invalid");
     }
 
@@ -40,6 +41,7 @@ class QueryResultTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the error as a string instead of ?array will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         QueryResult::fail("not-an-array");
     }
 

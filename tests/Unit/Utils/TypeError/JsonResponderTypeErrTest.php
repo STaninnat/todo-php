@@ -28,6 +28,8 @@ class JsonResponderTypeErrTest extends TestCase
 
         // Sending the message as an int instead of a string will cause a TypeError.
         $invalidMessage = 12345;
+
+        /** @phpstan-ignore-next-line */
         JsonResponder::success($invalidMessage);
     }
 
@@ -42,6 +44,8 @@ class JsonResponderTypeErrTest extends TestCase
 
         // Sending the message as null instead of a string will cause a TypeError.
         $invalidMessage = null;
+
+        /** @phpstan-ignore-next-line */
         JsonResponder::error($invalidMessage);
     }
 
@@ -56,6 +60,8 @@ class JsonResponderTypeErrTest extends TestCase
 
         // Sending the message as an array instead of a string will cause a TypeError.
         $invalidMessage = [];
+
+        /** @phpstan-ignore-next-line */
         JsonResponder::info($invalidMessage);
     }
 
@@ -72,6 +78,8 @@ class JsonResponderTypeErrTest extends TestCase
 
         // Sending the data as a string instead of an array will cause a TypeError.
         $invalidData = 'not-an-array';
+
+        /** @phpstan-ignore-next-line */
         $responder->withData($invalidData);
     }
 
@@ -88,6 +96,8 @@ class JsonResponderTypeErrTest extends TestCase
 
         // Sending the payload as a string instead of an array will cause a TypeError.
         $invalidData = 'string-instead-of-array';
+
+        /** @phpstan-ignore-next-line */
         $responder->withPayload($invalidData);
     }
 
@@ -104,6 +114,8 @@ class JsonResponderTypeErrTest extends TestCase
 
         // Sending the total as a string instead of an int will cause a TypeError.
         $invalidTotal = '10';
+
+        /** @phpstan-ignore-next-line */
         $responder->withTotalPages($invalidTotal);
     }
 
@@ -120,6 +132,8 @@ class JsonResponderTypeErrTest extends TestCase
 
         // Sending the type as an int instead of a string will cause a TypeError.
         $invalidType = 123;
+
+        /** @phpstan-ignore-next-line */
         $responder->withType($invalidType);
     }
 
@@ -136,6 +150,8 @@ class JsonResponderTypeErrTest extends TestCase
 
         // Sending the status as a string instead of an int will cause a TypeError.
         $invalidStatus = '200';
+
+        /** @phpstan-ignore-next-line */
         $responder->withHttpStatus($invalidStatus);
     }
 }

@@ -35,6 +35,7 @@ class AuthMiddlewareTypeErrTest extends TestCase
         $this->expectException(TypeError::class);
 
         // Sending the cookieManager as a string instead of a CookieManager will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         new AuthMiddleware("not_a_cookie_manager", $this->createMock(JwtService::class));
     }
 
@@ -48,6 +49,7 @@ class AuthMiddlewareTypeErrTest extends TestCase
         $this->expectException(TypeError::class);
 
         // Sending the jwt as an int instead of an JwtService will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         new AuthMiddleware($this->createMock(CookieManager::class), 123);
     }
 
@@ -65,6 +67,7 @@ class AuthMiddlewareTypeErrTest extends TestCase
         );
 
         // Sending the refreshJwt as an array instead of a Request will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         $middleware->refreshJwt([]);
     }
 
@@ -82,6 +85,7 @@ class AuthMiddlewareTypeErrTest extends TestCase
         );
 
         // Sending the requireAuth as a stdClass instead of a Request will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         $middleware->requireAuth(new \stdClass());
     }
 }

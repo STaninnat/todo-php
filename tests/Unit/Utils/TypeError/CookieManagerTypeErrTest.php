@@ -18,9 +18,7 @@ use App\Utils\CookieStorageInterface;
  */
 class CookieManagerTypeErrTest extends TestCase
 {
-    /**
-     * @var CookieManager The CookieManager instance being tested.
-     */
+    /** @var CookieManager&\PHPUnit\Framework\MockObject\MockObject */
     private CookieManager $cookieManager;
 
     /**
@@ -58,6 +56,7 @@ class CookieManagerTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the token as an int instead of a string will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         $this->cookieManager->setAccessToken(12345, time() + 3600);
     }
 
@@ -71,6 +70,7 @@ class CookieManagerTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending expires as a string instead of an int will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         $this->cookieManager->setAccessToken('token', 'invalid-expiry');
     }
 

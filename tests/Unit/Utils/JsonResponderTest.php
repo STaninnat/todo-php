@@ -24,19 +24,6 @@ use App\Utils\JsonResponder;
 class JsonResponderTest extends TestCase
 {
     /**
-     * Set up before each test.
-     *
-     * Ensures that any output will match a regex pattern to
-     * avoid PHPUnit warnings for echo/print usage.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->expectOutputRegex('/.*/');
-    }
-
-    /**
      * Test the success() factory method with default type and HTTP status.
      * 
      * Ensures 'success' response is correctly built.
@@ -181,17 +168,16 @@ class JsonResponderTest extends TestCase
     }
 
     /**
-     * Test sending the response in CLI mode (non-output mode).
+     * Test sending the response in test mode (non-output mode).
      * 
      * Should return the array representation instead of echoing JSON.
      * 
      * @return void
      */
-    public function testSendReturnsArrayCliMode(): void
+    public function testSendReturnsArrayTestMode(): void
     {
-        // In CLI mode, send() should return array instead of output
         $responder = JsonResponder::success('Send test')->withData(['x' => 1]);
-        $result = $responder->send(false);
+        $result = $responder->send(false, true);
 
         $this->assertIsArray($result);
         $this->assertSame('Send test', $result['message']);
@@ -208,7 +194,7 @@ class JsonResponderTest extends TestCase
     public function testQuickSuccessReturnsArray(): void
     {
         // Quick helper for success, returns array directly
-        $result = JsonResponder::quickSuccess('Q message', false);
+        $result = JsonResponder::quickSuccess('Q message', false, true);
 
         $this->assertSame('Q message', $result['message']);
         $this->assertTrue($result['success']);
@@ -222,7 +208,7 @@ class JsonResponderTest extends TestCase
     public function testQuickErrorReturnsArray(): void
     {
         // Quick helper for error
-        $result = JsonResponder::quickError('Bad thing', false);
+        $result = JsonResponder::quickError('Bad thing', false, true);
 
         $this->assertSame('Bad thing', $result['message']);
         $this->assertFalse($result['success']);
@@ -238,7 +224,7 @@ class JsonResponderTest extends TestCase
     public function testQuickInfoReturnsArray(): void
     {
         // Quick helper for info
-        $result = JsonResponder::quickInfo('FYI', false);
+        $result = JsonResponder::quickInfo('FYI', false, true);
 
         $this->assertSame('FYI', $result['message']);
         $this->assertSame('info', $result['type']);

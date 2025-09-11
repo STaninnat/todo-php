@@ -27,6 +27,7 @@ class JwtServiceTestTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the expire as a string instead of an int will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         new JwtService('secret', 'HS256', 'not-an-int');
     }
 
@@ -40,6 +41,7 @@ class JwtServiceTestTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the refreshThreshold as a string instead of an int will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         new JwtService('secret', 'HS256', 3600, 'not-an-int');
     }
 
@@ -55,6 +57,7 @@ class JwtServiceTestTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the claims as a string instead of an array will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         $svc->create('not-an-array');
     }
 
@@ -70,6 +73,7 @@ class JwtServiceTestTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the token as an int instead of a string will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         $svc->decodeStrict(123);
     }
 
@@ -85,6 +89,7 @@ class JwtServiceTestTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the token as an array instead of a string|null will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         $svc->verify([]);
     }
 
@@ -100,6 +105,7 @@ class JwtServiceTestTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the payload as a string instead of an array will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         $svc->shouldRefresh('not-an-array');
     }
 
@@ -115,6 +121,7 @@ class JwtServiceTestTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the payload as a string instead of an array will cause a TypeError.
+        /** @phpstan-ignore-next-line */
         $svc->refresh('not-an-array');
     }
 }

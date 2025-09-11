@@ -118,6 +118,7 @@ class JsonResponder
     {
         return self::success($message)->send($exitAfter, $forTest);
     }
+
     /**
      * Create a quick error response.
      *

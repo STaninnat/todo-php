@@ -4,62 +4,90 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Api\Tasks\Service\TypeError;
 
+use App\Api\Request;
 use App\Api\Tasks\Service\GetTasksService;
 use App\DB\TaskQueries;
+use App\DB\QueryResult;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use InvalidArgumentException;
 use TypeError;
 
-/**
- * Class GetTasksServiceTypeErrTest
- *
- * Unit tests to verify type errors in GetTasksService.
- *
- * Ensures that invalid input types or constructor arguments
- * trigger TypeError, protecting the service from unexpected input.
- *
- * @package Tests\Unit\Api\Tasks\Service\TypeError
- */
 class GetTasksServiceTypeErrTest extends TestCase
 {
+    /** @var TaskQueries&\PHPUnit\Framework\MockObject\MockObject */
+    private TaskQueries $taskQueriesMock;
+
+    /** @var GetTasksService&\PHPUnit\Framework\MockObject\MockObject */
     private GetTasksService $service;
 
-    /**
-     * Setup service instance with mocked TaskQueries.
-     *
-     * @return void
-     */
     protected function setUp(): void
     {
-        // Mock TaskQueries to isolate service behavior
-        $taskQueries = $this->createMock(TaskQueries::class);
-        $this->service = new GetTasksService($taskQueries);
+        parent::setUp();
+
+        $this->taskQueriesMock = $this->createMock(TaskQueries::class);
+        $this->service = new GetTasksService($this->taskQueriesMock);
     }
 
-    /**
-     * Test: execute() throws TypeError when input is not an array.
-     *
-     * @return void
-     */
-    public function testExecuteWithNonArrayInputThrowsTypeError(): void
+    public static function invalidUserIds(): array
     {
-        $this->expectException(TypeError::class);
+        return [
+            // params
+            'params int'         => [123, 'params', TypeError::class],
+            'params array'       => [['bad'], 'params', TypeError::class],
+            'params object'      => [new \stdClass(), 'params', TypeError::class],
+            'params empty'       => ['', 'params', InvalidArgumentException::class],
+            'params missing'     => [null, 'params', InvalidArgumentException::class],
 
-        // Passing a string instead of an array triggers TypeError
-        /** @phpstan-ignore-next-line */
-        $this->service->execute('not-an-array');
+            // query
+            'query int'          => [123, 'query', TypeError::class],
+            'query array'        => [['bad'], 'query', TypeError::class],
+            'query object'       => [new \stdClass(), 'query', TypeError::class],
+            'query empty'        => ['', 'query', InvalidArgumentException::class],
+            'query missing'      => [null, 'query', InvalidArgumentException::class],
+
+            // body
+            'body int'           => [123, 'body', TypeError::class],
+            'body array'         => [['bad'], 'body', TypeError::class],
+            'body object'        => [new \stdClass(), 'body', TypeError::class],
+            'body empty'         => ['', 'body', InvalidArgumentException::class],
+            'body missing'       => [null, 'body', InvalidArgumentException::class],
+        ];
     }
 
-    /**
-     * Test: constructor throws TypeError when TaskQueries is not provided.
-     *
-     * @return void
-     */
-    public function testConstructorWithInvalidTaskQueriesTypeThrowsTypeError(): void
+    #[DataProvider('invalidUserIds')]
+    public function testExecuteWithInvalidUserId($userId, string $source, string $expectedException): void
     {
-        $this->expectException(TypeError::class);
+        $request = new Request();
 
-        // Passing invalid type to constructor triggers TypeError
-        /** @phpstan-ignore-next-line */
-        new GetTasksService('not-a-TaskQueries');
+        if ($userId !== null) {
+            switch ($source) {
+                case 'params':
+                    $request->params['user_id'] = $userId;
+                    break;
+                case 'query':
+                    $request->query['user_id'] = $userId;
+                    break;
+                case 'body':
+                    $request->body['user_id'] = $userId;
+                    break;
+            }
+        }
+
+        $this->expectException($expectedException);
+        $this->service->execute($request);
+    }
+
+    public function testExecuteWithValidUserIdButMockFails(): void
+    {
+        $request = new Request();
+        $request->params['user_id'] = 'u123';
+
+        // mock ให้ return failure ของ QueryResult
+        $this->taskQueriesMock->method('getTasksByUserID')
+            ->willReturn(QueryResult::fail(['DB error']));
+
+        $this->expectException(\RuntimeException::class);
+        $this->service->execute($request);
     }
 }

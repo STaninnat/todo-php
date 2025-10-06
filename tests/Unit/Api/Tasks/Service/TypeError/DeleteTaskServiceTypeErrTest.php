@@ -5,61 +5,87 @@ declare(strict_types=1);
 namespace Tests\Unit\Api\Tasks\Service\TypeError;
 
 use App\Api\Tasks\Service\DeleteTaskService;
+use App\Api\Request;
 use App\DB\TaskQueries;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use TypeError;
 
-/**
- * Class DeleteTaskServiceTypeErrTest
- *
- * Unit tests to verify type errors in DeleteTaskService.
- *
- * Ensures that invalid input types or constructor arguments
- * trigger TypeError, preventing unintended behavior.
- *
- * @package Tests\Unit\Api\Tasks\Service\TypeError
- */
 class DeleteTaskServiceTypeErrTest extends TestCase
 {
-    private DeleteTaskService $service;
-
-    /**
-     * Setup service instance with mocked TaskQueries.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        // Mock TaskQueries to isolate service behavior
-        $taskQueries = $this->createMock(TaskQueries::class);
-        $this->service = new DeleteTaskService($taskQueries);
-    }
-
-    /**
-     * Test: execute() throws TypeError when input is not an array.
-     *
-     * @return void
-     */
-    public function testExecuteWithNonArrayInputThrowsTypeError(): void
+    // ---------- Constructor TypeError ----------
+    #[DataProvider('provideInvalidConstructorArgs')]
+    public function testConstructorThrowsTypeError($invalidArg): void
     {
         $this->expectException(TypeError::class);
-
-        // Passing a string instead of an array triggers TypeError
-        /** @phpstan-ignore-next-line */
-        $this->service->execute('not-an-array');
+        new DeleteTaskService($invalidArg);
     }
 
-    /**
-     * Test: constructor throws TypeError when TaskQueries is not provided.
-     *
-     * @return void
-     */
-    public function testConstructorWithInvalidTaskQueriesTypeThrowsTypeError(): void
+    public static function provideInvalidConstructorArgs(): array
     {
-        $this->expectException(TypeError::class);
+        return [
+            'null'      => [null],
+            'int'       => [123],
+            'string'    => ['not-a-task-queries'],
+            'array'     => [[]],
+            'stdClass'  => [new \stdClass()],
+        ];
+    }
 
-        // Passing invalid type to constructor triggers TypeError
-        /** @phpstan-ignore-next-line */
-        new DeleteTaskService('not-a-TaskQueries');
+    // ---------- Execute argument TypeError ----------
+    #[DataProvider('provideInvalidExecuteArgs')]
+    public function testExecuteThrowsTypeError($invalidRequest): void
+    {
+        $mockTaskQueries = $this->createMock(TaskQueries::class);
+        $service = new DeleteTaskService($mockTaskQueries);
+
+        $this->expectException(TypeError::class);
+        $service->execute($invalidRequest);
+    }
+
+    public static function provideInvalidExecuteArgs(): array
+    {
+        return [
+            'null'      => [null],
+            'int'       => [123],
+            'string'    => ['request'],
+            'array'     => [[]],
+            'stdClass'  => [new \stdClass()],
+        ];
+    }
+
+    // ---------- Body field validation (InvalidArgumentException) ----------
+    #[DataProvider('provideInvalidRequestBodies')]
+    public function testExecuteWithInvalidRequestBody($body, string $expectedException): void
+    {
+        $mockTaskQueries = $this->createMock(TaskQueries::class);
+        $service = new DeleteTaskService($mockTaskQueries);
+
+        $raw = json_encode($body);
+        $req = new Request('POST', '/tasks/delete', [], $raw);
+
+        $this->expectException($expectedException);
+        $service->execute($req);
+    }
+
+    public static function provideInvalidRequestBodies(): array
+    {
+        return [
+            // ---- id invalid ----
+            'id is string-non-numeric' => [['id' => 'not-a-number', 'user_id' => 'u1'], InvalidArgumentException::class],
+            'id is array'              => [['id' => ['bad'], 'user_id' => 'u1'], InvalidArgumentException::class],
+            'id is object'             => [['id' => new \stdClass(), 'user_id' => 'u1'], InvalidArgumentException::class],
+
+            // ---- user_id invalid (TypeError จาก strip_tags) ----
+            'user_id is int'           => [['id' => 1, 'user_id' => 123], TypeError::class],
+            'user_id is array'         => [['id' => 1, 'user_id' => ['bad']], TypeError::class],
+            'user_id is object'        => [['id' => 1, 'user_id' => new \stdClass()], TypeError::class],
+
+            // ---- missing fields ----
+            'missing id'               => [['user_id' => 'u1'], InvalidArgumentException::class],
+            'missing user_id'          => [['id' => 1], InvalidArgumentException::class],
+            'empty body'               => [[], InvalidArgumentException::class],
+        ];
     }
 }

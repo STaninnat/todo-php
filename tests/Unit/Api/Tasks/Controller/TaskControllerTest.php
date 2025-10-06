@@ -11,21 +11,9 @@ use App\Api\Tasks\Service\DeleteTaskService;
 use App\Api\Tasks\Service\UpdateTaskService;
 use App\Api\Tasks\Service\MarkDoneTaskService;
 use App\Api\Tasks\Service\GetTasksService;
+use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use RuntimeException;
 
-/**
- * Class TaskControllerTest
- *
- * Unit tests for the TaskController class.
- *
- * This test suite verifies:
- * - addTask(), deleteTask(), updateTask(), markDoneTask(), getTasks() success scenarios
- * - Exception handling for service failures
- *
- * All service dependencies are mocked to isolate controller logic.
- *
- * @package Tests\Unit\Api\Tasks\Controller
- */
 class TaskControllerTest extends TestCase
 {
     /** @var AddTaskService&\PHPUnit\Framework\MockObject\MockObject */
@@ -45,21 +33,14 @@ class TaskControllerTest extends TestCase
 
     private TaskController $controller;
 
-    /**
-     * Setup mocks and controller instance before each test.
-     *
-     * @return void
-     */
     protected function setUp(): void
     {
-        // Create mock services
         $this->addService = $this->createMock(AddTaskService::class);
         $this->deleteService = $this->createMock(DeleteTaskService::class);
         $this->updateService = $this->createMock(UpdateTaskService::class);
         $this->markDoneService = $this->createMock(MarkDoneTaskService::class);
         $this->getTasksService = $this->createMock(GetTasksService::class);
 
-        // Instantiate controller with mocked services
         $this->controller = new TaskController(
             $this->addService,
             $this->deleteService,
@@ -69,25 +50,16 @@ class TaskControllerTest extends TestCase
         );
     }
 
-    // ------------------------------
-    // Success cases with $forTest = true
-    // ------------------------------
+    use ApiTestHelperTrait;
 
-    /**
-     * Test: addTask() success scenario
-     *
-     * @return void
-     */
     public function testAddTaskSuccess(): void
     {
-        // Prepare fake task data returned by service
         $taskData = ['task' => ['id' => 1, 'title' => 'Task'], 'totalPages' => 2];
         $this->addService->method('execute')->willReturn($taskData);
 
-        // Call controller method
-        $decoded = $this->controller->addTask(['title' => 'Task'], true);
+        $req = $this->makeRequest(['title' => 'Task']);
+        $decoded = $this->controller->addTask($req, true);
 
-        // Assert response structure and content
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task added successfully', $decoded['message']);
@@ -95,17 +67,18 @@ class TaskControllerTest extends TestCase
         $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
     }
 
-    /**
-     * Test: deleteTask() success scenario
-     *
-     * @return void
-     */
     public function testDeleteTaskSuccess(): void
     {
         $taskData = ['id' => 1, 'totalPages' => 3];
         $this->deleteService->method('execute')->willReturn($taskData);
 
-        $decoded = $this->controller->deleteTask(['id' => 1], true);
+        $req = $this->makeRequest(
+            body: ['id' => 1],
+            params: ['id' => 1],
+            method: 'DELETE',
+            path: '/tasks/1'
+        );
+        $decoded = $this->controller->deleteTask($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
@@ -114,17 +87,18 @@ class TaskControllerTest extends TestCase
         $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
     }
 
-    /**
-     * Test: updateTask() success scenario
-     *
-     * @return void
-     */
     public function testUpdateTaskSuccess(): void
     {
         $taskData = ['task' => ['id' => 1, 'title' => 'Updated'], 'totalPages' => 4];
         $this->updateService->method('execute')->willReturn($taskData);
 
-        $decoded = $this->controller->updateTask(['id' => 1, 'title' => 'Updated'], true);
+        $req = $this->makeRequest(
+            body: ['title' => 'Updated'],
+            params: ['id' => 1],
+            method: 'PUT',
+            path: '/tasks/1'
+        );
+        $decoded = $this->controller->updateTask($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
@@ -133,17 +107,18 @@ class TaskControllerTest extends TestCase
         $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
     }
 
-    /**
-     * Test: markDoneTask() success scenario
-     *
-     * @return void
-     */
     public function testMarkDoneTaskSuccess(): void
     {
         $taskData = ['task' => ['id' => 1, 'is_done' => true], 'totalPages' => 5];
         $this->markDoneService->method('execute')->willReturn($taskData);
 
-        $decoded = $this->controller->markDoneTask(['id' => 1, 'is_done' => 1], true);
+        $req = $this->makeRequest(
+            body: ['is_done' => 1],
+            params: ['id' => 1],
+            method: 'PATCH',
+            path: '/tasks/1/done'
+        );
+        $decoded = $this->controller->markDoneTask($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
@@ -152,17 +127,18 @@ class TaskControllerTest extends TestCase
         $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
     }
 
-    /**
-     * Test: getTasks() success scenario
-     *
-     * @return void
-     */
     public function testGetTasksSuccess(): void
     {
         $taskData = ['task' => [['id' => 1, 'title' => 'Task']], 'totalPages' => 2];
         $this->getTasksService->method('execute')->willReturn($taskData);
 
-        $decoded = $this->controller->getTasks(['user_id' => 123], true);
+        $req = $this->makeRequest(
+            query: ['page' => 1],
+            params: ['user_id' => 123],
+            method: 'GET',
+            path: '/tasks'
+        );
+        $decoded = $this->controller->getTasks($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
@@ -171,71 +147,48 @@ class TaskControllerTest extends TestCase
         $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
     }
 
-    // ------------------------------
-    // Exception cases
-    // ------------------------------
-
-    /**
-     * Test: addTask() throws RuntimeException
-     *
-     * @return void
-     */
     public function testAddTaskThrowsException(): void
     {
-        // Mock service to throw exception
         $this->addService->method('execute')->willThrowException(new RuntimeException('Add failed'));
-
         $this->expectException(RuntimeException::class);
 
-        // Call controller, should throw
-        $this->controller->addTask(['title' => 'Task'], true);
+        $req = $this->makeRequest(['title' => 'Task']);
+        $this->controller->addTask($req, true);
     }
 
-    /**
-     * Test: deleteTask() throws RuntimeException
-     *
-     * @return void
-     */
     public function testDeleteTaskThrowsException(): void
     {
         $this->deleteService->method('execute')->willThrowException(new RuntimeException('Delete failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->deleteTask(['id' => 1], true);
+
+        $req = $this->makeRequest(params: ['id' => 1], method: 'DELETE', path: '/tasks/1');
+        $this->controller->deleteTask($req, true);
     }
 
-    /**
-     * Test: updateTask() throws RuntimeException
-     *
-     * @return void
-     */
     public function testUpdateTaskThrowsException(): void
     {
         $this->updateService->method('execute')->willThrowException(new RuntimeException('Update failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->updateTask(['id' => 1, 'title' => 'Updated'], true);
+
+        $req = $this->makeRequest(params: ['id' => 1], method: 'PUT', path: '/tasks/1');
+        $this->controller->updateTask($req, true);
     }
 
-    /**
-     * Test: markDoneTask() throws RuntimeException
-     *
-     * @return void
-     */
     public function testMarkDoneTaskThrowsException(): void
     {
         $this->markDoneService->method('execute')->willThrowException(new RuntimeException('MarkDone failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->markDoneTask(['id' => 1, 'is_done' => 1], true);
+
+        $req = $this->makeRequest(params: ['id' => 1], method: 'PATCH', path: '/tasks/1/done');
+        $this->controller->markDoneTask($req, true);
     }
 
-    /**
-     * Test: getTasks() throws RuntimeException
-     *
-     * @return void
-     */
     public function testGetTasksThrowsException(): void
     {
         $this->getTasksService->method('execute')->willThrowException(new RuntimeException('GetTasks failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->getTasks(['user_id' => 123], true);
+
+        $req = $this->makeRequest(query: ['page' => 1], method: 'GET', path: '/tasks');
+        $this->controller->getTasks($req, true);
     }
 }

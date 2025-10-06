@@ -4,23 +4,13 @@ declare(strict_types=1);
 
 namespace App\Api\Auth\Service;
 
+use App\Api\Request;
 use App\DB\UserQueries;
 use App\Utils\CookieManager;
+use App\Utils\RequestValidator;
 use RuntimeException;
 use InvalidArgumentException;
 
-/**
- * Class DeleteUserService
- *
- * Service responsible for deleting a user from the system.
- * 
- * This service:
- * - Validates the provided user ID.
- * - Attempts to delete the user via database queries.
- * - Clears authentication cookies after successful deletion.
- *
- * @package App\Api\Auth\Service
- */
 class DeleteUserService
 {
     private UserQueries $userQueries;
@@ -41,35 +31,20 @@ class DeleteUserService
     /**
      * Execute the deletion of a user.
      *
-     * Process:
-     * - Validate input and ensure a valid user ID is provided.
-     * - Perform deletion using UserQueries.
-     * - Throw exceptions if the operation fails.
-     * - Clear authentication cookies upon success.
-     *
-     * @param array $input Input array containing the 'user_id' field.
+     * @param Request $req Request object containing input data.
      *
      * @throws InvalidArgumentException If user_id is missing or empty.
      * @throws RuntimeException         If the database operation fails.
      *
      * @return void
      */
-    public function execute(array $input): void
+    public function execute(Request $req): void
     {
-        // Sanitize and validate user_id
-        $userId = trim(strip_tags($input['user_id'] ?? ''));
-        if ($userId === '') {
-            throw new InvalidArgumentException('User ID is required.');
-        }
+        $userId = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
 
         // Attempt to delete user from database
         $result = $this->userQueries->deleteUser($userId);
-
-        // Handle failure case
-        if (!$result->success) {
-            $errorInfo = $result->error ? implode(' | ', $result->error) : 'Unknown error';
-            throw new RuntimeException("Failed to delete user: $errorInfo");
-        }
+        RequestValidator::ensureSuccess($result, 'delete user');
 
         // Clear access token cookies after deletion
         $this->cookieManager->clearAccessToken();

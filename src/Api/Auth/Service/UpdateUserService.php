@@ -4,23 +4,12 @@ declare(strict_types=1);
 
 namespace App\Api\Auth\Service;
 
+use App\Api\Request;
 use App\DB\UserQueries;
+use App\Utils\RequestValidator;
 use RuntimeException;
 use InvalidArgumentException;
 
-/**
- * Class UpdateUserService
- *
- * Service responsible for updating an existing user’s information.
- *
- * This service:
- * - Validates provided user ID, username, and email.
- * - Ensures the new username or email is not already taken by another user.
- * - Updates the user record in the database.
- * - Returns the updated username and email.
- *
- * @package App\Api\Auth\Service
- */
 class UpdateUserService
 {
     private UserQueries $userQueries;
@@ -38,56 +27,31 @@ class UpdateUserService
     /**
      * Update user information.
      *
-     * Process:
-     * - Validate inputs (user_id, username, email).
-     * - Check if username or email already exists.
-     * - Update the user record in the database.
-     *
-     * @param array $input Input array containing 'user_id', 'username', and 'email'.
+     * @param Request $req Request object containing input data.
      *
      * @throws InvalidArgumentException If required fields are missing or invalid.
      * @throws RuntimeException         If database operations fail.
      *
      * @return array Updated user data with 'username' and 'email'.
      */
-    public function execute(array $input): array
+    public function execute(Request $req): array
     {
-        // Validate user ID
-        $userId = trim(strip_tags($input['user_id'] ?? ''));
-        if ($userId === '') {
-            throw new InvalidArgumentException('User ID is required.');
-        }
+        $userId   = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
+        $username = RequestValidator::getStringParam($req, 'username', 'Username is required.');
+        $email    = RequestValidator::getEmailParam($req, 'email', 'Valid email is required.');
 
-        // Validate username and email
-        $username = trim(strip_tags($input['username'] ?? ''));
-        $email = trim(strip_tags($input['email'] ?? ''));
-
-        if ($username === '') {
-            throw new InvalidArgumentException('Username is required.');
-        }
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException('Valid email is required.');
-        }
-
-        // Ensure username or email is not already taken
+        // Check for existing username/email
         $existsResult = $this->userQueries->checkUserExists($username, $email);
-        if (!$existsResult->success) {
-            $errorInfo = $existsResult->error ? implode(' | ', $existsResult->error) : 'Unknown error';
-            throw new RuntimeException("Failed to check user existence: $errorInfo");
-        }
+        RequestValidator::ensureSuccess($existsResult, 'check user existence');
+
         if ($existsResult->data === true) {
             throw new RuntimeException("Username or email already exists.");
         }
 
-        // Update user in database
+        // Update user
         $result = $this->userQueries->updateUser($userId, $username, $email);
+        RequestValidator::ensureSuccess($result, 'update user');
 
-        if (!$result->success || !$result->isChanged()) {
-            $errorInfo = $result->error ? implode(' | ', $result->error) : 'Unknown error';
-            throw new RuntimeException("Failed to update user: $errorInfo");
-        }
-
-        // Return updated user data
         return [
             'username' => $result->data['username'],
             'email' => $result->data['email'],

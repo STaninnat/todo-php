@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Api\Tasks\Controller;
 
+use App\Api\Request;
 use App\Api\Tasks\Service\AddTaskService;
 use App\Api\Tasks\Service\DeleteTaskService;
 use App\Api\Tasks\Service\UpdateTaskService;
@@ -55,20 +56,10 @@ class TaskController
         $this->getTasksService = $getTasksService;
     }
 
-    /**
-     * Add a new task.
-     *
-     * @param array $input   Input data for creating a new task.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response with added task in test mode, otherwise null.
-     */
-    public function addTask(array $input, bool $forTest = false): ?array
+    public function addTask(Request $req, bool $forTest = false): ?array
     {
-        // Execute task addition
-        $data = $this->addService->execute($input);
+        $data = $this->addService->execute($req);
 
-        // Build response with payload and total pages
         $response = JsonResponder::success('Task added successfully')
             ->withPayload(['task' => $data['task']])
             ->withTotalPages($data['totalPages'])
@@ -77,20 +68,10 @@ class TaskController
         return $forTest ? $response : null;
     }
 
-    /**
-     * Delete an existing task.
-     *
-     * @param array $input   Input data containing task identification.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response with deleted task id in test mode, otherwise null.
-     */
-    public function deleteTask(array $input, bool $forTest = false): ?array
+    public function deleteTask(Request $req, bool $forTest = false): ?array
     {
-        // Execute task deletion
-        $data = $this->deleteService->execute($input);
+        $data = $this->deleteService->execute($req);
 
-        // Build response with payload and total pages
         $response = JsonResponder::success('Task deleted successfully')
             ->withPayload(['id' => $data['id']])
             ->withTotalPages($data['totalPages'])
@@ -99,20 +80,10 @@ class TaskController
         return $forTest ? $response : null;
     }
 
-    /**
-     * Update an existing task.
-     *
-     * @param array $input   Input data containing updated task information.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response with updated task in test mode, otherwise null.
-     */
-    public function updateTask(array $input, bool $forTest = false): ?array
+    public function updateTask(Request $req, bool $forTest = false): ?array
     {
-        // Execute task update
-        $data = $this->updateService->execute($input);
+        $data = $this->updateService->execute($req);
 
-        // Build response with payload and total pages
         $response = JsonResponder::success('Task updated successfully')
             ->withPayload(['task' => $data['task']])
             ->withTotalPages($data['totalPages'])
@@ -121,20 +92,10 @@ class TaskController
         return $forTest ? $response : null;
     }
 
-    /**
-     * Mark a task as done.
-     *
-     * @param array $input   Input data containing task identification.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response with updated task in test mode, otherwise null.
-     */
-    public function markDoneTask(array $input, bool $forTest = false): ?array
+    public function markDoneTask(Request $req, bool $forTest = false): ?array
     {
-        // Execute mark as done
-        $data = $this->markDoneService->execute($input);
+        $data = $this->markDoneService->execute($req);
 
-        // Build response with payload and total pages
         $response = JsonResponder::success('Task status updated successfully')
             ->withPayload(['task' => $data['task']])
             ->withTotalPages($data['totalPages'])
@@ -143,20 +104,10 @@ class TaskController
         return $forTest ? $response : null;
     }
 
-    /**
-     * Retrieve tasks.
-     *
-     * @param array $input   Input data for fetching tasks.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response with task list in test mode, otherwise null.
-     */
-    public function getTasks(array $input, bool $forTest = false): ?array
+    public function getTasks(Request $req, bool $forTest = false): ?array
     {
-        // Execute tasks retrieval
-        $data = $this->getTasksService->execute($input);
+        $data = $this->getTasksService->execute($req);
 
-        // Build response with payload and total pages
         $response = JsonResponder::success('Task retrieved successfully')
             ->withPayload(['task' => $data['task']])
             ->withTotalPages($data['totalPages'])

@@ -4,62 +4,89 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Api\Tasks\Service\TypeError;
 
+use App\Api\Request;
 use App\Api\Tasks\Service\UpdateTaskService;
 use App\DB\TaskQueries;
+use App\DB\QueryResult;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use TypeError;
+use Error;
 
-/**
- * Class UpdateTaskServiceTypeErrTest
- *
- * Unit tests to verify type errors in UpdateTaskService.
- *
- * Ensures that invalid input types or constructor arguments
- * trigger TypeError, protecting the service from unexpected input.
- *
- * @package Tests\Unit\Api\Tasks\Service\TypeError
- */
 class UpdateTaskServiceTypeErrTest extends TestCase
 {
-    private UpdateTaskService $service;
-
-    /**
-     * Setup service instance with mocked TaskQueries.
-     *
-     * @return void
-     */
-    protected function setUp(): void
+    private function createService(): UpdateTaskService
     {
-        // Mock TaskQueries to isolate service behavior
-        $taskQueries = $this->createMock(TaskQueries::class);
-        $this->service = new UpdateTaskService($taskQueries);
+        $mock = $this->createMock(TaskQueries::class);
+
+        $mock->method('getTaskByID')
+            ->willReturn(QueryResult::ok(['id' => 1, 'title' => 'dummy'], 1));
+
+        $mock->method('updateTask')
+            ->willReturn(QueryResult::ok(['id' => 1, 'title' => 'dummy updated'], 1));
+
+        return new UpdateTaskService($mock);
     }
 
-    /**
-     * Test: execute() throws TypeError when input is not an array.
-     *
-     * @return void
-     */
-    public function testExecuteWithNonArrayInputThrowsTypeError(): void
+    public static function invalidRequestProvider(): array
     {
-        $this->expectException(TypeError::class);
+        return [
+            // ---- id ----
+            'id as string not numeric' => [
+                ['id' => 'abc', 'title' => 'ok', 'user_id' => 'u1', 'is_done' => '1'],
+                InvalidArgumentException::class,
+            ],
+            'id as object' => [
+                ['id' => new \stdClass(), 'title' => 'ok', 'user_id' => 'u1', 'is_done' => '1'],
+                InvalidArgumentException::class,
+            ],
 
-        // Passing a string instead of an array triggers TypeError
-        /** @phpstan-ignore-next-line */
-        $this->service->execute('not-an-array');
+            // ---- title ----
+            'title as empty string' => [
+                ['id' => '1', 'title' => '', 'user_id' => 'u1', 'is_done' => '1'],
+                InvalidArgumentException::class,
+            ],
+            'title as object' => [
+                ['id' => '1', 'title' => new \stdClass(), 'user_id' => 'u1', 'is_done' => '1'],
+                Error::class,
+            ],
+
+            // ---- user_id ----
+            'user_id missing' => [
+                ['id' => '1', 'title' => 'ok', 'is_done' => '1'],
+                InvalidArgumentException::class,
+            ],
+            'user_id as object' => [
+                ['id' => '1', 'title' => 'ok', 'user_id' => new \stdClass(), 'is_done' => '1'],
+                Error::class, // object -> string ก็ Error
+            ],
+
+            // ---- is_done ----
+            'is_done null' => [
+                ['id' => '1', 'title' => 'ok', 'user_id' => 'u1', 'is_done' => null],
+                InvalidArgumentException::class,
+            ],
+            'is_done string not numeric' => [
+                ['id' => '1', 'title' => 'ok', 'user_id' => 'u1', 'is_done' => 'maybe'],
+                Error::class,
+            ],
+            'is_done as object' => [
+                ['id' => '1', 'title' => 'ok', 'user_id' => 'u1', 'is_done' => new \stdClass()],
+                Error::class,
+            ],
+        ];
     }
 
-    /**
-     * Test: constructor throws TypeError when TaskQueries is not provided.
-     *
-     * @return void
-     */
-    public function testConstructorWithInvalidTaskQueriesTypeThrowsTypeError(): void
-    {
-        $this->expectException(TypeError::class);
 
-        // Passing invalid type to constructor triggers TypeError
-        /** @phpstan-ignore-next-line */
-        new UpdateTaskService('not-a-TaskQueries');
+    #[DataProvider('invalidRequestProvider')]
+    public function testExecuteWithInvalidParams(array $body, string $expectedException): void
+    {
+        $service = $this->createService();
+
+        $req = new Request('POST', '/tasks/update', [], null, $body);
+
+        $this->expectException($expectedException);
+
+        $service->execute($req);
     }
 }

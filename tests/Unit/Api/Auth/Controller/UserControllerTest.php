@@ -12,21 +12,9 @@ use App\Api\Auth\Service\SigninService;
 use App\Api\Auth\Service\SignoutService;
 use App\Api\Auth\Service\SignupService;
 use App\Api\Auth\Service\UpdateUserService;
+use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use RuntimeException;
 
-/**
- * Class UserControllerTest
- *
- * Unit tests for the UserController class.
- *
- * This test suite verifies:
- * - Success responses from each controller method
- * - Exception handling when services fail
- *
- * All service dependencies are mocked to avoid real DB or authentication calls.
- *
- * @package Tests\Unit\Api\Auth\Controller
- */
 class UserControllerTest extends TestCase
 {
     /** @var DeleteUserService&\PHPUnit\Framework\MockObject\MockObject */
@@ -49,11 +37,6 @@ class UserControllerTest extends TestCase
 
     private UserController $controller;
 
-    /**
-     * Setup mocks and controller instance before each test.
-     *
-     * @return void
-     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -75,37 +58,27 @@ class UserControllerTest extends TestCase
         );
     }
 
-    // --------------------------------
-    // Success cases with $forTest = true
-    // --------------------------------
+    use ApiTestHelperTrait;
 
-    /**
-     * Test successful deletion of a user.
-     *
-     * @return void
-     */
     public function testDeleteUserSuccess(): void
     {
         $this->deleteUserService->expects($this->once())->method('execute');
 
-        $decoded = $this->controller->deleteUser(['id' => 1], true);
+        $req = $this->makeRequest(params: ['id' => 1], method: 'DELETE', path: '/users/1');
+        $decoded = $this->controller->deleteUser($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
         $this->assertSame('User deleted successfully', $decoded['message']);
     }
 
-    /**
-     * Test successful retrieval of a user.
-     *
-     * @return void
-     */
     public function testGetUserSuccess(): void
     {
         $userData = ['id' => 1, 'name' => 'John'];
         $this->getUserService->method('execute')->willReturn($userData);
 
-        $decoded = $this->controller->getUser(['id' => 1], true);
+        $req = $this->makeRequest(params: ['id' => 1], method: 'GET', path: '/users/1');
+        $decoded = $this->controller->getUser($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
@@ -113,65 +86,49 @@ class UserControllerTest extends TestCase
         $this->assertSame($userData, $decoded['data']);
     }
 
-    /**
-     * Test successful signin of a user.
-     *
-     * @return void
-     */
     public function testSigninSuccess(): void
     {
         $this->signinService->expects($this->once())->method('execute');
 
-        $decoded = $this->controller->signin(['email' => 'a@b.com', 'password' => 'pass'], true);
+        $req = $this->makeRequest(['email' => 'a@b.com', 'password' => 'pass'], method: 'POST', path: '/auth/signin');
+        $decoded = $this->controller->signin($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
         $this->assertSame('User signin successfully', $decoded['message']);
     }
 
-    /**
-     * Test successful signout of a user.
-     *
-     * @return void
-     */
     public function testSignoutSuccess(): void
     {
         $this->signoutService->expects($this->once())->method('execute');
 
-        $decoded = $this->controller->signout(true);
+        $req = $this->makeRequest(method: 'POST', path: '/auth/signout');
+        $decoded = $this->controller->signout($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
         $this->assertSame('User signed out successfully.', $decoded['message']);
     }
 
-    /**
-     * Test successful signup of a user.
-     *
-     * @return void
-     */
     public function testSignupSuccess(): void
     {
         $this->signupService->expects($this->once())->method('execute');
 
-        $decoded = $this->controller->signup(['email' => 'a@b.com', 'password' => 'pass'], true);
+        $req = $this->makeRequest(['email' => 'a@b.com', 'password' => 'pass'], method: 'POST', path: '/auth/signup');
+        $decoded = $this->controller->signup($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
         $this->assertSame('User signup successfully', $decoded['message']);
     }
 
-    /**
-     * Test successful update of a user.
-     *
-     * @return void
-     */
     public function testUpdateUserSuccess(): void
     {
         $userData = ['id' => 1, 'name' => 'Jane'];
         $this->updateUserService->method('execute')->willReturn($userData);
 
-        $decoded = $this->controller->updateUser(['id' => 1, 'name' => 'Jane'], true);
+        $req = $this->makeRequest(['name' => 'Jane'], params: ['id' => 1], method: 'PUT', path: '/users/1');
+        $decoded = $this->controller->updateUser($req, true);
 
         $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
@@ -179,91 +136,58 @@ class UserControllerTest extends TestCase
         $this->assertSame($userData, $decoded['data']);
     }
 
-    // ------------------------------
-    // Exception cases
-    // ------------------------------
-
-    /**
-     * Test that deleteUser() throws RuntimeException when service fails.
-     *
-     * @return void
-     */
+    // Exception tests
     public function testDeleteUserThrowsException(): void
     {
-        $this->deleteUserService->method('execute')
-            ->willThrowException(new RuntimeException('Delete failed'));
-
+        $this->deleteUserService->method('execute')->willThrowException(new RuntimeException('Delete failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->deleteUser(['id' => 1], true);
+
+        $req = $this->makeRequest(params: ['id' => 1], method: 'DELETE', path: '/users/1');
+        $this->controller->deleteUser($req, true);
     }
 
-    /**
-     * Test that getUser() throws RuntimeException when service fails.
-     *
-     * @return void
-     */
     public function testGetUserThrowsException(): void
     {
-        $this->getUserService->method('execute')
-            ->willThrowException(new RuntimeException('Get failed'));
-
+        $this->getUserService->method('execute')->willThrowException(new RuntimeException('Get failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->getUser(['id' => 1], true);
+
+        $req = $this->makeRequest(params: ['id' => 1], method: 'GET', path: '/users/1');
+        $this->controller->getUser($req, true);
     }
 
-    /**
-     * Test that signin() throws RuntimeException when service fails.
-     *
-     * @return void
-     */
     public function testSigninThrowsException(): void
     {
-        $this->signinService->method('execute')
-            ->willThrowException(new RuntimeException('Signin failed'));
-
+        $this->signinService->method('execute')->willThrowException(new RuntimeException('Signin failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->signin(['email' => 'a@b.com', 'password' => 'pass'], true);
+
+        $req = $this->makeRequest(['email' => 'a@b.com', 'password' => 'pass'], method: 'POST', path: '/auth/signin');
+        $this->controller->signin($req, true);
     }
 
-    /**
-     * Test that signout() throws RuntimeException when service fails.
-     *
-     * @return void
-     */
     public function testSignoutThrowsException(): void
     {
-        $this->signoutService->method('execute')
-            ->willThrowException(new RuntimeException('Signout failed'));
-
+        $this->signoutService->method('execute')->willThrowException(new RuntimeException('Signout failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->signout(true);
+
+        $req = $this->makeRequest(method: 'POST', path: '/auth/signout');
+        $this->controller->signout($req, true);
     }
 
-    /**
-     * Test that signup() throws RuntimeException when service fails.
-     *
-     * @return void
-     */
     public function testSignupThrowsException(): void
     {
-        $this->signupService->method('execute')
-            ->willThrowException(new RuntimeException('Signup failed'));
-
+        $this->signupService->method('execute')->willThrowException(new RuntimeException('Signup failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->signup(['email' => 'a@b.com', 'password' => 'pass'], true);
+
+        $req = $this->makeRequest(['email' => 'a@b.com', 'password' => 'pass'], method: 'POST', path: '/auth/signup');
+        $this->controller->signup($req, true);
     }
 
-    /**
-     * Test that updateUser() throws RuntimeException when service fails.
-     *
-     * @return void
-     */
     public function testUpdateUserThrowsException(): void
     {
-        $this->updateUserService->method('execute')
-            ->willThrowException(new RuntimeException('Update failed'));
-
+        $this->updateUserService->method('execute')->willThrowException(new RuntimeException('Update failed'));
         $this->expectException(RuntimeException::class);
-        $this->controller->updateUser(['id' => 1, 'name' => 'Jane'], true);
+
+        $req = $this->makeRequest(['name' => 'Jane'], params: ['id' => 1], method: 'PUT', path: '/users/1');
+        $this->controller->updateUser($req, true);
     }
 }

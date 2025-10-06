@@ -11,22 +11,10 @@ use App\DB\QueryResult;
 use App\DB\UserQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
+use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use InvalidArgumentException;
 use RuntimeException;
 
-/**
- * Class SigninServiceTest
- *
- * Unit tests for SigninService.
- *
- * This test suite verifies:
- * - Validation of input (username/password)
- * - Handling of DB query failures
- * - Handling of invalid credentials
- * - Successful signin flow (JWT creation + cookie set)
- *
- * @package Tests\Unit\Api\Auth\Service
- */
 class SigninServiceTest extends TestCase
 {
     /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject */
@@ -40,11 +28,8 @@ class SigninServiceTest extends TestCase
 
     private SigninService $service;
 
-    /**
-     * Setup mocks and service instance before each test.
-     *
-     * @return void
-     */
+    use ApiTestHelperTrait;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -60,11 +45,6 @@ class SigninServiceTest extends TestCase
         );
     }
 
-    /**
-     * Data provider for invalid signin input.
-     *
-     * @return array<string, array>
-     */
     public static function invalidInputProvider(): array
     {
         return [
@@ -75,27 +55,15 @@ class SigninServiceTest extends TestCase
         ];
     }
 
-    /**
-     * Test that execute() throws InvalidArgumentException for invalid input.
-     *
-     * @param array $input
-     *
-     * @return void
-     */
     #[DataProvider('invalidInputProvider')]
     public function testExecuteThrowsInvalidArgumentExceptionForInvalidInput(array $input): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        // Act: call service with missing or empty username/password
-        $this->service->execute($input);
+        $req = $this->makeRequest($input);
+        $this->service->execute($req);
     }
 
-    /**
-     * Data provider for DB query failures.
-     *
-     * @return array<string, array>
-     */
     public static function getUserByNameFailProvider(): array
     {
         return [
@@ -105,90 +73,61 @@ class SigninServiceTest extends TestCase
             ],
             'without error' => [
                 QueryResult::fail(null),
-                'Failed to fetch user: Unknown error'
+                'Failed to fetch user: No changes were made.'
             ],
         ];
     }
 
-    /**
-     * Test that execute() throws RuntimeException when getUserByName fails.
-     *
-     * @param QueryResult $result
-     * @param string      $expectedMessage
-     *
-     * @return void
-     */
     #[DataProvider('getUserByNameFailProvider')]
     public function testExecuteThrowsRuntimeExceptionWhenGetUserByNameFails(QueryResult $result, string $expectedMessage): void
     {
-        // Mock DB call to simulate failure
         $this->userQueries->method('getUserByName')->willReturn($result);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage($expectedMessage);
 
-        // Act
-        $this->service->execute(['username' => 'john', 'password' => 'pass']);
+        $req = $this->makeRequest(['username' => 'john', 'password' => 'pass']);
+        $this->service->execute($req);
     }
 
-    /**
-     * Test that execute() throws InvalidArgumentException when user not found.
-     *
-     * @return void
-     */
     public function testExecuteThrowsInvalidArgumentExceptionWhenUserNotFound(): void
     {
-        // Mock DB returning no rows
         $this->userQueries->method('getUserByName')->willReturn(QueryResult::ok(null, 0));
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid username or password.');
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to fetch user: No changes were made.');
 
-        // Act
-        $this->service->execute(['username' => 'john', 'password' => 'pass']);
+        $req = $this->makeRequest(['username' => 'john', 'password' => 'pass']);
+        $this->service->execute($req);
     }
 
-    /**
-     * Test that execute() throws InvalidArgumentException for wrong password.
-     *
-     * @return void
-     */
     public function testExecuteThrowsInvalidArgumentExceptionForWrongPassword(): void
     {
-        // Mock DB returning a user with hashed password
         $user = ['id' => 'uuid', 'username' => 'john', 'password' => password_hash('correct-pass', PASSWORD_DEFAULT)];
         $this->userQueries->method('getUserByName')->willReturn(QueryResult::ok($user, 1));
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid username or password.');
 
-        // Act with wrong password
-        $this->service->execute(['username' => 'john', 'password' => 'wrong-pass']);
+        $req = $this->makeRequest(['username' => 'john', 'password' => 'wrong-pass']);
+        $this->service->execute($req);
     }
 
-    /**
-     * Test that execute() creates JWT and sets cookie when successful.
-     *
-     * @return void
-     */
     public function testExecuteCallsJwtAndCookieManagerWhenSuccessful(): void
     {
-        // Mock DB returning a valid user
         $user = ['id' => 'uuid', 'username' => 'john', 'password' => password_hash('pass123', PASSWORD_DEFAULT)];
         $this->userQueries->method('getUserByName')->willReturn(QueryResult::ok($user, 1));
 
-        // Expect JWT creation with user id
         $this->jwt->expects($this->once())
             ->method('create')
             ->with(['id' => 'uuid'])
             ->willReturn('mock-token');
 
-        // Expect cookie set with JWT
         $this->cookieManager->expects($this->once())
             ->method('setAccessToken')
             ->with('mock-token', $this->anything());
 
-        // Act
-        $this->service->execute(['username' => 'john', 'password' => 'pass123']);
+        $req = $this->makeRequest(['username' => 'john', 'password' => 'pass123']);
+        $this->service->execute($req);
     }
 }

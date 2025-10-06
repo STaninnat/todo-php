@@ -10,110 +10,70 @@ use App\Api\Auth\Service\DeleteUserService;
 use App\DB\UserQueries;
 use App\DB\QueryResult;
 use App\Utils\CookieManager;
+use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use InvalidArgumentException;
 use RuntimeException;
 
-/**
- * Class DeleteUserServiceTest
- *
- * Unit tests for DeleteUserService.
- *
- * This test suite verifies:
- * - Validation of user_id input (null, empty, whitespace, HTML tags)
- * - Proper handling of deleteUser results (success/fail)
- * - Clearing of access token via CookieManager when deletion succeeds
- *
- * @package Tests\Unit\Api\Auth\Service
- */
 class DeleteUserServiceTest extends TestCase
 {
     /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject */
-    private $userQueriesMock;
+    private $userQueries;
 
     /** @var CookieManager&\PHPUnit\Framework\MockObject\MockObject */
-    private $cookieManagerMock;
+    private $cookieManager;
 
     private DeleteUserService $service;
 
-    /**
-     * Setup mocks and service instance before each test.
-     *
-     * @return void
-     */
+    use ApiTestHelperTrait;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Create mock objects for dependencies
-        $this->userQueriesMock = $this->createMock(UserQueries::class);
-        $this->cookieManagerMock = $this->createMock(CookieManager::class);
+        $this->userQueries = $this->createMock(UserQueries::class);
+        $this->cookieManager = $this->createMock(CookieManager::class);
 
-        // Instantiate the service with mocked dependencies
         $this->service = new DeleteUserService(
-            $this->userQueriesMock,
-            $this->cookieManagerMock
+            $this->userQueries,
+            $this->cookieManager
         );
     }
 
-    /**
-     * Test that execute() validates user_id correctly.
-     *
-     * @param ?string $rawUserId          Raw input user_id
-     * @param ?string $expectedCleanUserId Expected sanitized user_id
-     * @param bool    $shouldThrow        Whether InvalidArgumentException is expected
-     *
-     * @return void
-     */
     #[DataProvider('userIdProvider')]
-    public function testExecuteUserIdValidation(?string $rawUserId, ?string $expectedCleanUserId, bool $shouldThrow): void
-    {
+    public function testExecuteUserIdValidation(
+        ?string $rawUserId,
+        ?string $expectedCleanUserId,
+        bool $shouldThrow
+    ): void {
         if ($shouldThrow) {
-            // Expect an InvalidArgumentException for invalid user_id
             $this->expectException(InvalidArgumentException::class);
             $this->expectExceptionMessage('User ID is required.');
         } else {
-            // Expect deleteUser to be called with sanitized user_id
-            $this->userQueriesMock
+            $this->userQueries
                 ->expects($this->once())
                 ->method('deleteUser')
                 ->with($expectedCleanUserId)
-                ->willReturn(QueryResult::ok());
+                ->willReturn(QueryResult::ok(null, 1));
 
-            // Expect access token to be cleared after successful deletion
-            $this->cookieManagerMock
+            $this->cookieManager
                 ->expects($this->once())
                 ->method('clearAccessToken');
         }
 
-        // Execute the service with input
-        $this->service->execute(['user_id' => $rawUserId]);
+        $req = $this->makeRequest(['user_id' => $rawUserId]);
+        $this->service->execute($req);
     }
 
-    /**
-     * Data provider for testExecuteUserIdValidation().
-     *
-     * @return array<string, array>
-     */
     public static function userIdProvider(): array
     {
         return [
-            'null' => [null, null, true],
-            'empty string' => ['', '', true],
-            'whitespace' => ['   ', '', true],
-            'HTML tags' => ['<b>123</b>', '123', false],
+            'null'        => [null, null, true],
+            'empty'       => ['', '', true],
+            'whitespace'  => ['   ', '', true],
+            'html tags'   => ['<b>123</b>', '123', false],
         ];
     }
 
-    /**
-     * Test that execute() handles deleteUser result correctly.
-     *
-     * @param string       $userId
-     * @param QueryResult  $deleteResult
-     * @param ?string      $expectedExceptionMessage
-     * @param bool         $shouldClearCookie
-     *
-     * @return void
-     */
     #[DataProvider('deleteUserResultProvider')]
     public function testExecuteHandlesDeleteUserResult(
         string $userId,
@@ -121,46 +81,37 @@ class DeleteUserServiceTest extends TestCase
         ?string $expectedExceptionMessage,
         bool $shouldClearCookie
     ): void {
-        // Mock deleteUser to return specified result
-        $this->userQueriesMock
+        $this->userQueries
             ->expects($this->once())
             ->method('deleteUser')
             ->with($userId)
             ->willReturn($deleteResult);
 
         if ($expectedExceptionMessage !== null) {
-            // Expect RuntimeException if deletion fails
             $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage($expectedExceptionMessage);
         }
 
         if ($shouldClearCookie) {
-            // If success -> access token should be cleared
-            $this->cookieManagerMock
+            $this->cookieManager
                 ->expects($this->once())
                 ->method('clearAccessToken');
         } else {
-            // If fail -> access token should not be cleared
-            $this->cookieManagerMock
+            $this->cookieManager
                 ->expects($this->never())
                 ->method('clearAccessToken');
         }
 
-        // Execute the service
-        $this->service->execute(['user_id' => $userId]);
+        $req = $this->makeRequest(['user_id' => $userId]);
+        $this->service->execute($req);
     }
 
-    /**
-     * Data provider for testExecuteHandlesDeleteUserResult().
-     *
-     * @return array<string, array>
-     */
     public static function deleteUserResultProvider(): array
     {
         return [
             'success' => [
                 '123',
-                QueryResult::ok(),
+                QueryResult::ok(null, 1),
                 null,
                 true,
             ],
@@ -173,7 +124,7 @@ class DeleteUserServiceTest extends TestCase
             'fail with null error' => [
                 '789',
                 QueryResult::fail(null),
-                'Failed to delete user: Unknown error',
+                'Failed to delete user: No changes were made.',
                 false,
             ],
         ];

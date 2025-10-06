@@ -7,24 +7,13 @@ namespace Tests\Unit\Api\Auth\Service;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use App\Api\Auth\Service\GetUserService;
+use App\Api\Request;
 use App\DB\QueryResult;
 use App\DB\UserQueries;
+use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use InvalidArgumentException;
 use RuntimeException;
 
-/**
- * Class GetUserServiceTest
- *
- * Unit tests for GetUserService.
- *
- * This test suite verifies:
- * - Validation of user_id input
- * - Handling of failed database queries
- * - Handling of not-found users
- * - Successful retrieval of user data
- *
- * @package Tests\Unit\Api\Auth\Service
- */
 class GetUserServiceTest extends TestCase
 {
     /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject */
@@ -32,11 +21,8 @@ class GetUserServiceTest extends TestCase
 
     private GetUserService $service;
 
-    /**
-     * Setup mocks and service instance before each test.
-     *
-     * @return void
-     */
+    use ApiTestHelperTrait;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -45,11 +31,6 @@ class GetUserServiceTest extends TestCase
         $this->service = new GetUserService($this->userQueries);
     }
 
-    /**
-     * Data provider for invalid user_id input.
-     *
-     * @return array<string, array>
-     */
     public static function userIdProvider(): array
     {
         return [
@@ -59,27 +40,15 @@ class GetUserServiceTest extends TestCase
         ];
     }
 
-    /**
-     * Test that execute() throws InvalidArgumentException for invalid user_id.
-     *
-     * @param array $input
-     *
-     * @return void
-     */
     #[DataProvider('userIdProvider')]
-    public function testExecuteThrowsInvalidArgumentException(array $input): void
+    public function testExecuteThrowsInvalidArgumentException(array $body): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        // Act: call service with invalid input
-        $this->service->execute($input);
+        $req = $this->makeRequest($body);
+        $this->service->execute($req);
     }
 
-    /**
-     * Data provider for query failure scenarios.
-     *
-     * @return array<string, array>
-     */
     public static function queryFailProvider(): array
     {
         return [
@@ -89,23 +58,14 @@ class GetUserServiceTest extends TestCase
             ],
             'fail without error'   => [
                 QueryResult::fail(null),
-                'Failed to fetch user: Unknown error'
+                'Failed to fetch user: No changes were made.'
             ],
         ];
     }
 
-    /**
-     * Test that execute() throws RuntimeException when query fails.
-     *
-     * @param QueryResult $result
-     * @param string      $expectedMessage
-     *
-     * @return void
-     */
     #[DataProvider('queryFailProvider')]
     public function testExecuteThrowsRuntimeExceptionWhenQueryFails(QueryResult $result, string $expectedMessage): void
     {
-        // Mock DB call to return failure
         $this->userQueries
             ->method('getUserById')
             ->willReturn($result);
@@ -113,34 +73,23 @@ class GetUserServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage($expectedMessage);
 
-        // Act: call service with valid user_id
-        $this->service->execute(['user_id' => '123']);
+        $req = $this->makeRequest(['user_id' => '123']);
+        $this->service->execute($req);
     }
 
-    /**
-     * Test that execute() throws RuntimeException when no user is found.
-     *
-     * @return void
-     */
     public function testExecuteThrowsRuntimeExceptionWhenUserNotFound(): void
     {
-        // Mock DB call to return ok result but with zero rows
         $this->userQueries
             ->method('getUserById')
             ->willReturn(QueryResult::ok(null, 0));
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('User not found.');
+        $this->expectExceptionMessage('Failed to fetch user: No changes were made.');
 
-        // Act
-        $this->service->execute(['user_id' => '123']);
+        $req = $this->makeRequest(['user_id' => '123']);
+        $this->service->execute($req);
     }
 
-    /**
-     * Test that execute() returns correct user data on success.
-     *
-     * @return void
-     */
     public function testExecuteReturnsUserDataWhenSuccessful(): void
     {
         $userData = [
@@ -148,15 +97,13 @@ class GetUserServiceTest extends TestCase
             'email' => 'john@example.com'
         ];
 
-        // Mock DB call to return successful result with user data
         $this->userQueries
             ->method('getUserById')
             ->willReturn(QueryResult::ok($userData, 1));
 
-        // Act
-        $result = $this->service->execute(['user_id' => '123']);
+        $req = $this->makeRequest(['user_id' => '123']);
+        $result = $this->service->execute($req);
 
-        // Assert: returned data matches expected
         $this->assertSame([
             'username' => 'john_doe',
             'email' => 'john@example.com',

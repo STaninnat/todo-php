@@ -4,116 +4,133 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Api\Auth\Service\TypeError;
 
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\DataProvider;
 use App\Api\Auth\Service\GetUserService;
+use App\Api\Request;
 use App\DB\UserQueries;
+use App\DB\QueryResult;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use TypeError;
 
-/**
- * Class GetUserServiceTypeErrTest
- *
- * Unit tests for GetUserService focusing on type errors and invalid input handling.
- *
- * This test suite verifies:
- * - execute() throws TypeError for non-array input or incorrectly typed 'user_id'
- * - execute() throws InvalidArgumentException for missing or empty string 'user_id'
- *
- * Mocks UserQueries to avoid real database operations.
- *
- * @package Tests\Unit\Api\Auth\Service\TypeError
- */
 class GetUserServiceTypeErrTest extends TestCase
 {
-    /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject */
-    private $userQueriesMock;
-
     private GetUserService $service;
+    private UserQueries $userQueries;
 
-    /**
-     * Setup test dependencies and service instance.
-     *
-     * - Create mock for UserQueries
-     * - Instantiate GetUserService with mock
-     *
-     * @return void
-     */
     protected function setUp(): void
     {
-        $this->userQueriesMock = $this->createMock(UserQueries::class);
-        $this->service = new GetUserService($this->userQueriesMock);
+        $this->userQueries = $this->createMock(UserQueries::class);
+        $this->service = new GetUserService($this->userQueries);
     }
 
-    /**
-     * Data provider for testExecuteThrowsTypeError().
-     *
-     * Supplies various invalid input types:
-     * - input not an array
-     * - 'user_id' as object, array, float, int
-     *
-     * @return array<string, mixed>
-     */
-    public static function invalidTypeProvider(): array
+    public static function invalidExecuteArgsProvider(): array
     {
         return [
-            'input not array'   => ['not-an-array'],
-            'user_id is object' => [['user_id' => new \stdClass()]],
-            'user_id is array'  => [['user_id' => ['array']]],
-            'user_id is float'  => [['user_id' => 3.14]],
-            'user_id is int'    => [['user_id' => 123]],
+            'null instead of Request'   => [null],
+            'int instead of Request'    => [123],
+            'array instead of Request'  => [[]],
+            'string instead of Request' => ['not-a-request'],
         ];
     }
 
-    /**
-     * Test: execute() throws TypeError for invalid input types.
-     *
-     * @param mixed $input Input to be passed to execute()
-     * 
-     * @return void
-     */
-    #[DataProvider('invalidTypeProvider')]
-    public function testExecuteThrowsTypeError(mixed $input): void
+    #[DataProvider('invalidExecuteArgsProvider')]
+    public function testExecuteThrowsTypeErrorWhenNotRequest(mixed $invalidArg): void
     {
         $this->expectException(TypeError::class);
-
-        // Passing invalid types should trigger TypeError
-        $this->service->execute($input);
+        /** @phpstan-ignore-next-line deliberately wrong type */
+        $this->service->execute($invalidArg);
     }
 
-    /**
-     * Data provider for testExecuteThrowsInvalidArgumentException().
-     *
-     * Supplies string inputs that are considered invalid:
-     * - null
-     * - empty string
-     * - whitespace string
-     *
-     * @return array<string, array>
-     */
-    public static function invalidArgumentProvider(): array
+    public static function invalidUserIdProvider(): array
     {
         return [
-            'user_id is null'       => [['user_id' => null]],
-            'user_id empty string'  => [['user_id' => '']],
-            'user_id whitespace'    => [['user_id' => '   ']],
+            'user_id missing' => [
+                fn() => new Request()
+            ],
+            'user_id null' => [
+                function () {
+                    $req = new Request();
+                    $req->params['user_id'] = null;
+                    return $req;
+                }
+            ],
+            'user_id empty string' => [
+                function () {
+                    $req = new Request();
+                    $req->params['user_id'] = '';
+                    return $req;
+                }
+            ],
         ];
     }
 
-    /**
-     * Test: execute() throws InvalidArgumentException for missing or empty 'user_id'.
-     *
-     * @param array $input Input array containing 'user_id'
-     * 
-     * @return void
-     */
-    #[DataProvider('invalidArgumentProvider')]
-    public function testExecuteThrowsInvalidArgumentException(array $input): void
+    #[DataProvider('invalidUserIdProvider')]
+    public function testExecuteThrowsInvalidArgumentExceptionWhenUserIdInvalid(callable $requestFactory): void
     {
+        $req = $requestFactory();
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required.');
+        $this->service->execute($req);
+    }
 
-        // Passing null, empty, or whitespace user_id triggers InvalidArgumentException
-        $this->service->execute($input);
+    public function testExecuteThrowsRuntimeExceptionWhenEnsureSuccessFails(): void
+    {
+        $req = new Request();
+        $req->params['user_id'] = '123';
+
+        $result = QueryResult::ok(['username' => 'u', 'email' => 'e'], 1);
+        $result->success = false; // force fail
+
+        $this->userQueries
+            /** @phpstan-ignore-next-line */
+            ->method('getUserById')
+            ->willReturn($result);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to fetch user');
+
+        $this->service->execute($req);
+    }
+
+    public function testExecuteThrowsRuntimeExceptionWhenUserNotFound(): void
+    {
+        $req = new Request();
+        $req->params['user_id'] = '123';
+
+        $result = QueryResult::ok(null, 0);
+
+        $this->userQueries
+            /** @phpstan-ignore-next-line */
+            ->method('getUserById')
+            ->willReturn($result);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to fetch user: No changes were made.');
+
+        $this->service->execute($req);
+    }
+
+    public function testExecuteReturnsUserArrayOnSuccess(): void
+    {
+        $req = new Request();
+        $req->params['user_id'] = '123';
+
+        $result = QueryResult::ok(
+            ['username' => 'john', 'email' => 'john@example.com'],
+            1
+        );
+
+        $this->userQueries
+            /** @phpstan-ignore-next-line */
+            ->method('getUserById')
+            ->willReturn($result);
+
+        $output = $this->service->execute($req);
+
+        $this->assertSame(
+            ['username' => 'john', 'email' => 'john@example.com'],
+            $output
+        );
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Api\Auth\Controller;
 
+use App\Api\Request;
 use App\Api\Auth\Service\DeleteUserService;
 use App\Api\Auth\Service\GetUserService;
 use App\Api\Auth\Service\SigninService;
@@ -61,39 +62,19 @@ class UserController
         $this->updateUserService = $updateUserService;
     }
 
-    /**
-     * Delete a user from the system.
-     *
-     * @param array $input   Input data containing user identification.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response if in test mode, otherwise null.
-     */
-    public function deleteUser(array $input, bool $forTest = false): ?array
+    public function deleteUser(Request $req, bool $forTest = false): ?array
     {
-        // Execute user deletion
-        $this->deleteUserService->execute($input);
+        $this->deleteUserService->execute($req);
 
-        // Build response
         $response = JsonResponder::quickSuccess('User deleted successfully', false, $forTest);
 
         return $forTest ? $response : null;
     }
 
-    /**
-     * Retrieve user data.
-     *
-     * @param array $input   Input data containing user identification.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response with user data in test mode, otherwise null.
-     */
-    public function getUser(array $input, bool $forTest = false): ?array
+    public function getUser(Request $req, bool $forTest = false): ?array
     {
-        // Fetch user data
-        $data = $this->getUserService->execute($input);
+        $data = $this->getUserService->execute($req);
 
-        // Build response with payload
         $response = JsonResponder::success('User retrieved successfully')
             ->withPayload($data)
             ->send(!$forTest, $forTest);
@@ -101,76 +82,37 @@ class UserController
         return $forTest ? $response : null;
     }
 
-    /**
-     * Sign in a user.
-     *
-     * @param array $input   Input data containing login credentials.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response if in test mode, otherwise null.
-     */
-    public function signin(array $input, bool $forTest = false): ?array
+    public function signin(Request $req, bool $forTest = false): ?array
     {
-        // Execute sign-in process
-        $this->signinService->execute($input);
+        $this->signinService->execute($req);
 
-        // Build response
         $response = JsonResponder::quickSuccess('User signin successfully', false, $forTest);
 
         return $forTest ? $response : null;
     }
 
-    /**
-     * Sign out a user.
-     *
-     * @param bool $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response if in test mode, otherwise null.
-     */
-    public function signout(bool $forTest = false): ?array
+    public function signout(Request $req, bool $forTest = false): ?array
     {
-        // Execute sign-out process
         $this->signoutService->execute();
 
-        // Build response
         $response = JsonResponder::quickSuccess('User signed out successfully.', false, $forTest);
 
         return $forTest ? $response : null;
     }
 
-    /**
-     * Sign up a new user.
-     *
-     * @param array $input   Input data for creating a new user.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response if in test mode, otherwise null.
-     */
-    public function signup(array $input, bool $forTest = false): ?array
+    public function signup(Request $req, bool $forTest = false): ?array
     {
-        // Execute sign-up process
-        $this->signupService->execute($input);
+        $this->signupService->execute($req);
 
-        // Build response
         $response = JsonResponder::quickSuccess('User signup successfully', false, $forTest);
 
         return $forTest ? $response : null;
     }
 
-    /**
-     * Update an existing user’s data.
-     *
-     * @param array $input   Input data containing updated user information.
-     * @param bool  $forTest If true, return the response instead of sending it.
-     *
-     * @return array|null JSON response with updated data in test mode, otherwise null.
-     */
-    public function updateUser(array $input, bool $forTest = false): ?array
+    public function updateUser(Request $req, bool $forTest = false): ?array
     {
-        // Execute update
-        $data = $this->updateUserService->execute($input);
+        $data = $this->updateUserService->execute($req);
 
-        // Build response with payload
         $response = JsonResponder::success('User updated successfully')
             ->withPayload($data)
             ->send(!$forTest, $forTest);

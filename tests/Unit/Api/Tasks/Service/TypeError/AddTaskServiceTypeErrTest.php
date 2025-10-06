@@ -5,74 +5,75 @@ declare(strict_types=1);
 namespace Tests\Unit\Api\Tasks\Service\TypeError;
 
 use App\Api\Tasks\Service\AddTaskService;
-use App\DB\QueryResult;
+use App\Api\Request;
 use App\DB\TaskQueries;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use TypeError;
 
-/**
- * Class AddTaskServiceTypeErrTest
- *
- * Unit tests to verify type errors in AddTaskService.
- *
- * This test suite ensures that invalid input types trigger TypeError,
- * protecting the service from unexpected input structures.
- *
- * @package Tests\Unit\Api\Tasks\Service\TypeError
- */
 class AddTaskServiceTypeErrTest extends TestCase
 {
-    /** @var TaskQueries&\PHPUnit\Framework\MockObject\MockObject */
-    private $taskQueries;
-
-    private AddTaskService $service;
-
-    /**
-     * Setup mocks and service instance before each test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        // Mock TaskQueries to isolate service logic
-        $this->taskQueries = $this->createMock(TaskQueries::class);
-
-        // Always return a successful result for addTask to focus only on type errors
-        $this->taskQueries
-            ->method('addTask')
-            ->willReturn(QueryResult::ok(['id' => 1], 1));
-
-        $this->service = new AddTaskService($this->taskQueries);
-    }
-
-    /**
-     * Test: execute() throws TypeError when input is not an array.
-     *
-     * @return void
-     */
-    public function testExecuteWithNonArrayInputThrowsTypeError(): void
+    #[DataProvider('provideInvalidConstructorArgs')]
+    public function testConstructorThrowsTypeError($invalidArg): void
     {
         $this->expectException(TypeError::class);
-
-        // Sending a string instead of an array triggers TypeError
-        /** @phpstan-ignore-next-line */
-        $this->service->execute('not-an-array');
+        new AddTaskService($invalidArg);
     }
 
-    /**
-     * Test: execute() throws TypeError when array contains invalid key types.
-     *
-     * @return void
-     */
-    public function testExecuteWithInvalidArrayKeyTypes(): void
+    public static function provideInvalidConstructorArgs(): array
     {
-        $this->expectException(TypeError::class);
+        return [
+            'null' => [null],
+            'int' => [123],
+            'string' => ['not-a-task-queries'],
+            'array' => [[]],
+            'stdClass' => [new \stdClass()],
+        ];
+    }
 
-        // Passing 'user_id' as an array instead of a string triggers TypeError
-        $this->service->execute([
-            'title' => 'My Task',
-            'description' => 'desc',
-            'user_id' => ['wrong-type'],
-        ]);
+    #[DataProvider('provideInvalidExecuteArgs')]
+    public function testExecuteThrowsTypeError($invalidRequest): void
+    {
+        $mockTaskQueries = $this->createMock(TaskQueries::class);
+        $service = new AddTaskService($mockTaskQueries);
+
+        $this->expectException(TypeError::class);
+        $service->execute($invalidRequest);
+    }
+
+    public static function provideInvalidExecuteArgs(): array
+    {
+        return [
+            'null' => [null],
+            'int' => [123],
+            'string' => ['request'],
+            'array' => [[]],
+            'stdClass' => [new \stdClass()],
+        ];
+    }
+
+    #[DataProvider('provideInvalidRequestBodies')]
+    public function testExecuteWithInvalidRequestBodyThrowsTypeError(array $body): void
+    {
+        $mockTaskQueries = $this->createMock(TaskQueries::class);
+        $service = new AddTaskService($mockTaskQueries);
+
+        $raw = json_encode($body);
+        $req = new Request('POST', '/tasks', [], $raw);
+
+        $this->expectException(TypeError::class);
+        $service->execute($req);
+    }
+
+    public static function provideInvalidRequestBodies(): array
+    {
+        return [
+            'title is int'       => [['title' => 123, 'user_id' => 'u1']],
+            'title is array'     => [['title' => ['bad'], 'user_id' => 'u1']],
+            'user_id is int'     => [['title' => 'ok', 'user_id' => 456]],
+            'user_id is object'  => [['title' => 'ok', 'user_id' => new \stdClass()]],
+            'description array'  => [['title' => 'ok', 'user_id' => 'u1', 'description' => []]],
+            'description object' => [['title' => 'ok', 'user_id' => 'u1', 'description' => new \stdClass()]],
+        ];
     }
 }

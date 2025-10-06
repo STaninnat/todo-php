@@ -1,4 +1,7 @@
+note*
+*.txt
 .env*
 vendor/
 
+phpunit.xml
 .phpunit.result.cache

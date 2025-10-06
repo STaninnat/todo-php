@@ -1,5 +1,7 @@
 <?php
 
+namespace App\db;
+
 /**
  * QueryResult represents the outcome of a database query.
  */

@@ -1,12 +1,27 @@
 {
   "require": {
     "twbs/bootstrap": "^5.3",
-    "vlucas/phpdotenv": "^5.6"
+    "vlucas/phpdotenv": "^5.6",
+    "ramsey/uuid": "^4.9",
+    "firebase/php-jwt": "^6.11"
   },
   "require-dev": {
-    "phpunit/phpunit": "^12.3"
+    "phpunit/phpunit": "^12.3",
+    "phpstan/phpstan": "^2.1"
   },
   "scripts": {
-    "test": "phpunit"
+    "test": "phpunit -c phpunit.xml.dist",
+    "test:unit": "phpunit -c phpunit.unit.xml.dist",
+    "test:integration": "phpunit -c phpunit.integration.xml.dist"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
   }
 }

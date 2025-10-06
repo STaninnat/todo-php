@@ -1,7 +1,11 @@
 <?php
-require __DIR__ . '/../../vendor/autoload.php';
+
+namespace App\db;
 
 use Dotenv\Dotenv;
+use PDO;
+use PDOException;
+use Exception;
 
 /**
  * Database class for managing PDO connection
@@ -24,7 +28,12 @@ class Database
     {
         // If DSN is not provided, load environment variables
         if ($dsn === null) {
-            $dotenv = Dotenv::createImmutable(dirname(__DIR__));
+            $envFile = '.env'; // default
+            if (getenv('APP_ENV') === 'testing') {
+                $envFile = '.env.test';
+            }
+
+            $dotenv = Dotenv::createImmutable(dirname(__DIR__), $envFile);
             $dotenv->safeLoad();
 
             $host = $_ENV['DB_HOST'] ?? null;
@@ -48,8 +57,7 @@ class Database
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
         } catch (PDOException $e) {
-            // Stop execution if connection fails
-            die("DB connection failed: " . $e->getMessage());
+            throw new Exception("DB connection failed: " . $e->getMessage(), 0, $e);
         }
     }
 

@@ -1,5 +1,8 @@
 <?php
-require_once __DIR__ . '/../db/TaskQueries.php';
+
+namespace App\utils;
+
+use App\db\TaskQueries;
 
 /**
  * Calculate total number of pages for tasks, based on items per page.

@@ -1,5 +1,7 @@
 <?php
 
+namespace App\utils;
+
 /**
  * Send a standardized JSON response and exit the script.
  *

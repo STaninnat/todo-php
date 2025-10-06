@@ -1,55 +1,54 @@
 <?php
-require_once __DIR__ . '/../../db/Database.php';
-require_once __DIR__ . '/../../db/TaskQueries.php';
-require_once __DIR__ . '/../../db/QueryResult.php';
-require_once __DIR__ . '/../../utils/response.php';
-require_once __DIR__ . '/../../utils/pagination.php';
 
-// Initialize database and get PDO connection
-$dbInstance = new Database();
-$pdo = $dbInstance->getConnection();
+namespace App\api\tasks;
 
-try {
-    // Create TaskQueries instance for task operations
-    $taskObj = new TaskQueries($pdo);
+use function App\utils\calculateTotalPages;
+use function App\utils\jsonResponse;
+use App\db\TaskQueries;
+use InvalidArgumentException;
+use RuntimeException;
 
-    // Check if the request is a POST request and has a 'title' parameter
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'])) {
-        // Sanitize input
-        $title = trim(strip_tags(filter_input(INPUT_POST, 'title', FILTER_UNSAFE_RAW)));
-        $description = trim(strip_tags(filter_input(INPUT_POST, 'description', FILTER_UNSAFE_RAW)));
+/**
+ * Handle adding a new task via POST request
+ *
+ * @param TaskQueries $taskObj Instance of TaskQueries for database operations
+ *
+ * @throws InvalidArgumentException If task title is missing
+ * @throws RuntimeException If adding the task fails
+ */
+function handleAddTask(TaskQueries $taskObj, array $input): void
+{
+    // Sanitize and retrieve POST inputs
+    $title       = trim(strip_tags($input['title'] ?? ''));
+    $description = trim(strip_tags($input['description'] ?? ''));
+    $userID = trim(strip_tags($input['user_id'] ?? ''));
 
-        // Validate required fields
-        if ($title === null || $title === '') {
-            throw new InvalidArgumentException('Task title is required.');
-        }
-
-        // Add the task using TaskQueries
-        $result = $taskObj->addTask($title, $description);
-
-        // Check for errors returned by the query
-        if (!$result->success) {
-            $errorInfo = $result->error ? implode(' | ', $result->error) : 'Unknown error';
-            throw new RuntimeException("Failed to add task: $errorInfo");
-        }
-
-        // Ensure the task was actually added and data is available
-        if (!$result->isChanged() || !$result->hasData()) {
-            throw new RuntimeException('Task was not added.');
-        }
-
-        // Calculate total pages for pagination (assuming 10 tasks per page)
-        $totalPages = calculateTotalPages($taskObj, 10);
-
-        // Send JSON success response including the new task and total pages
-        jsonResponse(true, 'success', 'Task added successfully', [
-            'task' => $result->data
-        ], $totalPages);
-    } else {
-        // Handle invalid request method or missing title
-        throw new InvalidArgumentException('Invalid request.');
+    if ($title === '') {
+        throw new InvalidArgumentException('Task title is required.');
     }
-} catch (Exception $e) {
-    // Send JSON error response with the exception message
-    jsonResponse(false, 'error', $e->getMessage());
+    if ($userID === '') {
+        throw new InvalidArgumentException('User ID is required.');
+    }
+
+    // Attempt to add the task to the database
+    $result = $taskObj->addTask($title, $description, $userID);
+
+    // Check if the database operation was successful
+    if (!$result->success) {
+        $errorInfo = $result->error ? implode(' | ', $result->error) : 'Unknown error';
+        throw new RuntimeException("Failed to add task: $errorInfo");
+    }
+
+    // Verify that the task was actually added
+    if (!$result->isChanged() || !$result->hasData()) {
+        throw new RuntimeException('Task was not added.');
+    }
+
+    // Calculate total pages for pagination (assuming 10 items per page)
+    $totalPages = calculateTotalPages($taskObj, 10);
+
+    // Return JSON response with the new task and pagination info
+    jsonResponse(true, 'success', 'Task added successfully', [
+        'task' => $result->data
+    ], $totalPages);
 }

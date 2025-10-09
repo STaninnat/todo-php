@@ -1,6 +1,8 @@
-FROM php:8.2-fpm-alpine
+FROM php:8.2-fpm-alpine3.22
 
-RUN apk add --no-cache mariadb-connector-c-dev \
+# Upgrade all packages to fix vulnerabilities
+RUN apk update && apk upgrade --no-cache \
+    && apk add --no-cache mariadb-connector-c-dev \
     && docker-php-ext-install pdo pdo_mysql \
     && apk add --no-cache bash
 

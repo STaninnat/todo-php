@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Utils;
 
 /**
+ * Interface CookieStorageInterface
+ * 
  * Interface for handling cookie storage operations.
+ * 
+ * @package App\Utils
  */
 interface CookieStorageInterface
 {

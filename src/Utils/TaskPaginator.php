@@ -7,10 +7,12 @@ namespace App\Utils;
 use App\DB\TaskQueries;
 
 /**
- * TaskPaginator
+ * Class TaskPaginator
  *
  * Service class to handle pagination logic for tasks.
  * Depends on TaskQueries to fetch total task count.
+ * 
+ * @package App\Utils
  */
 class TaskPaginator
 {

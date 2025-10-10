@@ -10,9 +10,11 @@ use RuntimeException;
 use Throwable;
 
 /**
- * JwtService
+ * Class JwtService
  *
  * Service class for handling JWT creation, verification, and refresh.
+ * 
+ * @package App\Utils
  */
 class JwtService
 {

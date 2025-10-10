@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Utils;
 
 /**
- * JsonResponder
+ * Class JsonResponder
  *
  * A hybrid fluent JSON responder for API responses.
  * Provides:
@@ -17,6 +17,8 @@ namespace App\Utils;
  * Example usage:
  *   JsonResponder::success("Operation completed")->withData($data)->send();
  *   JsonResponder::quickError("Something went wrong");
+ * 
+ * @package App\Utils
  */
 class JsonResponder
 {

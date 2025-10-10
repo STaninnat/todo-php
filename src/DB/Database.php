@@ -10,7 +10,11 @@ use PDOException;
 use Exception;
 
 /**
- * Database class for managing PDO connection
+ * Class Database
+ * 
+ * Database class for managing PDO connection.
+ * 
+ * @package App\DB
  */
 class Database
 {

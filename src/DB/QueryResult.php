@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\DB;
 
 /**
+ * Class QueryResult
+ * 
  * QueryResult represents the outcome of a database query.
+ * 
+ * @package App\DB
  */
 class QueryResult
 {
@@ -46,6 +50,7 @@ class QueryResult
      *
      * @param mixed $data    Optional data returned from query
      * @param int $affected  Number of affected rows
+     * 
      * @return self
      */
     public static function ok(mixed $data = null, int $affected = 0): self
@@ -57,6 +62,7 @@ class QueryResult
      * Factory method for a failed query result
      *
      * @param array|null $error Optional error details
+     * 
      * @return self
      */
     public static function fail(?array $error = null): self

@@ -9,7 +9,11 @@ use PDOStatement;
 
 
 /**
+ * Class UserQueries
+ * 
  * UserQueries provides CRUD operations for the "users" table.
+ * 
+ * @package App\DB
  */
 class UserQueries
 {
@@ -30,6 +34,7 @@ class UserQueries
      * Helper method to create a failed QueryResult from a PDOStatement
      *
      * @param PDOStatement $stmt
+     * 
      * @return QueryResult
      */
     private function failFromStmt(PDOStatement $stmt): QueryResult
@@ -44,6 +49,7 @@ class UserQueries
      * @param string $username
      * @param string $email
      * @param string $pass
+     * 
      * @return QueryResult
      */
     public function createUser(string $id, string $username, string $email, string $pass): QueryResult
@@ -62,6 +68,7 @@ class UserQueries
      * Get a single user by username
      *
      * @param string $username
+     * 
      * @return QueryResult
      */
     public function getUserByName(string $username): QueryResult
@@ -85,6 +92,7 @@ class UserQueries
      * Get a single user by ID
      *
      * @param string $id
+     * 
      * @return QueryResult
      */
     public function getUserByID(string $id): QueryResult
@@ -109,6 +117,7 @@ class UserQueries
      *
      * @param string $username
      * @param string $email
+     * 
      * @return QueryResult
      */
     public function checkUserExists(string $username, string $email): QueryResult
@@ -133,6 +142,7 @@ class UserQueries
      * @param string $id
      * @param string $username
      * @param string $email
+     * 
      * @return QueryResult
      */
     public function updateUser(string $id, string $username, string $email): QueryResult
@@ -151,6 +161,7 @@ class UserQueries
      * Delete a user by ID
      *
      * @param string $id
+     * 
      * @return QueryResult
      */
     public function deleteUser(string $id): QueryResult

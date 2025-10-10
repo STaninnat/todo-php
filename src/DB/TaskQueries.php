@@ -8,7 +8,11 @@ use PDO;
 use PDOStatement;
 
 /**
+ * Class TaskQueries
+ * 
  * TaskQueries provides CRUD operations for the "tasks" table.
+ * 
+ * @package App\DB
  */
 class TaskQueries
 {
@@ -29,6 +33,7 @@ class TaskQueries
      * Helper method to create a failed QueryResult from a PDOStatement
      *
      * @param PDOStatement $stmt
+     * 
      * @return QueryResult
      */
     private function failFromStmt(PDOStatement $stmt): QueryResult
@@ -42,6 +47,7 @@ class TaskQueries
      * @param string $title
      * @param string $description
      * @param string $userID
+     * 
      * @return QueryResult
      */
     public function addTask(string $title, string $description, string $userId): QueryResult
@@ -80,6 +86,7 @@ class TaskQueries
      *
      * @param int $id
      * @param string $userID
+     * 
      * @return QueryResult
      */
     public function getTaskByID(int $id, string $userId): QueryResult
@@ -109,6 +116,7 @@ class TaskQueries
      * @param int $page
      * @param int $perPage
      * @param string $userID
+     * 
      * @return QueryResult
      */
     public function getTasksByPage(int $page, int $perPage = 10, ?string $userId = null): QueryResult
@@ -144,6 +152,7 @@ class TaskQueries
      * Get All tasks By user id
      *
      * @param string $userId
+     * 
      * @return QueryResult
      */
     public function getTasksByUserID(string $userId): QueryResult
@@ -165,6 +174,7 @@ class TaskQueries
      * @param int $id
      * @param bool $isDone
      * @param string $userID
+     * 
      * @return QueryResult
      */
     public function markDone(int $id, bool $isDone, string $userId): QueryResult
@@ -187,6 +197,7 @@ class TaskQueries
      * @param string $description
      * @param bool $isDone
      * @param string $userID
+     * 
      * @return QueryResult
      */
     public function updateTask(int $id, string $title, string $description, bool $isDone, string $userId): QueryResult
@@ -208,6 +219,7 @@ class TaskQueries
      *
      * @param int $id
      * @param string $userID
+     * 
      * @return QueryResult
      */
     public function deleteTask(int $id, string $userId): QueryResult

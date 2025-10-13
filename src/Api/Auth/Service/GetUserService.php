@@ -10,14 +10,28 @@ use App\Utils\RequestValidator;
 use RuntimeException;
 use InvalidArgumentException;
 
+/**
+ * Class GetUserService
+ *
+ * Service responsible for retrieving user information by ID.
+ *
+ * - Validates input request (`user_id` required)
+ * - Fetches user record via {@see UserQueries}
+ * - Returns sanitized user fields
+ *
+ * @package App\Api\Auth\Service
+ */
 class GetUserService
 {
+    /** @var UserQueries Database query handler for user operations */
     private UserQueries $userQueries;
 
     /**
      * Constructor
      *
-     * @param UserQueries $userQueries Database query handler for user operations.
+     * Initializes dependencies required for retrieving user data.
+     *
+     * @param UserQueries $userQueries Database query handler for user operations
      */
     public function __construct(UserQueries $userQueries)
     {
@@ -25,14 +39,18 @@ class GetUserService
     }
 
     /**
-     * Retrieve a user's information by ID.
+     * Execute user retrieval process.
      *
-     * @param Request $req Request object containing input data.
+     * - Validates `user_id` parameter from the request
+     * - Fetches corresponding user data from the database
+     * - Ensures successful query execution and existence of the user
      *
-     * @throws InvalidArgumentException If user_id is missing or empty.
-     * @throws RuntimeException         If fetching the user fails or the user does not exist.
+     * @param Request $req Request object containing input data
      *
-     * @return array Associative array with 'username' and 'email'.
+     * @throws InvalidArgumentException If `user_id` is missing or invalid
+     * @throws RuntimeException         If the query fails or user not found
+     *
+     * @return array<string, string> Associative array with 'username' and 'email' fields
      */
     public function execute(Request $req): array
     {

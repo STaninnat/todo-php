@@ -15,17 +15,51 @@ use App\Api\Middlewares\AuthMiddleware;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
 
+/**
+ * Class RouterApp
+ *
+ * Central application router responsible for:
+ * - Registering routes and middlewares
+ * - Instantiating controllers and dependencies
+ * - Handling request dispatching with error logging
+ *
+ * @package App\Api
+ */
 class RouterApp
 {
+    /** @var Router Core router instance responsible for request routing and dispatching */
     private Router $router;
+
+    /** @var Logger Application-wide logger for info, warning, and error messages */
     private Logger $logger;
 
+    /** @var string Base prefix for all API routes (e.g., "/v1") */
     private string $apiPrefix;
 
+    /** @var UserController Handles all user-related endpoints (signup, signin, update, delete, etc.) */
     private UserController $userController;
+
+    /** @var TaskController Handles all task-related endpoints (add, update, delete, mark done, fetch) */
     private TaskController $taskController;
+
+    /** @var AuthMiddleware Middleware that manages authentication checks and JWT refresh */
     private AuthMiddleware $authMiddleware;
 
+    /**
+     * Constructor
+     *
+     * Initializes the router, logger, and controllers with all required
+     * dependencies (queries, services, middlewares, etc.), then registers
+     * routes and global middlewares.
+     *
+     * @param Router          $router         Router instance for request handling
+     * @param Logger          $logger         Application logger
+     * @param Database        $database       Database connection manager
+     * @param string          $apiPrefix      Base API prefix (default: "/v1")
+     * @param UserController|null $userController Optional custom UserController
+     * @param TaskController|null $taskController Optional custom TaskController
+     * @param AuthMiddleware|null $authMiddleware Optional custom AuthMiddleware
+     */
     public function __construct(
         Router $router,
         Logger $logger,
@@ -72,6 +106,16 @@ class RouterApp
         $this->registerRoutes();
     }
 
+    /**
+     * Register global middlewares.
+     *
+     * Currently adds:
+     * - JWT refresh middleware for all incoming requests
+     *
+     * Logs success or failure during token refresh.
+     *
+     * @return void
+     */
     private function registerMiddlewares(): void
     {
         // Global middleware
@@ -86,6 +130,14 @@ class RouterApp
         });
     }
 
+    /**
+     * Register API routes for users and tasks.
+     *
+     * - Applies authentication middleware to protected endpoints
+     * - Maps each route to its respective controller handler
+     *
+     * @return void
+     */
     private function registerRoutes(): void
     {
         $authMiddlewareFn = [
@@ -119,12 +171,26 @@ class RouterApp
             ['GET', '/tasks', 'getTasks', $authMiddlewareFn],
         ];
 
+        // Register all routes in batch
         $this->registerRouteBatch($userRoutes, $this->userController);
         $this->registerRouteBatch($taskRoutes, $this->taskController);
     }
 
+    /**
+     * Register a batch of routes for a specific controller.
+     *
+     * - Automatically constructs full API path with prefix
+     * - Logs each route registration and request handling
+     * - Wraps route handlers in try/catch for robust error handling
+     *
+     * @param array  $routes     Array of route definitions [method, path, handler, middlewares]
+     * @param object $controller Controller instance handling the route
+     *
+     * @return void
+     */
     private function registerRouteBatch(array $routes, object $controller): void
     {
+        // Determine data source for request (GET uses query, others use body)
         $getRequestData = fn($req) => match ($req->method) {
             'GET' => $req->query,
             default => $req->body
@@ -133,11 +199,15 @@ class RouterApp
         foreach ($routes as [$method, $path, $handler, $middlewares]) {
             $fullPath = $this->apiPrefix . $path;
 
+            // Register route handler with middleware
             $this->router->register($method, $fullPath, function ($req) use ($controller, $handler, $fullPath, $getRequestData) {
                 try {
                     $this->logger->info("Route called: $fullPath -> " . get_class($controller) . "::$handler");
+
+                    // Get request data and invoke controller method
                     $data = $controller->$handler($getRequestData($req));
                     $this->logger->info("Response prepared for $fullPath");
+
                     return $data;
                 } catch (\Throwable $e) {
                     $this->logger->error("Exception in route $fullPath: " . $e->getMessage());
@@ -147,6 +217,17 @@ class RouterApp
         }
     }
 
+    /**
+     * Dispatch the request through the router.
+     *
+     * - Handles exceptions and logs them
+     * - Returns JSON-formatted error response if an unhandled error occurs
+     *
+     * @param Request|null $request Optional request to dispatch (default: global)
+     * @param bool         $forTest When true, prevents immediate output (for testing)
+     *
+     * @return array|null JSON response array or null
+     */
     public function dispatch(?Request $request = null, bool $forTest = false): ?array
     {
         try {

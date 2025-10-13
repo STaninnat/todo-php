@@ -13,18 +13,40 @@ use RuntimeException;
 use InvalidArgumentException;
 use Ramsey\Uuid\Uuid;
 
+/**
+ * Class SignupService
+ *
+ * Handles the logic for registering new users.
+ *
+ * Responsibilities:
+ * - Validate registration input
+ * - Check if username or email already exists
+ * - Hash password securely
+ * - Create user record in database
+ * - Generate JWT token and store it as an access cookie
+ *
+ * @package App\Api\Auth\Service
+ */
 class SignupService
 {
+    /** @var UserQueries Handles user-related database operations */
     private UserQueries $userQueries;
+
+    /** @var CookieManager Manages authentication cookies */
     private CookieManager $cookieManager;
+
+    /** @var JwtService Handles creation and validation of JWT tokens */
     private JwtService $jwt;
+
 
     /**
      * Constructor
      *
-     * @param UserQueries   $userQueries   Database query handler for user operations.
-     * @param CookieManager $cookieManager Utility for managing authentication cookies.
-     * @param JwtService    $jwt           Service for generating and validating JWT tokens.
+     * Initializes dependencies required for user registration.
+     *
+     * @param UserQueries   $userQueries   Database query handler for user operations
+     * @param CookieManager $cookieManager Utility for managing authentication cookies
+     * @param JwtService    $jwt           Service for generating and validating JWT tokens
      */
     public function __construct(UserQueries $userQueries, CookieManager $cookieManager, JwtService $jwt)
     {
@@ -34,12 +56,18 @@ class SignupService
     }
 
     /**
-     * Register a new user.
+     * Execute user signup process.
      *
-     * @param Request $req Request object containing input data.
+     * - Validates input fields (`username`, `email`, `password`)
+     * - Checks for duplicate user or email
+     * - Hashes password using PHP's secure algorithm
+     * - Inserts new user record into the database
+     * - Generates and sets an access token cookie
      *
-     * @throws InvalidArgumentException If required fields are missing, invalid, or already exist.
-     * @throws RuntimeException         If database operations fail.
+     * @param Request $req Request object containing input data
+     *
+     * @throws InvalidArgumentException If required fields are missing, invalid, or already exist
+     * @throws RuntimeException         If any database operation fails
      *
      * @return void
      */
@@ -49,6 +77,7 @@ class SignupService
         $email    = RequestValidator::getEmailParam($req, 'email', 'Valid email is required.');
         $password = RequestValidator::getStringParam($req, 'password', 'Password is required.');
 
+        // Ensure username or email does not already exist
         $existsResult = $this->userQueries->checkUserExists($username, $email);
         RequestValidator::ensureSuccess($existsResult, 'check user existence');
 
@@ -56,15 +85,19 @@ class SignupService
             throw new InvalidArgumentException("Username or email already exists.");
         }
 
+        // Generate unique ID and securely hash password
         $id = Uuid::uuid4()->toString();
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
+        // Create new user record in database
         $result = $this->userQueries->createUser($id, $username, $email, $hashedPassword);
         RequestValidator::ensureSuccess($result, 'sign up');
 
+        // Retrieve created user and issue JWT access token
         $user = $result->data;
         $token = $this->jwt->create(['id' => $user['id']]);
 
+        // Store access token in secure cookie
         $this->cookieManager->setAccessToken($token, time() + 3600);
     }
 }

@@ -11,16 +11,29 @@ use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
+/**
+ * Class UpdateTaskService
+ *
+ * Handles the logic for updating an existing task.
+ *
+ * - Validates required input fields (`id`, `title`, `user_id`)
+ * - Ensures the task exists before updating
+ * - Updates task record in the database
+ * - Computes pagination data via {@see TaskPaginator}
+ *
+ * @package App\Api\Tasks\Service
+ */
 class UpdateTaskService
 {
+    /** @var TaskQueries Database handler for task operations */
     private TaskQueries $taskQueries;
 
     /**
      * Constructor
      *
-     * Injects the TaskQueries dependency for database operations.
+     * Injects {@see TaskQueries} dependency for database operations.
      *
-     * @param TaskQueries $taskQueries Service to interact with task database.
+     * @param TaskQueries $taskQueries Service to interact with task database
      */
     public function __construct(TaskQueries $taskQueries)
     {
@@ -28,14 +41,22 @@ class UpdateTaskService
     }
 
     /**
-     * Execute the task update process.
+     * Execute the process of updating a task.
      *
-     * @param Request $req Request object containing task update data.
+     * - Validates required parameters (`id`, `title`, `user_id`, `is_done`)
+     * - Checks that the task exists for the given user
+     * - Updates the task record in the database
+     * - Returns updated task data and total page count
      *
-     * @return array Array containing updated task data and total pages.
+     * @param Request $req Request object containing task update data
      *
-     * @throws InvalidArgumentException If required input fields are missing or invalid.
-     * @throws RuntimeException If the task could not be found or updated.
+     * @return array{
+     *     task: array,
+     *     totalPages: int
+     * } Returns updated task data and pagination info
+     *
+     * @throws InvalidArgumentException If required fields are missing or invalid
+     * @throws RuntimeException If the task could not be found or updated
      */
     public function execute(Request $req): array
     {

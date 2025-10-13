@@ -11,16 +11,30 @@ use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
+/**
+ * Class MarkDoneTaskService
+ *
+ * Service responsible for marking a task as done or undone.
+ *
+ * - Validates input parameters (`id`, `user_id`, `is_done`)
+ * - Ensures the task exists before updating
+ * - Updates task completion status in the database
+ * - Returns updated task data and pagination info
+ *
+ * @package App\Api\Tasks\Service
+ */
 class MarkDoneTaskService
 {
+    /** @var TaskQueries Database handler for task operations */
     private TaskQueries $taskQueries;
 
     /**
      * Constructor
      *
-     * Injects the TaskQueries dependency for database operations.
+     * Initializes the service with a {@see TaskQueries} instance for
+     * performing database operations.
      *
-     * @param TaskQueries $taskQueries Service to interact with task database.
+     * @param TaskQueries $taskQueries Service to interact with task database
      */
     public function __construct(TaskQueries $taskQueries)
     {
@@ -28,14 +42,22 @@ class MarkDoneTaskService
     }
 
     /**
-     * Execute the process to mark a task as done or undone.
+     * Execute the process of marking a task as done or undone.
      *
-     * @param Request $req
-     * 
-     * @return array
+     * - Validates `id`, `user_id`, and `is_done` from the request
+     * - Checks that the task exists
+     * - Updates completion status in the database
+     * - Returns task data along with updated pagination info
      *
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
+     * @param Request $req Incoming request containing task ID and status
+     *
+     * @return array{
+     *     task: array,
+     *     totalPages: int
+     * } Returns updated task data and total page count
+     *
+     * @throws InvalidArgumentException If parameters are missing or invalid
+     * @throws RuntimeException If the task does not exist or update fails
      */
     public function execute(Request $req): array
     {

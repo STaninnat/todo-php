@@ -12,18 +12,38 @@ use App\Utils\RequestValidator;
 use RuntimeException;
 use InvalidArgumentException;
 
+/**
+ * Class SigninService
+ *
+ * Service responsible for handling user sign-in and authentication logic.
+ *
+ * - Validates `username` and `password` from request
+ * - Fetches user from database
+ * - Verifies password using PHP's `password_verify`
+ * - Generates JWT token for authenticated user
+ * - Stores token in cookie for session management
+ *
+ * @package App\Api\Auth\Service
+ */
 class SigninService
 {
+    /** @var UserQueries Handles database queries for user authentication */
     private UserQueries $userQueries;
+
+    /** @var CookieManager Manages authentication cookies */
     private CookieManager $cookieManager;
+
+    /** @var JwtService Service for generating and validating JWT tokens */
     private JwtService $jwt;
 
     /**
      * Constructor
      *
-     * @param UserQueries   $userQueries   Database query handler for user operations.
-     * @param CookieManager $cookieManager Utility for managing authentication cookies.
-     * @param JwtService    $jwt           Service for generating and validating JWT tokens.
+     * Initializes dependencies for user authentication service.
+     *
+     * @param UserQueries   $userQueries   Database query handler for user operations
+     * @param CookieManager $cookieManager Utility for managing authentication cookies
+     * @param JwtService    $jwt           Service for generating and validating JWT tokens
      */
     public function __construct(UserQueries $userQueries, CookieManager $cookieManager, JwtService $jwt)
     {
@@ -33,12 +53,19 @@ class SigninService
     }
 
     /**
-     * Authenticate a user using username and password.
+     * Execute user authentication process.
      *
-     * @param Request $req Request object containing input data.
+     * Steps:
+     * - Validate required parameters (`username`, `password`)
+     * - Fetch user record from database
+     * - Verify credentials using password hashing
+     * - Generate JWT token for the authenticated user
+     * - Store access token in secure cookie
      *
-     * @throws InvalidArgumentException If required fields are missing or credentials are invalid.
-     * @throws RuntimeException         If database operations fail.
+     * @param Request $req Request object containing input data
+     *
+     * @throws InvalidArgumentException If credentials are missing or invalid
+     * @throws RuntimeException         If a database or token operation fails
      *
      * @return void
      */
@@ -47,6 +74,7 @@ class SigninService
         $username = RequestValidator::getStringParam($req, 'username', 'Username is required.');
         $password = RequestValidator::getStringParam($req, 'password', 'Password is required.');
 
+        // Fetch user data by username
         $result = $this->userQueries->getUserByName($username);
         RequestValidator::ensureSuccess($result, 'fetch user');
 
@@ -60,8 +88,10 @@ class SigninService
             throw new InvalidArgumentException('Invalid username or password.');
         }
 
+        // Generate JWT token
         $token = $this->jwt->create(['id' => $user['id']]);
 
+        // Set authentication token as cookie (1-hour expiry)
         $this->cookieManager->setAccessToken($token, time() + 3600);
     }
 }

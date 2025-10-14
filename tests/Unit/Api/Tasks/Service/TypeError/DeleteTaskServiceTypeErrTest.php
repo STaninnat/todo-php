@@ -12,9 +12,31 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use TypeError;
 
+/**
+ * Class DeleteTaskServiceTypeErrTest
+ *
+ * Unit tests for DeleteTaskService focusing on type errors
+ * and request validation errors.
+ *
+ * Covers:
+ * - Constructor argument type enforcement (TypeError)
+ * - execute() argument type enforcement (TypeError)
+ * - Request body field validation (InvalidArgumentException or TypeError)
+ *
+ * Uses data providers to test multiple invalid inputs efficiently.
+ *
+ * @package Tests\Unit\Api\Tasks\Service\TypeError
+ */
 class DeleteTaskServiceTypeErrTest extends TestCase
 {
     // ---------- Constructor TypeError ----------
+
+    /**
+     * Test that providing invalid constructor arguments
+     * throws a TypeError.
+     *
+     * @param mixed $invalidArg Invalid argument to pass to constructor.
+     */
     #[DataProvider('provideInvalidConstructorArgs')]
     public function testConstructorThrowsTypeError($invalidArg): void
     {
@@ -22,6 +44,11 @@ class DeleteTaskServiceTypeErrTest extends TestCase
         new DeleteTaskService($invalidArg);
     }
 
+    /**
+     * Provides invalid constructor arguments for DeleteTaskService.
+     *
+     * @return array<string, array{0:mixed}>
+     */
     public static function provideInvalidConstructorArgs(): array
     {
         return [
@@ -34,6 +61,13 @@ class DeleteTaskServiceTypeErrTest extends TestCase
     }
 
     // ---------- Execute argument TypeError ----------
+
+    /**
+     * Test that execute() throws TypeError when provided
+     * with invalid arguments (not a Request instance).
+     *
+     * @param mixed $invalidRequest Invalid argument to pass to execute().
+     */
     #[DataProvider('provideInvalidExecuteArgs')]
     public function testExecuteThrowsTypeError($invalidRequest): void
     {
@@ -44,6 +78,11 @@ class DeleteTaskServiceTypeErrTest extends TestCase
         $service->execute($invalidRequest);
     }
 
+    /**
+     * Provides invalid arguments for execute() method.
+     *
+     * @return array<string, array{0:mixed}>
+     */
     public static function provideInvalidExecuteArgs(): array
     {
         return [
@@ -55,13 +94,22 @@ class DeleteTaskServiceTypeErrTest extends TestCase
         ];
     }
 
-    // ---------- Body field validation (InvalidArgumentException) ----------
+    // ---------- Body field validation (InvalidArgumentException / TypeError) ----------
+
+    /**
+     * Test that execute() throws expected exceptions when
+     * request body fields are invalid or missing.
+     *
+     * @param array $body Request body to test
+     * @param class-string<\Throwable> $expectedException Expected exception class
+     */
     #[DataProvider('provideInvalidRequestBodies')]
     public function testExecuteWithInvalidRequestBody($body, string $expectedException): void
     {
         $mockTaskQueries = $this->createMock(TaskQueries::class);
         $service = new DeleteTaskService($mockTaskQueries);
 
+        // Encode body to JSON as raw input
         $raw = json_encode($body);
         $req = new Request('POST', '/tasks/delete', [], $raw);
 
@@ -69,6 +117,17 @@ class DeleteTaskServiceTypeErrTest extends TestCase
         $service->execute($req);
     }
 
+    /**
+     * Provides invalid request bodies to test execute() validation.
+     *
+     * Covers:
+     * - id invalid (non-numeric, array, object)
+     * - user_id invalid (int, array, object)
+     * - missing fields (id or user_id)
+     * - empty body
+     *
+     * @return array<string, array{0:array,1:class-string<\Throwable>}>
+     */
     public static function provideInvalidRequestBodies(): array
     {
         return [
@@ -77,7 +136,7 @@ class DeleteTaskServiceTypeErrTest extends TestCase
             'id is array'              => [['id' => ['bad'], 'user_id' => 'u1'], InvalidArgumentException::class],
             'id is object'             => [['id' => new \stdClass(), 'user_id' => 'u1'], InvalidArgumentException::class],
 
-            // ---- user_id invalid (TypeError จาก strip_tags) ----
+            // ---- user_id invalid (TypeError from strip_tags) ----
             'user_id is int'           => [['id' => 1, 'user_id' => 123], TypeError::class],
             'user_id is array'         => [['id' => 1, 'user_id' => ['bad']], TypeError::class],
             'user_id is object'        => [['id' => 1, 'user_id' => new \stdClass()], TypeError::class],

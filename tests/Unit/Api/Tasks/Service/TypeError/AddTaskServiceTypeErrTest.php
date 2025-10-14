@@ -11,8 +11,26 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use TypeError;
 
+/**
+ * Class AddTaskServiceTypeErrTest
+ *
+ * Unit tests for AddTaskService focusing on type errors.
+ *
+ * Covers scenarios where invalid argument types are passed to:
+ * - The constructor (invalid TaskQueries dependency)
+ * - The execute() method (invalid Request or malformed request body)
+ *
+ * Uses PHPUnit DataProviders to test multiple invalid types efficiently.
+ *
+ * @package Tests\Unit\Api\Tasks\Service\TypeError
+ */
 class AddTaskServiceTypeErrTest extends TestCase
 {
+    /**
+     * Test that constructor throws TypeError for invalid arguments.
+     *
+     * @param mixed $invalidArg An invalid constructor argument.
+     */
     #[DataProvider('provideInvalidConstructorArgs')]
     public function testConstructorThrowsTypeError($invalidArg): void
     {
@@ -20,6 +38,11 @@ class AddTaskServiceTypeErrTest extends TestCase
         new AddTaskService($invalidArg);
     }
 
+    /**
+     * Provides invalid constructor arguments for AddTaskService.
+     *
+     * @return array<int|string, array{0:mixed}>
+     */
     public static function provideInvalidConstructorArgs(): array
     {
         return [
@@ -31,6 +54,11 @@ class AddTaskServiceTypeErrTest extends TestCase
         ];
     }
 
+    /**
+     * Test that execute() throws TypeError when passed invalid argument types.
+     *
+     * @param mixed $invalidRequest An invalid execute() argument.
+     */
     #[DataProvider('provideInvalidExecuteArgs')]
     public function testExecuteThrowsTypeError($invalidRequest): void
     {
@@ -41,6 +69,11 @@ class AddTaskServiceTypeErrTest extends TestCase
         $service->execute($invalidRequest);
     }
 
+    /**
+     * Provides invalid execute() arguments for AddTaskService.
+     *
+     * @return array<int|string, array{0:mixed}>
+     */
     public static function provideInvalidExecuteArgs(): array
     {
         return [
@@ -52,19 +85,31 @@ class AddTaskServiceTypeErrTest extends TestCase
         ];
     }
 
+    /**
+     * Test that execute() throws TypeError when request body fields are invalid types.
+     *
+     * @param array $body Simulated request body with invalid types.
+     */
     #[DataProvider('provideInvalidRequestBodies')]
     public function testExecuteWithInvalidRequestBodyThrowsTypeError(array $body): void
     {
         $mockTaskQueries = $this->createMock(TaskQueries::class);
         $service = new AddTaskService($mockTaskQueries);
 
-        $raw = json_encode($body);
+        $raw = json_encode($body); // Encode invalid body to JSON
         $req = new Request('POST', '/tasks', [], $raw);
 
         $this->expectException(TypeError::class);
         $service->execute($req);
     }
 
+    /**
+     * Provides request bodies with invalid types for AddTaskService.
+     *
+     * Covers invalid types for 'title', 'user_id', and 'description'.
+     *
+     * @return array<int|string, array{0:array}>
+     */
     public static function provideInvalidRequestBodies(): array
     {
         return [

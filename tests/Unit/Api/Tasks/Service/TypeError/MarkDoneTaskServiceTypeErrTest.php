@@ -14,13 +14,35 @@ use InvalidArgumentException;
 use TypeError;
 use RuntimeException;
 
+/**
+ * Class MarkDoneTaskServiceTypeErrTest
+ *
+ * Unit tests for MarkDoneTaskService focusing on type errors
+ * and invalid input handling.
+ *
+ * Covers scenarios including:
+ * - Invalid or missing task IDs
+ * - Invalid or missing user IDs
+ * - Task not found errors
+ *
+ * Uses data providers to test multiple invalid input types efficiently.
+ *
+ * @package Tests\Unit\Api\Tasks\Service\TypeError
+ */
 class MarkDoneTaskServiceTypeErrTest extends TestCase
 {
-    /** @var TaskQueries&\PHPUnit\Framework\MockObject\MockObject */
+    /** @var TaskQueries&\PHPUnit\Framework\MockObject\MockObject Mocked TaskQueries dependency */
     private TaskQueries $taskQueriesMock;
 
+    /** @var MarkDoneTaskService Service under test */
     private MarkDoneTaskService $service;
 
+    /**
+     * Set up the test environment.
+     *
+     * Creates a mocked TaskQueries instance and initializes
+     * the MarkDoneTaskService with it.
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,10 +50,19 @@ class MarkDoneTaskServiceTypeErrTest extends TestCase
         $this->service = new MarkDoneTaskService($this->taskQueriesMock);
     }
 
+    /**
+     * Provides invalid task ID inputs for data-driven testing.
+     *
+     * Each entry contains:
+     * - The invalid ID value
+     * - Source location (params, query, or body)
+     * - Expected exception class
+     *
+     * @return array<string, array{0:mixed,1:string,2:string}>
+     */
     public static function invalidIds(): array
     {
         return [
-            // invalid → expect InvalidArgumentException
             'params array'     => [['bad'], 'params', InvalidArgumentException::class],
             'params object'    => [new \stdClass(), 'params', InvalidArgumentException::class],
             'params empty'     => ['', 'params', InvalidArgumentException::class],
@@ -49,11 +80,21 @@ class MarkDoneTaskServiceTypeErrTest extends TestCase
         ];
     }
 
-
+    /**
+     * Test execution with invalid task IDs.
+     *
+     * Uses the invalidIds data provider.
+     *
+     * @param mixed  $id                The invalid ID value
+     * @param string $source            Source location (params, query, body)
+     * @param string $expectedException Expected exception class
+     */
     #[DataProvider('invalidIds')]
     public function testExecuteWithInvalidId($id, string $source, string $expectedException): void
     {
         $request = new Request();
+
+        // Assign the invalid ID based on the source
         if ($id !== null) {
             switch ($source) {
                 case 'params':
@@ -73,18 +114,29 @@ class MarkDoneTaskServiceTypeErrTest extends TestCase
                     break;
             }
         } else {
+            // No ID provided → use default params
             $request->params['user_id'] = 'u123';
             $request->params['is_done'] = 1;
         }
 
+        // Mock getTaskByID to simulate DB failure
         $this->taskQueriesMock->method('getTaskByID')
             ->willReturn(QueryResult::fail(['forced error']));
-
 
         $this->expectException($expectedException);
         $this->service->execute($request);
     }
 
+    /**
+     * Provides invalid user ID inputs for data-driven testing.
+     *
+     * Each entry contains:
+     * - The invalid user ID value
+     * - Source location (params, query, body)
+     * - Expected exception class
+     *
+     * @return array<string, array{0:mixed,1:string,2:string}>
+     */
     public static function invalidUserIds(): array
     {
         return [
@@ -108,10 +160,21 @@ class MarkDoneTaskServiceTypeErrTest extends TestCase
         ];
     }
 
+    /**
+     * Test execution with invalid user IDs.
+     *
+     * Uses the invalidUserIds data provider.
+     *
+     * @param mixed  $userId            The invalid user ID value
+     * @param string $source            Source location (params, query, body)
+     * @param string $expectedException Expected exception class
+     */
     #[DataProvider('invalidUserIds')]
     public function testExecuteWithInvalidUserId($userId, string $source, string $expectedException): void
     {
         $request = new Request();
+
+        // Assign the invalid user ID based on the source
         if ($userId !== null) {
             switch ($source) {
                 case 'params':
@@ -131,6 +194,7 @@ class MarkDoneTaskServiceTypeErrTest extends TestCase
                     break;
             }
         } else {
+            // No user_id provided → default params
             $request->params['id'] = 1;
             $request->params['is_done'] = 1;
         }
@@ -139,6 +203,11 @@ class MarkDoneTaskServiceTypeErrTest extends TestCase
         $this->service->execute($request);
     }
 
+    /**
+     * Test execution with valid IDs but task not found in DB.
+     *
+     * Ensures RuntimeException is thrown on task lookup failure.
+     */
     public function testExecuteWithValidDataButTaskNotFound(): void
     {
         $request = new Request();
@@ -146,6 +215,7 @@ class MarkDoneTaskServiceTypeErrTest extends TestCase
         $request->params['user_id'] = 'u123';
         $request->params['is_done'] = 1;
 
+        // Simulate task not found
         $this->taskQueriesMock->method('getTaskByID')
             ->willReturn(QueryResult::fail(['Task not found']));
 

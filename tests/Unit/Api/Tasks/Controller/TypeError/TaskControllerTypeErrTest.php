@@ -17,45 +17,50 @@ use App\Api\Tasks\Service\GetTasksService;
  *
  * Unit tests for TaskController to verify TypeError handling.
  *
- * This test suite ensures that passing invalid argument types
- * to controller methods triggers a TypeError as expected.
+ * Ensures that passing arguments with invalid types to controller
+ * methods raises a TypeError as expected — protecting against
+ * incorrect usage and enforcing type safety.
  *
  * @package Tests\Unit\Api\Tasks\Controller\TypeError
  */
 class TaskControllerTypeErrTest extends TestCase
 {
-    /** @var AddTaskService&\PHPUnit\Framework\MockObject\MockObject */
+    /** @var AddTaskService&\PHPUnit\Framework\MockObject\MockObject Mocked AddTaskService */
     private $addService;
 
-    /** @var DeleteTaskService&\PHPUnit\Framework\MockObject\MockObject */
+    /** @var DeleteTaskService&\PHPUnit\Framework\MockObject\MockObject Mocked DeleteTaskService */
     private $deleteService;
 
-    /** @var UpdateTaskService&\PHPUnit\Framework\MockObject\MockObject */
+    /** @var UpdateTaskService&\PHPUnit\Framework\MockObject\MockObject Mocked UpdateTaskService */
     private $updateService;
 
-    /** @var MarkDoneTaskService&\PHPUnit\Framework\MockObject\MockObject */
+    /** @var MarkDoneTaskService&\PHPUnit\Framework\MockObject\MockObject Mocked MarkDoneTaskService */
     private $markDoneService;
 
-    /** @var GetTasksService&\PHPUnit\Framework\MockObject\MockObject */
+    /** @var GetTasksService&\PHPUnit\Framework\MockObject\MockObject Mocked GetTasksService */
     private $getTasksService;
 
+    /** @var TaskController Controller instance under test */
     private TaskController $controller;
 
     /**
-     * Setup mocks and controller instance before each test.
+     * Setup the testing environment before each test.
+     *
+     * Creates mock instances for all dependent services and
+     * injects them into a fresh TaskController instance.
      *
      * @return void
      */
     protected function setUp(): void
     {
-        // Create mock services
+        // Initialize mocked services to isolate controller logic
         $this->addService = $this->createMock(AddTaskService::class);
         $this->deleteService = $this->createMock(DeleteTaskService::class);
         $this->updateService = $this->createMock(UpdateTaskService::class);
         $this->markDoneService = $this->createMock(MarkDoneTaskService::class);
         $this->getTasksService = $this->createMock(GetTasksService::class);
 
-        // Instantiate controller with mocked services
+        // Inject mocks into the controller
         $this->controller = new TaskController(
             $this->addService,
             $this->deleteService,
@@ -66,21 +71,21 @@ class TaskControllerTypeErrTest extends TestCase
     }
 
     /**
-     * Test: addTask() triggers TypeError for invalid argument type.
+     * Test that addTask() throws a TypeError when receiving an invalid argument type.
      *
      * @return void
      */
     public function testAddTaskTypeError(): void
     {
-        // Expect TypeError when passing string instead of array
+        // Expect a TypeError when a string is passed instead of Request
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
+        /** @phpstan-ignore-next-line Intentionally passing invalid type for test */
         $this->controller->addTask('invalid type', true);
     }
 
     /**
-     * Test: deleteTask() triggers TypeError for invalid argument type.
+     * Test that deleteTask() throws a TypeError when receiving an invalid argument type.
      *
      * @return void
      */
@@ -88,12 +93,12 @@ class TaskControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
+        /** @phpstan-ignore-next-line Prevent static analysis error for invalid argument */
         $this->controller->deleteTask('invalid type', true);
     }
 
     /**
-     * Test: updateTask() triggers TypeError for invalid argument type.
+     * Test that updateTask() throws a TypeError when receiving an invalid argument type.
      *
      * @return void
      */
@@ -101,12 +106,12 @@ class TaskControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
+        /** @phpstan-ignore-next-line Intentionally invalid to test type safety */
         $this->controller->updateTask('invalid type', true);
     }
 
     /**
-     * Test: markDoneTask() triggers TypeError for invalid argument type.
+     * Test that markDoneTask() throws a TypeError when receiving an invalid argument type.
      *
      * @return void
      */
@@ -114,12 +119,12 @@ class TaskControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
+        /** @phpstan-ignore-next-line Ensures strict type enforcement */
         $this->controller->markDoneTask('invalid type', true);
     }
 
     /**
-     * Test: getTasks() triggers TypeError for invalid argument type.
+     * Test that getTasks() throws a TypeError when receiving an invalid argument type.
      *
      * @return void
      */
@@ -127,7 +132,7 @@ class TaskControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
+        /** @phpstan-ignore-next-line Invalid type to confirm strict parameter expectations */
         $this->controller->getTasks('invalid type', true);
     }
 }

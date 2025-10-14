@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Api\Auth\Service;
 
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\MockObject\MockObject;
 use App\Api\Auth\Service\SignoutService;
 use App\Utils\CookieManager;
 

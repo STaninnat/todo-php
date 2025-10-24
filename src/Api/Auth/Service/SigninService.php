@@ -83,6 +83,12 @@ class SigninService
         }
 
         $user = $result->data;
+        if (
+            !is_array($user) || !isset($user['id'], $user['password'])
+            || !is_string($user['id']) || !is_string($user['password'])
+        ) {
+            throw new RuntimeException('Invalid user data returned from getUserByName.');
+        }
 
         if (!password_verify($password, $user['password'])) {
             throw new InvalidArgumentException('Invalid username or password.');

@@ -23,6 +23,16 @@ class NativeCookieStorage implements CookieStorageInterface
      */
     public function get(string $name): ?string
     {
-        return $_COOKIE[$name] ?? null;
+        $val = $_COOKIE[$name] ?? null;
+
+        if ($val === null) {
+            return null;
+        }
+
+        if (!is_string($val)) {
+            return null;
+        }
+
+        return $val;
     }
 }

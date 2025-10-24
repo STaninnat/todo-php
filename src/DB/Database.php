@@ -19,7 +19,7 @@ use Exception;
 class Database
 {
     // PDO instance
-    protected $pdo;
+    protected PDO $pdo;
 
     /**
      * Constructor initializes a database connection
@@ -30,15 +30,11 @@ class Database
      *
      * @throws Exception If required environment variables are missing
      */
-    public function __construct($dsn = null, $user = null, $pass = null)
+    public function __construct(?string $dsn = null, ?string $user = null, ?string $pass = null)
     {
         // If DSN is not provided, load environment variables
         if ($dsn === null) {
-            $envFile = '.env'; // default
-            if (getenv('APP_ENV') === 'testing') {
-                $envFile = '.env.test';
-            }
-
+            $envFile = getenv('APP_ENV') === 'testing' ? '.env.test' : '.env';
             $dotenv = Dotenv::createImmutable(dirname(__DIR__), $envFile);
             $dotenv->safeLoad();
 
@@ -47,13 +43,18 @@ class Database
             $user = $_ENV['DB_USER'] ?? null;
             $pass = $_ENV['DB_PASS'] ?? null;
 
+
             // Ensure required environment variables are set
-            if (!$host || !$db || !$user) {
+            if (!is_string($host) || !is_string($db) || !is_string($user)) {
                 throw new Exception("DB environment variables are not set.");
             }
 
+            if ($pass !== null && !is_string($pass)) {
+                throw new Exception("DB_PASS must be a string or null.");
+            }
+
             // Build DSN string for MySQL connection
-            $dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4";
+            $dsn = "mysql:host={$host};dbname={$db};charset=utf8mb4";
         }
 
         // Attempt to create PDO connection

@@ -75,7 +75,7 @@ class TaskController
      * @param Request $req      The HTTP request containing task data.
      * @param bool    $forTest  Whether to return response array (for testing).
      *
-     * @return array|null JSON response array if testing mode, otherwise null.
+     * @return array<string, mixed>|null JSON response array if testing mode, otherwise null.
      */
     public function addTask(Request $req, bool $forTest = false): ?array
     {
@@ -97,7 +97,7 @@ class TaskController
      * @param Request $req      The HTTP request containing task ID.
      * @param bool    $forTest  Whether to return response array (for testing).
      *
-     * @return array|null JSON response array if testing mode, otherwise null.
+     * @return array<string, mixed>|null JSON response array if testing mode, otherwise null.
      */
     public function deleteTask(Request $req, bool $forTest = false): ?array
     {
@@ -117,7 +117,7 @@ class TaskController
      * @param Request $req      The HTTP request containing updated task info.
      * @param bool    $forTest  Whether to return response array (for testing).
      *
-     * @return array|null JSON response array if testing mode, otherwise null.
+     * @return array<string, mixed>|null JSON response array if testing mode, otherwise null.
      */
     public function updateTask(Request $req, bool $forTest = false): ?array
     {
@@ -137,7 +137,7 @@ class TaskController
      * @param Request $req      The HTTP request containing task ID.
      * @param bool    $forTest  Whether to return response array (for testing).
      *
-     * @return array|null JSON response array if testing mode, otherwise null.
+     * @return array<string, mixed>|null JSON response array if testing mode, otherwise null.
      */
     public function markDoneTask(Request $req, bool $forTest = false): ?array
     {
@@ -157,7 +157,7 @@ class TaskController
      * @param Request $req      The HTTP request containing filter/pagination info.
      * @param bool    $forTest  Whether to return response array (for testing).
      *
-     * @return array|null JSON response array if testing mode, otherwise null.
+     * @return array<string, mixed>|null JSON response array if testing mode, otherwise null.
      */
     public function getTasks(Request $req, bool $forTest = false): ?array
     {

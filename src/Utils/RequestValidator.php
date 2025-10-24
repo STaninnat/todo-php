@@ -64,14 +64,13 @@ class RequestValidator
     public static function getStringParam(Request $req, string $key, string $errorMsg): string
     {
         // Extract and sanitize parameter value
-        $val = trim(strip_tags($req->getParam($key) ?? $req->getQuery($key) ?? $req->body[$key] ?? ''));
+        $rawVal = $req->getParam($key) ?? $req->getQuery($key) ?? ($req->body[$key] ?? null);
 
-        if (!is_string($val)) {
+        if (!is_scalar($rawVal)) {
             throw new InvalidArgumentException($errorMsg);
         }
 
-        $val = trim(strip_tags($val));
-
+        $val = trim(strip_tags((string)$rawVal));
         if ($val === '') {
             throw new InvalidArgumentException($errorMsg);
         }
@@ -95,7 +94,14 @@ class RequestValidator
      */
     public static function getEmailParam(Request $req, string $key, string $errorMsg): string
     {
-        $val = trim(strip_tags($req->getParam($key) ?? $req->getQuery($key) ?? $req->body[$key] ?? ''));
+        $rawVal = $req->getParam($key) ?? $req->getQuery($key) ?? ($req->body[$key] ?? null);
+
+        if (!is_scalar($rawVal)) {
+            throw new InvalidArgumentException($errorMsg);
+        }
+
+        $val = trim(strip_tags((string)$rawVal));
+
         if ($val === '' || !filter_var($val, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException($errorMsg);
         }
@@ -125,7 +131,7 @@ class RequestValidator
         }
 
         // Validate numeric boolean representation
-        if (!ctype_digit((string)$val) || !in_array((int)$val, [0, 1], true)) {
+        if (!is_scalar($val) || !ctype_digit((string)$val) || !in_array((int)$val, [0, 1], true)) {
             return false; // Default to false if invalid
         }
 
@@ -147,9 +153,18 @@ class RequestValidator
      */
     public static function ensureSuccess(object $result, string $action): void
     {
-        // Check operation success and modification status
+        // Check required properties/methods exist
+        if (!isset($result->success) || !is_bool($result->success) || !is_callable([$result, 'isChanged'])) {
+            throw new RuntimeException("Invalid result object passed to ensureSuccess");
+        }
+
         if (!$result->success || !$result->isChanged()) {
-            $errorInfo = $result->error ? implode(' | ', $result->error) : 'No changes were made.';
+            $errorInfo = 'No changes were made.';
+
+            if (isset($result->error) && is_array($result->error)) {
+                $errorInfo = implode(' | ', $result->error);
+            }
+
             throw new RuntimeException("Failed to {$action}: {$errorInfo}");
         }
     }

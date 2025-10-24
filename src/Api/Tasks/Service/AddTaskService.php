@@ -50,7 +50,7 @@ class AddTaskService
      * @param Request $req Incoming request containing task data
      *
      * @return array{
-     *     task: array,
+     *     task: array<int|string, mixed>,
      *     totalPages: int
      * } Returns the added task data and total page count
      *
@@ -60,7 +60,11 @@ class AddTaskService
     public function execute(Request $req): array
     {
         $title = RequestValidator::getStringParam($req, 'title', 'Task title is required.');
-        $description = trim(strip_tags($req->body['description'] ?? '')); // optional
+        $description = ''; // optional
+        if (isset($req->body['description']) && is_string($req->body['description'])) {
+            $description = trim(strip_tags($req->body['description']));
+        }
+
         $userId = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
 
         // Add task to database
@@ -73,7 +77,7 @@ class AddTaskService
 
         // Return created task data and pagination info
         return [
-            'task' => $result->data,
+            'task' => (array) $result->data,
             'totalPages' => $totalPages,
         ];
     }

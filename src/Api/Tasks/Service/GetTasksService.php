@@ -49,7 +49,7 @@ class GetTasksService
      * @param Request $req Request object containing query parameters.
      *
      * @return array{
-     *     task: array,
+     *     task: array<int|string, mixed>,
      *     totalPages: int
      * } Array containing task data and total pages.
      *
@@ -69,7 +69,7 @@ class GetTasksService
         $totalPages = $paginator->calculateTotalPages(10);
 
         return [
-            'task' => $result->data,
+            'task' => (array) $result->data,
             'totalPages' => $totalPages,
         ];
     }

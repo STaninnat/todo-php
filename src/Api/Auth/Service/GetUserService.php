@@ -65,10 +65,18 @@ class GetUserService
             throw new RuntimeException("User not found.");
         }
 
+        $user = $result->data;
+        if (
+            !is_array($user) || !isset($user['username'], $user['email'])
+            || !is_string($user['username']) || !is_string($user['email'])
+        ) {
+            throw new RuntimeException("Invalid user data returned from getUserById.");
+        }
+
         // Return selected fields
         return [
-            'username' => $result->data['username'],
-            'email' => $result->data['email'],
+            'username' => $user['username'],
+            'email' => $user['email'],
         ];
     }
 }

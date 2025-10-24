@@ -52,7 +52,7 @@ class MarkDoneTaskService
      * @param Request $req Incoming request containing task ID and status
      *
      * @return array{
-     *     task: array,
+     *     task: array<int|string, mixed>,
      *     totalPages: int
      * } Returns updated task data and total page count
      *
@@ -80,7 +80,7 @@ class MarkDoneTaskService
         $totalPages = $paginator->calculateTotalPages(10);
 
         return [
-            'task' => $result->data,
+            'task' => (array) $result->data,
             'totalPages' => $totalPages,
         ];
     }

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Api\RouterApp;
+use App\Api\Request;
 use App\Api\Router;
+use App\Api\RouterApp;
 use App\DB\Database;
 use App\Utils\Logger;
 use App\Utils\SystemClock;
@@ -25,7 +26,7 @@ try {
 
     $app = new RouterApp($router, $logger, $database);
 
-    $router->addMiddleware(function ($request) use ($logger) {
+    $router->addMiddleware(function (Request $request) use ($logger) {
         $logger->info("=== Debug Middleware ===");
         $logger->info("Request Method: {$request->method}");
         $logger->info("Request Path: {$request->path}");
@@ -37,6 +38,7 @@ try {
     $app->dispatch();
 } catch (\Throwable $e) {
     if (isset($logger)) {
+        /** @var Logger $logger */
         $logger->error("Bootstrap error: " . $e->getMessage());
     }
 

@@ -82,7 +82,7 @@ class UserController
      * @param Request $req     HTTP request
      * @param bool    $forTest If true, returns array instead of sending JSON
      *
-     * @return array|null Response array for tests, or null in production
+     * @return array<string, mixed>|null Response array for tests, or null in production
      */
     public function deleteUser(Request $req, bool $forTest = false): ?array
     {
@@ -103,7 +103,7 @@ class UserController
      * @param Request $req     HTTP request
      * @param bool    $forTest If true, returns array instead of sending JSON
      *
-     * @return array|null Response array for tests, or null in production
+     * @return array<string, mixed>|null Response array for tests, or null in production
      */
     public function getUser(Request $req, bool $forTest = false): ?array
     {
@@ -126,7 +126,7 @@ class UserController
      * @param Request $req     HTTP request containing login credentials
      * @param bool    $forTest If true, returns array instead of sending JSON
      *
-     * @return array|null Response array for tests, or null in production
+     * @return array<string, mixed>|null Response array for tests, or null in production
      */
     public function signin(Request $req, bool $forTest = false): ?array
     {
@@ -146,7 +146,7 @@ class UserController
      * @param Request $req     HTTP request (unused)
      * @param bool    $forTest If true, returns array instead of sending JSON
      *
-     * @return array|null Response array for tests, or null in production
+     * @return array<string, mixed>|null Response array for tests, or null in production
      */
     public function signout(Request $req, bool $forTest = false): ?array
     {
@@ -166,7 +166,7 @@ class UserController
      * @param Request $req     HTTP request containing signup data
      * @param bool    $forTest If true, returns array instead of sending JSON
      *
-     * @return array|null Response array for tests, or null in production
+     * @return array<string, mixed>|null Response array for tests, or null in production
      */
     public function signup(Request $req, bool $forTest = false): ?array
     {
@@ -186,7 +186,7 @@ class UserController
      * @param Request $req     HTTP request containing updated user info
      * @param bool    $forTest If true, returns array instead of sending JSON
      *
-     * @return array|null Response array for tests, or null in production
+     * @return array<string, mixed>|null Response array for tests, or null in production
      */
     public function updateUser(Request $req, bool $forTest = false): ?array
     {

@@ -51,7 +51,7 @@ class UpdateTaskService
      * @param Request $req Request object containing task update data
      *
      * @return array{
-     *     task: array,
+     *     task: array<int|string, mixed>,
      *     totalPages: int
      * } Returns updated task data and pagination info
      *
@@ -61,7 +61,11 @@ class UpdateTaskService
     public function execute(Request $req): array
     {
         $title = RequestValidator::getStringParam($req, 'title', 'Task title is required.');
-        $description = trim(strip_tags($req->body['description'] ?? ''));   // optional
+        $description = ''; // optional
+        if (isset($req->body['description']) && is_string($req->body['description'])) {
+            $description = trim(strip_tags($req->body['description']));
+        }
+
         $id = RequestValidator::getIntParam($req, 'id', 'Task ID must be a numeric string.');
         $userId = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
         $isDone = RequestValidator::getBoolParam($req, 'is_done', 'Invalid status value.');
@@ -81,7 +85,7 @@ class UpdateTaskService
         $totalPages = $paginator->calculateTotalPages(10);
 
         return [
-            'task' => $result->data,
+            'task' => (array) $result->data,
             'totalPages' => $totalPages,
         ];
     }

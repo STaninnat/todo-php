@@ -22,16 +22,16 @@ class QueryResult
     // Data returned from the query, if any
     public mixed $data;
 
-    // Optional array of error information
+    /** @var array<string>|null Error details as array of strings, or null */
     public ?array $error;
 
     /**
      * Private constructor to enforce use of static factory methods
      *
-     * @param bool $success  Query success flag
-     * @param int $affected  Number of affected rows
-     * @param mixed $data    Query result data
-     * @param array|null $error Optional error details
+     * @param bool               $success   Query success flag
+     * @param int                $affected  Number of affected rows
+     * @param mixed              $data      Query result data
+     * @param array<string>|null $error     Optional error details
      */
     private function __construct(
         bool $success,
@@ -61,7 +61,7 @@ class QueryResult
     /**
      * Factory method for a failed query result
      *
-     * @param array|null $error Optional error details
+     * @param array<string>|null $error Optional error details
      * 
      * @return self
      */

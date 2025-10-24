@@ -18,7 +18,7 @@ use PDOStatement;
 class UserQueries
 {
     // PDO instance for database operations
-    private $pdo;
+    private PDO $pdo;
 
     /**
      * Constructor sets the PDO connection
@@ -37,9 +37,18 @@ class UserQueries
      * 
      * @return QueryResult
      */
-    private function failFromStmt(PDOStatement $stmt): QueryResult
+    private function failFromStmt(PDOStatement|false $stmt): QueryResult
     {
-        return QueryResult::fail($stmt->errorInfo());
+        $errorInfo = $stmt instanceof PDOStatement
+            ? $stmt->errorInfo()
+            : $this->pdo->errorInfo();
+
+        $errorStrings = [];
+        foreach ($errorInfo as $v) {
+            $errorStrings[] = is_scalar($v) || $v === null ? (string)$v : gettype($v);
+        }
+
+        return QueryResult::fail($errorStrings);
     }
 
     /**
@@ -55,7 +64,11 @@ class UserQueries
     public function createUser(string $id, string $username, string $email, string $pass): QueryResult
     {
         $query = "INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)";
+
         $stmt = $this->pdo->prepare($query);
+        if ($stmt === false) {
+            return $this->failFromStmt(false);
+        }
 
         if (!$stmt->execute([$id, $username, $email, $pass])) {
             return $this->failFromStmt($stmt);
@@ -74,16 +87,17 @@ class UserQueries
     public function getUserByName(string $username): QueryResult
     {
         $query = "SELECT * FROM users WHERE username = ? LIMIT 1";
+
         $stmt = $this->pdo->prepare($query);
+        if ($stmt === false) {
+            return $this->failFromStmt(false);
+        }
 
         if (!$stmt->execute([$username])) {
             return $this->failFromStmt($stmt);
         }
 
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user === false) {
-            $user = null;
-        }
+        $user = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
         return QueryResult::ok($user, $user ? 1 : 0);
     }
@@ -98,16 +112,17 @@ class UserQueries
     public function getUserByID(string $id): QueryResult
     {
         $query = "SELECT * FROM users WHERE id = ? LIMIT 1";
+
         $stmt = $this->pdo->prepare($query);
+        if ($stmt === false) {
+            return $this->failFromStmt(false);
+        }
 
         if (!$stmt->execute([$id])) {
             return $this->failFromStmt($stmt);
         }
 
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user === false) {
-            $user = null;
-        }
+        $user = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
         return QueryResult::ok($user, $user ? 1 : 0);
     }
@@ -122,17 +137,18 @@ class UserQueries
      */
     public function checkUserExists(string $username, string $email): QueryResult
     {
-        $query = "SELECT EXISTS(
-            SELECT 1 FROM users WHERE username = ? OR email = ?
-        )";
+        $query = "SELECT EXISTS(SELECT 1 FROM users WHERE username = ? OR email = ?)";
 
         $stmt = $this->pdo->prepare($query);
+        if ($stmt === false) {
+            return $this->failFromStmt(false);
+        }
 
         if (!$stmt->execute([$username, $email])) {
             return $this->failFromStmt($stmt);
         }
 
-        $exists = (bool)$stmt->fetchColumn();
+        $exists = (bool) $stmt->fetchColumn();
         return QueryResult::ok($exists, $exists ? 1 : 0);
     }
 
@@ -148,7 +164,11 @@ class UserQueries
     public function updateUser(string $id, string $username, string $email): QueryResult
     {
         $query = "UPDATE users SET username = ?, email = ? WHERE id = ?";
+
         $stmt = $this->pdo->prepare($query);
+        if ($stmt === false) {
+            return $this->failFromStmt(false);
+        }
 
         if (!$stmt->execute([$username, $email, $id])) {
             return $this->failFromStmt($stmt);
@@ -167,7 +187,11 @@ class UserQueries
     public function deleteUser(string $id): QueryResult
     {
         $query = "DELETE FROM users WHERE id = ?";
+
         $stmt = $this->pdo->prepare($query);
+        if ($stmt === false) {
+            return $this->failFromStmt(false);
+        }
 
         if (!$stmt->execute([$id])) {
             return $this->failFromStmt($stmt);

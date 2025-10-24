@@ -48,7 +48,7 @@ class UpdateUserService
      * @throws InvalidArgumentException If required fields are missing or invalid
      * @throws RuntimeException         If the username/email already exists or database update fails
      *
-     * @return array Updated user data containing 'username' and 'email'
+     * @return array<string, string> Updated user data containing 'username' and 'email'
      */
     public function execute(Request $req): array
     {
@@ -68,10 +68,16 @@ class UpdateUserService
         $result = $this->userQueries->updateUser($userId, $username, $email);
         RequestValidator::ensureSuccess($result, 'update user');
 
+        // Cast data to array to satisfy PHPStan
+        $data = (array) $result->data;
+        if (!isset($data['username'], $data['email']) || !is_string($data['username']) || !is_string($data['email'])) {
+            throw new RuntimeException('Invalid data returned from updateUser.');
+        }
+
         // Return the updated user info for confirmation
         return [
-            'username' => $result->data['username'],
-            'email' => $result->data['email'],
+            'username' => $data['username'],
+            'email' => $data['email'],
         ];
     }
 }

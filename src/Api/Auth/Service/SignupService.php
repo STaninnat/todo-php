@@ -95,6 +95,10 @@ class SignupService
 
         // Retrieve created user and issue JWT access token
         $user = $result->data;
+        if (!is_array($user) || !isset($user['id']) || !is_string($user['id'])) {
+            throw new RuntimeException('Invalid user data returned from createUser.');
+        }
+
         $token = $this->jwt->create(['id' => $user['id']]);
 
         // Store access token in secure cookie

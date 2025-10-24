@@ -119,7 +119,7 @@ class RouterApp
     private function registerMiddlewares(): void
     {
         // Global middleware
-        $this->router->addMiddleware(function ($req) {
+        $this->router->addMiddleware(function (Request $req) {
             try {
                 $this->authMiddleware->refreshJwt($req);
                 $this->logger->info("JWT refresh executed for {$req->method} {$req->path}");
@@ -141,7 +141,7 @@ class RouterApp
     private function registerRoutes(): void
     {
         $authMiddlewareFn = [
-            function ($req) {
+            function (Request  $req) {
                 try {
                     $this->authMiddleware->requireAuth($req);
                     $this->logger->info("Auth passed for {$req->method} {$req->path}");
@@ -183,15 +183,15 @@ class RouterApp
      * - Logs each route registration and request handling
      * - Wraps route handlers in try/catch for robust error handling
      *
-     * @param array  $routes     Array of route definitions [method, path, handler, middlewares]
-     * @param object $controller Controller instance handling the route
+     * @param array<int, array{0:string,1:string,2:string,3:array<int, callable>}>  $routes     Array of route definitions [method, path, handler, middlewares]
+     * @param object                                                                $controller Controller instance handling the route
      *
      * @return void
      */
     private function registerRouteBatch(array $routes, object $controller): void
     {
         // Determine data source for request (GET uses query, others use body)
-        $getRequestData = fn($req) => match ($req->method) {
+        $getRequestData = fn(Request $req) => match ($req->method) {
             'GET' => $req->query,
             default => $req->body
         };
@@ -200,7 +200,7 @@ class RouterApp
             $fullPath = $this->apiPrefix . $path;
 
             // Register route handler with middleware
-            $this->router->register($method, $fullPath, function ($req) use ($controller, $handler, $fullPath, $getRequestData) {
+            $this->router->register($method, $fullPath, function (Request $req) use ($controller, $handler, $fullPath, $getRequestData) {
                 try {
                     $this->logger->info("Route called: $fullPath -> " . get_class($controller) . "::$handler");
 
@@ -226,16 +226,28 @@ class RouterApp
      * @param Request|null $request Optional request to dispatch (default: global)
      * @param bool         $forTest When true, prevents immediate output (for testing)
      *
-     * @return array|null JSON response array or null
+     * @return array<string, mixed>|null JSON response array or null
      */
     public function dispatch(?Request $request = null, bool $forTest = false): ?array
     {
         try {
-            return $this->router->dispatch($request, $forTest);
+            /** @var array<string, mixed>|null $data */
+            $data = $this->router->dispatch($request, $forTest);
+
+            if ($data === null) {
+                return null;
+            }
+
+            // Ensure all keys are strings for PHPStan
+            return array_map(fn($v) => $v, $data);
         } catch (\Throwable $e) {
             $this->logger->error("Unhandled exception during dispatch: " . $e->getMessage());
-            return JsonResponder::error('Internal server error', 'error', 500)
+
+            /** @var array<string, mixed> $errorResponse */
+            $errorResponse = JsonResponder::error('Internal server error', 'error', 500)
                 ->send(false, $forTest);
+
+            return $errorResponse;
         }
     }
 }

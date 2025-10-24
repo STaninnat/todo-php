@@ -10,29 +10,27 @@
     "phpstan/phpstan": "^2.1"
   },
   "scripts": {
-    "build": "docker compose build",
-    "up": "docker compose up -d",
-    "rebuild": "docker compose up -d --build",
-    "start": "docker compose start",
-    "down": "docker compose down",
-    "down:clean": "docker compose down -v --rmi all",
-    "build:test": "docker compose -f docker-compose.test.yml build",
-    "up:test": "docker compose -f docker-compose.test.yml up -d",
-    "rebuild:test": "docker compose -f docker-compose.test.yml up -d --build",
-    "down:test": "docker compose -f docker-compose.test.yml down",
-    "down:test:clean": "docker compose -f docker-compose.test.yml down -v",
-    "test": [
-      "@test:unit",
-      "@test:integration"
+    "lint": "find src tests -name '*.php' -print0 | xargs -0 php -l",
+    "phpstan": "phpstan analyse --configuration=phpstan.neon",
+    "check:hard": [
+      "@lint",
+      "@phpstan"
     ],
-    "test:unit": "phpunit -c phpunit.unit.xml.dist",
-    "test:integration": "docker compose -f docker-compose.test.yml exec php-fpm phpunit -c phpunit.integration.xml.dist",
-    "test:docker": [
-      "@test:docker:unit",
-      "@test:docker:integration"
-    ],
-    "test:docker:unit": "docker compose exec php-fpm phpunit -c phpunit.unit.xml.dist",
-    "test:docker:integration": "docker compose -f docker-compose.test.yml exec php-fpm phpunit -c phpunit.integration.xml.dist"
+    "build": "scripts/env.sh build",
+    "up": "scripts/env.sh up",
+    "rebuild": "scripts/env.sh rebuild",
+    "down": "scripts/env.sh down",
+    "down:clean": "scripts/env.sh down:clean",
+    "build:test": "scripts/env.sh build test",
+    "up:test": "scripts/env.sh up test",
+    "rebuild:test": "scripts/env.sh rebuild test",
+    "down:test": "scripts/env.sh down test",
+    "down:test:clean": "scripts/env.sh down:clean test",
+    "test": "scripts/test.sh",
+    "test:unit": "scripts/test.sh unit",
+    "test:integration": "scripts/test.sh integration",
+    "test:integration:fast": "scripts/test.sh integration --fast",
+    "clean": "scripts/clean.sh"
   },
   "autoload": {
     "psr-4": {

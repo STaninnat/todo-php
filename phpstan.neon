@@ -1,0 +1,17 @@
+includes:
+    - vendor/phpstan/phpstan/conf/bleedingEdge.neon
+
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - tests/Unit/Api/TypeError/*
+        - tests/Unit/Api/Auth/Controller/TypeError/*
+        - tests/Unit/Api/Auth/Service/TypeError/*
+        - tests/Unit/Api/Middlewares/TypeError/*
+        - tests/Unit/Api/Tasks/Controller/TypeError/*
+        - tests/Unit/Api/Tasks/Service/TypeError/*
+        - tests/Unit/DB/TypeError/*
+        - tests/Unit/Utils/TypeError/*

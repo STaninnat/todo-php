@@ -64,7 +64,6 @@ class UserControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
         $this->controller->deleteUser('invalid_type', true);
     }
 
@@ -77,7 +76,6 @@ class UserControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
         $this->controller->getUser('invalid_type', true);
     }
 
@@ -90,7 +88,6 @@ class UserControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
         $this->controller->signin('invalid_type', true);
     }
 
@@ -103,7 +100,6 @@ class UserControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
         $this->controller->signout('invalid_type');
     }
 
@@ -116,7 +112,6 @@ class UserControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
         $this->controller->signup('invalid_type', true);
     }
 
@@ -129,7 +124,6 @@ class UserControllerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        /** @phpstan-ignore-next-line */
         $this->controller->updateUser('invalid_type', true);
     }
 }

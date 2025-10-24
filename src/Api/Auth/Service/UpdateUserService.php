@@ -10,14 +10,26 @@ use App\Utils\RequestValidator;
 use RuntimeException;
 use InvalidArgumentException;
 
+/**
+ * Class UpdateUserService
+ *
+ * Handles user information update operations.
+ *
+ * - Validates and sanitizes input parameters (`user_id`, `username`, `email`)
+ * - Checks for duplicate username or email
+ * - Updates user record in the database and returns updated information
+ *
+ * @package App\Api\Auth\Service
+ */
 class UpdateUserService
 {
+    /** @var UserQueries Database query handler for user-related operations */
     private UserQueries $userQueries;
 
     /**
      * Constructor
      *
-     * @param UserQueries $userQueries Database query handler for user operations.
+     * @param UserQueries $userQueries Database query handler for user operations
      */
     public function __construct(UserQueries $userQueries)
     {
@@ -25,14 +37,18 @@ class UpdateUserService
     }
 
     /**
-     * Update user information.
+     * Execute user update process.
      *
-     * @param Request $req Request object containing input data.
+     * - Validates request parameters (`user_id`, `username`, `email`)
+     * - Checks if username or email already exists
+     * - Updates user data in the database
      *
-     * @throws InvalidArgumentException If required fields are missing or invalid.
-     * @throws RuntimeException         If database operations fail.
+     * @param Request $req Request object containing input data
      *
-     * @return array Updated user data with 'username' and 'email'.
+     * @throws InvalidArgumentException If required fields are missing or invalid
+     * @throws RuntimeException         If the username/email already exists or database update fails
+     *
+     * @return array<string, string> Updated user data containing 'username' and 'email'
      */
     public function execute(Request $req): array
     {
@@ -40,7 +56,7 @@ class UpdateUserService
         $username = RequestValidator::getStringParam($req, 'username', 'Username is required.');
         $email    = RequestValidator::getEmailParam($req, 'email', 'Valid email is required.');
 
-        // Check for existing username/email
+        // Check for existing username or email to prevent duplication
         $existsResult = $this->userQueries->checkUserExists($username, $email);
         RequestValidator::ensureSuccess($existsResult, 'check user existence');
 
@@ -48,13 +64,20 @@ class UpdateUserService
             throw new RuntimeException("Username or email already exists.");
         }
 
-        // Update user
+        // Perform user update operation
         $result = $this->userQueries->updateUser($userId, $username, $email);
         RequestValidator::ensureSuccess($result, 'update user');
 
+        // Cast data to array to satisfy PHPStan
+        $data = (array) $result->data;
+        if (!isset($data['username'], $data['email']) || !is_string($data['username']) || !is_string($data['email'])) {
+            throw new RuntimeException('Invalid data returned from updateUser.');
+        }
+
+        // Return the updated user info for confirmation
         return [
-            'username' => $result->data['username'],
-            'email' => $result->data['email'],
+            'username' => $data['username'],
+            'email' => $data['email'],
         ];
     }
 }

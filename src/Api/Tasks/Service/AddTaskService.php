@@ -11,16 +11,29 @@ use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
+/**
+ * Class AddTaskService
+ *
+ * Handles the logic for adding a new task to the system.
+ *
+ * - Validates required input fields (`title`, `user_id`)
+ * - Adds task record into the database
+ * - Computes pagination data via {@see TaskPaginator}
+ *
+ * @package App\Api\Tasks\Service
+ */
 class AddTaskService
 {
+    /** @var TaskQueries Database handler for task operations */
     private TaskQueries $taskQueries;
 
     /**
      * Constructor
      *
-     * Injects the TaskQueries dependency for database operations.
+     * Initializes the service with a {@see TaskQueries} instance for
+     * performing database operations.
      *
-     * @param TaskQueries $taskQueries Service to interact with task database.
+     * @param TaskQueries $taskQueries Service to interact with task database
      */
     public function __construct(TaskQueries $taskQueries)
     {
@@ -28,19 +41,30 @@ class AddTaskService
     }
 
     /**
-     * Execute the task addition process.
+     * Execute the process of adding a new task.
      *
-     * @param Request $req Incoming request containing task data.
+     * - Validates required parameters (`title`, `user_id`)
+     * - Adds a task record to the database
+     * - Returns task data and updated pagination info
      *
-     * @return array Array containing the added task data and total pages.
+     * @param Request $req Incoming request containing task data
      *
-     * @throws InvalidArgumentException If required input fields are missing.
-     * @throws RuntimeException If the task could not be added to the database.
+     * @return array{
+     *     task: array<int|string, mixed>,
+     *     totalPages: int
+     * } Returns the added task data and total page count
+     *
+     * @throws InvalidArgumentException If required fields are missing or invalid
+     * @throws RuntimeException If the task insertion fails in the database
      */
     public function execute(Request $req): array
     {
         $title = RequestValidator::getStringParam($req, 'title', 'Task title is required.');
-        $description = trim(strip_tags($req->body['description'] ?? '')); // optional
+        $description = ''; // optional
+        if (isset($req->body['description']) && is_string($req->body['description'])) {
+            $description = trim(strip_tags($req->body['description']));
+        }
+
         $userId = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
 
         // Add task to database
@@ -51,8 +75,9 @@ class AddTaskService
         $paginator = new TaskPaginator($this->taskQueries);
         $totalPages = $paginator->calculateTotalPages(10);
 
+        // Return created task data and pagination info
         return [
-            'task' => $result->data,
+            'task' => (array) $result->data,
             'totalPages' => $totalPages,
         ];
     }

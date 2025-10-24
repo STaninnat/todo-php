@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Utils;
 
 /**
- * JsonResponder
+ * Class JsonResponder
  *
  * A hybrid fluent JSON responder for API responses.
  * Provides:
@@ -17,13 +17,18 @@ namespace App\Utils;
  * Example usage:
  *   JsonResponder::success("Operation completed")->withData($data)->send();
  *   JsonResponder::quickError("Something went wrong");
+ * 
+ * @package App\Utils
  */
 class JsonResponder
 {
     private bool $success;
     private string $message;
     private string $type;
+
+    /** @var array<string, mixed>|null */
     private ?array $data = null;
+
     private ?int $totalPages = null;
     private int $httpStatus;
 
@@ -112,7 +117,7 @@ class JsonResponder
      * @param bool $exitAfter Whether to exit immediately after sending the response.
      * @param bool $forTest Whether the response is for testing.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public static function quickSuccess(string $message, bool $exitAfter = true, bool $forTest = false): array
     {
@@ -126,7 +131,7 @@ class JsonResponder
      * @param bool $exitAfter Whether to exit immediately after sending the response.
      * @param bool $forTest Whether the response is for testing.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public static function quickError(string $message, bool $exitAfter = true, bool $forTest = false): array
     {
@@ -140,7 +145,7 @@ class JsonResponder
      * @param bool $exitAfter Whether to exit immediately after sending the response.
      * @param bool $forTest Whether the response is for testing.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public static function quickInfo(string $message, bool $exitAfter = true, bool $forTest = false): array
     {
@@ -154,7 +159,7 @@ class JsonResponder
     /**
      * Set the response data.
      *
-     * @param array $data The data to include in the response.
+     * @param array<string, mixed> $data The data to include in the response.
      *
      * @return self
      */
@@ -167,7 +172,7 @@ class JsonResponder
     /**
      * Alias for withData().
      *
-     * @param array $data The data to include in the response.
+     * @param array<string, mixed> $data The data to include in the response.
      *
      * @return self
      */
@@ -226,7 +231,7 @@ class JsonResponder
      *
      * Includes optional data and totalPages if set
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -254,10 +259,10 @@ class JsonResponder
     /**
      * Output JSON response, optionally exit, and optionally suppress output for testing
      *
-     * @param bool $exitAfter If true, calls exit after sending (ignored in test mode)
-     * @param bool $forTest   If true, suppresses echo and returns response array for testing
+     * @param bool $exitAfter         If true, calls exit after sending (ignored in test mode)
+     * @param bool $forTest           If true, suppresses echo and returns response array for testing
      * 
-     * @return array          The response array (useful for testing)
+     * @return array<string, mixed>   The response array (useful for testing)
      */
     public function send(bool $exitAfter = true, bool $forTest = false): array
     {

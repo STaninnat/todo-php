@@ -11,16 +11,29 @@ use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
+/**
+ * Class UpdateTaskService
+ *
+ * Handles the logic for updating an existing task.
+ *
+ * - Validates required input fields (`id`, `title`, `user_id`)
+ * - Ensures the task exists before updating
+ * - Updates task record in the database
+ * - Computes pagination data via {@see TaskPaginator}
+ *
+ * @package App\Api\Tasks\Service
+ */
 class UpdateTaskService
 {
+    /** @var TaskQueries Database handler for task operations */
     private TaskQueries $taskQueries;
 
     /**
      * Constructor
      *
-     * Injects the TaskQueries dependency for database operations.
+     * Injects {@see TaskQueries} dependency for database operations.
      *
-     * @param TaskQueries $taskQueries Service to interact with task database.
+     * @param TaskQueries $taskQueries Service to interact with task database
      */
     public function __construct(TaskQueries $taskQueries)
     {
@@ -28,19 +41,31 @@ class UpdateTaskService
     }
 
     /**
-     * Execute the task update process.
+     * Execute the process of updating a task.
      *
-     * @param Request $req Request object containing task update data.
+     * - Validates required parameters (`id`, `title`, `user_id`, `is_done`)
+     * - Checks that the task exists for the given user
+     * - Updates the task record in the database
+     * - Returns updated task data and total page count
      *
-     * @return array Array containing updated task data and total pages.
+     * @param Request $req Request object containing task update data
      *
-     * @throws InvalidArgumentException If required input fields are missing or invalid.
-     * @throws RuntimeException If the task could not be found or updated.
+     * @return array{
+     *     task: array<int|string, mixed>,
+     *     totalPages: int
+     * } Returns updated task data and pagination info
+     *
+     * @throws InvalidArgumentException If required fields are missing or invalid
+     * @throws RuntimeException If the task could not be found or updated
      */
     public function execute(Request $req): array
     {
         $title = RequestValidator::getStringParam($req, 'title', 'Task title is required.');
-        $description = trim(strip_tags($req->body['description'] ?? ''));   // optional
+        $description = ''; // optional
+        if (isset($req->body['description']) && is_string($req->body['description'])) {
+            $description = trim(strip_tags($req->body['description']));
+        }
+
         $id = RequestValidator::getIntParam($req, 'id', 'Task ID must be a numeric string.');
         $userId = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
         $isDone = RequestValidator::getBoolParam($req, 'is_done', 'Invalid status value.');
@@ -60,7 +85,7 @@ class UpdateTaskService
         $totalPages = $paginator->calculateTotalPages(10);
 
         return [
-            'task' => $result->data,
+            'task' => (array) $result->data,
             'totalPages' => $totalPages,
         ];
     }

@@ -40,7 +40,6 @@ class LoggerTypeErrTest extends TestCase
         $this->expectException(TypeError::class);
 
         // Act: call method with wrong type (string instead of int)
-        /** @phpstan-ignore-next-line */
         $logger->setMaxDays("not-a-number");
     }
 
@@ -62,7 +61,6 @@ class LoggerTypeErrTest extends TestCase
         $this->expectException(TypeError::class);
 
         // Act: call setDebug() with int instead of bool
-        /** @phpstan-ignore-next-line */
         $logger->setDebug(123);
     }
 
@@ -77,7 +75,6 @@ class LoggerTypeErrTest extends TestCase
         $this->expectException(TypeError::class);
 
         // Act: pass string instead of FileSystemInterface
-        /** @phpstan-ignore-next-line */
         new Logger('/tmp/logs', "not-an-fs");
     }
 }

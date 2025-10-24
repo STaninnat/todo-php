@@ -10,9 +10,11 @@ use RuntimeException;
 use Throwable;
 
 /**
- * JwtService
+ * Class JwtService
  *
  * Service class for handling JWT creation, verification, and refresh.
+ * 
+ * @package App\Utils
  */
 class JwtService
 {
@@ -38,10 +40,13 @@ class JwtService
         int $refreshThreshold = 600
     ) {
         // Use provided secret or fallback to environment variable
-        $this->secret = $secret ?? ($_ENV['JWT_SECRET'] ?? '');
+        /** @var string $envSecret */
+        $envSecret = $_ENV['JWT_SECRET'] ?? '';
+        $this->secret = $secret ?? $envSecret;
         if ($this->secret === '') {
             throw new RuntimeException('JWT_SECRET is not set');
         }
+
         $this->algo = $algo;
         $this->expire = $expire;
         $this->refreshThreshold = $refreshThreshold;
@@ -50,8 +55,8 @@ class JwtService
     /**
      * Create a new JWT with provided claims
      *
-     * @param array    $claims Custom payload claims
-     * @param int|null $now    Current timestamp, optional (for testing)
+     * @param array<string, mixed>    $claims Custom payload claims
+     * @param int|null                $now    Current timestamp, optional (for testing)
      *
      * @return string Encoded JWT token
      */
@@ -75,14 +80,15 @@ class JwtService
      *
      * @param string $token JWT token
      *
-     * @return array Decoded payload
+     * @return array<string, mixed> Decoded payload
      */
     public function decodeStrict(string $token): array
     {
         // Decode JWT and cast stdClass to array
-        $decoded = JWT::decode($token, new Key($this->secret, $this->algo));
+        /** @var array<string, mixed> $decodedArr */
+        $decodedArr = (array) JWT::decode($token, new Key($this->secret, $this->algo));
 
-        return (array) $decoded;
+        return $decodedArr;
     }
 
     /**
@@ -90,7 +96,7 @@ class JwtService
      *
      * @param string|null $token JWT token
      *
-     * @return array|null Decoded payload or null if token invalid
+     * @return array<string, mixed>|null Decoded payload or null if token invalid
      */
     public function verify(?string $token): ?array
     {
@@ -108,15 +114,29 @@ class JwtService
     /**
      * Determine if token should be refreshed based on threshold
      *
-     * @param array    $payload Decoded JWT payload
-     * @param int|null $now     Current timestamp, optional
+     * @param array<string, mixed> $payload Decoded JWT payload
+     * @param int|null             $now     Current timestamp, optional
      *
      * @return bool True if token is close to expiration
      */
     public function shouldRefresh(array $payload, ?int $now = null): bool
     {
-        $exp = $payload['exp'] ?? 0;    // Get expiration from payload
-        $now = $now ?? time();          // Use provided time or current time
+        $exp = 0;
+
+        // Get expiration from payload
+        if (isset($payload['exp'])) {
+            $val = $payload['exp'];
+
+            if (is_int($val)) {
+                $exp = $val;
+            } elseif (is_numeric($val)) {
+                $exp = (int)$val;
+            } else {
+                $exp = 0;
+            }
+        }
+
+        $now = $now ?? time();  // Use provided time or current time
 
         // Return true if token is within refresh threshold
         return ($exp - $now) < $this->refreshThreshold;
@@ -125,8 +145,8 @@ class JwtService
     /**
      * Refresh a JWT by creating a new token with the same claims
      *
-     * @param array    $payload Decoded payload to refresh
-     * @param int|null $now     Current timestamp, optional
+     * @param array<string, mixed>    $payload Decoded payload to refresh
+     * @param int|null                $now     Current timestamp, optional
      *
      * @return string New JWT token
      */

@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Utils;
 
 /**
+ * Class CookieManager
+ * 
  * Manages cookies related to authentication, such as access tokens.
  * 
  * This class provides methods to get, set, and clear the 'access_token' cookie.
  * It can work with any implementation of CookieStorageInterface, defaulting to NativeCookieStorage.
+ * 
+ * @package App\Utils
  */
 class CookieManager
 {

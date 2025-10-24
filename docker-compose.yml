@@ -5,7 +5,6 @@ services:
     volumes:
       - ./src:/app/src
       - ./public:/app/public
-      - ./vendor:/app/vendor
     environment:
       DB_HOST: ${DB_HOST}
       DB_NAME: ${DB_NAME}
@@ -32,12 +31,12 @@ services:
       - app_network
 
   db:
-    image: bitnami/mysql:8.0
+    image: mysql:8.0
     container_name: mysql_db
     ports:
       - "${DB_PORT:-3306}:3306"
     volumes:
-      - db_data:/bitnami/mysql
+      - db_data:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-tododb}

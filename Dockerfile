@@ -1,15 +1,18 @@
-FROM php:8.2-fpm-alpine3.22
+FROM php:8.3-fpm-alpine3.22
 
 # Upgrade all packages to fix vulnerabilities
 RUN apk update && apk upgrade --no-cache \
-    && apk add --no-cache mariadb-connector-c-dev \
+    && apk add --no-cache mariadb-connector-c-dev bash git unzip \
     && docker-php-ext-install pdo pdo_mysql \
-    && apk add --no-cache bash
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /app
 
+COPY composer.json composer.lock ./
+
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
 COPY ./src ./src
 COPY ./public ./public
-COPY ./vendor ./vendor
 
 WORKDIR /app/public

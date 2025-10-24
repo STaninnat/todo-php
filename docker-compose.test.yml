@@ -1,37 +1,42 @@
 services:
   php-fpm:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     container_name: php_fpm_test
     env_file:
       - .env.test
     volumes:
       - ./src:/app/src
       - ./public:/app/public
-      - ./vendor:/app/vendor
+      - ./tests:/app/tests
+      - ./phpunit.integration.xml.dist:/app/phpunit.integration.xml.dist
+      - ./phpunit.unit.xml.dist:/app/phpunit.unit.xml.dist
+      - ./phpunit.xml.dist:/app/phpunit.xml.dist
     environment:
       APP_ENV: ${APP_ENV:-testing}
       APP_DEBUG: ${APP_DEBUG:-true}
     depends_on:
       - db_test
     networks:
-      - app_network
+      - app_test_network
     profiles: ["test"]
 
   db_test:
-    image: bitnami/mysql:8.0
+    image: mysql:8.0
     container_name: mysql_db_test
     env_file:
       - .env.test
     ports:
       - "3307:3306"
     volumes:
-      - db_test_data:/bitnami/mysql
+      - db_test_data:/var/lib/mysql
     networks:
-      - app_network
+      - app_test_network
     profiles: ["test"]
 
 volumes:
   db_test_data:
 
 networks:
-  app_network:
+  app_test_network:

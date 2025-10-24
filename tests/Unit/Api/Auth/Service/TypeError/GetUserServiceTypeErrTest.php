@@ -14,17 +14,47 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use TypeError;
 
+/**
+ * Class GetUserServiceTypeErrTest
+ *
+ * Unit tests for GetUserService focusing on type-safety
+ * and error-handling scenarios.
+ *
+ * Covers:
+ * - Passing invalid types to execute()
+ * - Invalid or missing user_id
+ * - Failures in database query or success flag
+ * - Valid successful data retrieval
+ *
+ * @package Tests\Unit\Api\Auth\Service\TypeError
+ */
 class GetUserServiceTypeErrTest extends TestCase
 {
+    /** @var GetUserService Service under test */
     private GetUserService $service;
+
+    /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject Mocked UserQueries dependency */
     private UserQueries $userQueries;
 
+    /**
+     * Setup the mocked dependencies and instantiate the service.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->userQueries = $this->createMock(UserQueries::class);
         $this->service = new GetUserService($this->userQueries);
     }
 
+    /**
+     * Provides invalid argument types for execute() method.
+     *
+     * Each entry simulates calling execute() with a type
+     * that is not an instance of Request.
+     *
+     * @return array<string, array{0:mixed}>
+     */
     public static function invalidExecuteArgsProvider(): array
     {
         return [
@@ -35,20 +65,37 @@ class GetUserServiceTypeErrTest extends TestCase
         ];
     }
 
+    /**
+     * Test that execute() throws TypeError when argument is not a Request instance.
+     *
+     * @param mixed $invalidArg Invalid argument passed to execute().
+     *
+     * @return void
+     */
     #[DataProvider('invalidExecuteArgsProvider')]
     public function testExecuteThrowsTypeErrorWhenNotRequest(mixed $invalidArg): void
     {
         $this->expectException(TypeError::class);
-        /** @phpstan-ignore-next-line deliberately wrong type */
+
+        /** @phpstan-ignore-next-line Deliberately using wrong type to trigger TypeError */
         $this->service->execute($invalidArg);
     }
 
+    /**
+     * Provides invalid Request instances with missing or invalid user_id.
+     *
+     * Each case returns a callable that constructs an invalid Request.
+     *
+     * @return array<string, array{0:callable}>
+     */
     public static function invalidUserIdProvider(): array
     {
         return [
+            // Case where user_id is missing
             'user_id missing' => [
                 fn() => new Request()
             ],
+            // Case where user_id exists but is null
             'user_id null' => [
                 function () {
                     $req = new Request();
@@ -56,6 +103,7 @@ class GetUserServiceTypeErrTest extends TestCase
                     return $req;
                 }
             ],
+            // Case where user_id is empty string
             'user_id empty string' => [
                 function () {
                     $req = new Request();
@@ -66,6 +114,14 @@ class GetUserServiceTypeErrTest extends TestCase
         ];
     }
 
+    /**
+     * Test that execute() throws InvalidArgumentException
+     * when user_id is missing or invalid.
+     *
+     * @param callable $requestFactory Factory that returns a malformed Request.
+     *
+     * @return void
+     */
     #[DataProvider('invalidUserIdProvider')]
     public function testExecuteThrowsInvalidArgumentExceptionWhenUserIdInvalid(callable $requestFactory): void
     {
@@ -74,16 +130,26 @@ class GetUserServiceTypeErrTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test that execute() throws RuntimeException when QueryResult success flag is false.
+     *
+     * Simulates a situation where the query executes but the result
+     * is marked as unsuccessful manually.
+     *
+     * @return void
+     */
     public function testExecuteThrowsRuntimeExceptionWhenEnsureSuccessFails(): void
     {
         $req = new Request();
         $req->params['user_id'] = '123';
 
+        // Simulate a result that looks OK but marked as failed
         $result = QueryResult::ok(['username' => 'u', 'email' => 'e'], 1);
-        $result->success = false; // force fail
+        $result->success = false; // Force failure manually
 
+        // Mock getUserById() to return failed QueryResult
         $this->userQueries
-            /** @phpstan-ignore-next-line */
+            /** @phpstan-ignore-next-line Simulated return type */
             ->method('getUserById')
             ->willReturn($result);
 
@@ -93,15 +159,21 @@ class GetUserServiceTypeErrTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test that execute() throws RuntimeException when no user is found.
+     *
+     * @return void
+     */
     public function testExecuteThrowsRuntimeExceptionWhenUserNotFound(): void
     {
         $req = new Request();
         $req->params['user_id'] = '123';
 
+        // Simulate a valid query but no rows found
         $result = QueryResult::ok(null, 0);
 
         $this->userQueries
-            /** @phpstan-ignore-next-line */
+            /** @phpstan-ignore-next-line Mocked method return */
             ->method('getUserById')
             ->willReturn($result);
 
@@ -111,23 +183,30 @@ class GetUserServiceTypeErrTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test that execute() returns user data array when successful.
+     *
+     * @return void
+     */
     public function testExecuteReturnsUserArrayOnSuccess(): void
     {
         $req = new Request();
         $req->params['user_id'] = '123';
 
+        // Simulate successful query result
         $result = QueryResult::ok(
             ['username' => 'john', 'email' => 'john@example.com'],
             1
         );
 
         $this->userQueries
-            /** @phpstan-ignore-next-line */
+            /** @phpstan-ignore-next-line Mocked method return */
             ->method('getUserById')
             ->willReturn($result);
 
         $output = $this->service->execute($req);
 
+        // Assert the returned array matches expected user data
         $this->assertSame(
             ['username' => 'john', 'email' => 'john@example.com'],
             $output

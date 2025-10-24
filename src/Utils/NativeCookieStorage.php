@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace App\Utils;
 
 /**
+ * Class NativeCookieStorage
+ * 
  * Native implementation of CookieStorageInterface.
  * 
  * This class uses PHP's native $_COOKIE superglobal to retrieve cookie values.
+ * 
+ * @package App\Utils
  */
 class NativeCookieStorage implements CookieStorageInterface
 {
@@ -19,6 +23,16 @@ class NativeCookieStorage implements CookieStorageInterface
      */
     public function get(string $name): ?string
     {
-        return $_COOKIE[$name] ?? null;
+        $val = $_COOKIE[$name] ?? null;
+
+        if ($val === null) {
+            return null;
+        }
+
+        if (!is_string($val)) {
+            return null;
+        }
+
+        return $val;
     }
 }

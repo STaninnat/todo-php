@@ -11,16 +11,32 @@ use App\Utils\RequestValidator;
 use RuntimeException;
 use InvalidArgumentException;
 
+/**
+ * Class DeleteUserService
+ *
+ * Service responsible for handling user deletion logic.
+ *
+ * - Validates input data (requires `user_id`)
+ * - Performs database deletion through {@see UserQueries}
+ * - Clears authentication cookies upon successful removal
+ *
+ * @package App\Api\Auth\Service
+ */
 class DeleteUserService
 {
+    /** @var UserQueries Database query handler for user-related operations */
     private UserQueries $userQueries;
+
+    /** @var CookieManager Utility for managing authentication cookies */
     private CookieManager $cookieManager;
 
     /**
      * Constructor
      *
-     * @param UserQueries   $userQueries   Database query handler for user operations.
-     * @param CookieManager $cookieManager Utility for managing authentication cookies.
+     * Initializes dependencies required for deleting users.
+     *
+     * @param UserQueries   $userQueries   Database query handler for user operations
+     * @param CookieManager $cookieManager Utility for managing authentication cookies
      */
     public function __construct(UserQueries $userQueries, CookieManager $cookieManager)
     {
@@ -28,13 +44,18 @@ class DeleteUserService
         $this->cookieManager = $cookieManager;
     }
 
+
     /**
-     * Execute the deletion of a user.
+     * Execute user deletion process.
      *
-     * @param Request $req Request object containing input data.
+     * - Validates `user_id` parameter from request
+     * - Deletes user record from the database
+     * - Ensures operation success and clears authentication token
      *
-     * @throws InvalidArgumentException If user_id is missing or empty.
-     * @throws RuntimeException         If the database operation fails.
+     * @param Request $req Request object containing input data
+     *
+     * @throws InvalidArgumentException If `user_id` is missing or invalid
+     * @throws RuntimeException         If the deletion operation fails
      *
      * @return void
      */

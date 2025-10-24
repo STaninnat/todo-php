@@ -45,7 +45,6 @@ class TaskQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the title as an int instead of a string will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->taskQueries->addTask(123, 'desc', 'user');
     }
 
@@ -59,7 +58,6 @@ class TaskQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the id as a string instead of an int will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->taskQueries->getTaskByID('not-int', 'user');
     }
 
@@ -73,7 +71,6 @@ class TaskQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the page as a string instead of an int will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->taskQueries->getTasksByPage('page');
     }
 
@@ -87,7 +84,6 @@ class TaskQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending id, isDone as a string instead of int and bool will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->taskQueries->markDone('id', 'true', 'user');
     }
 
@@ -101,7 +97,6 @@ class TaskQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // id, title, description, isDone, userId must match the method signature types.
-        /** @phpstan-ignore-next-line */
         $this->taskQueries->updateTask('id', 123, [], 'yes', 456);
     }
 
@@ -115,7 +110,6 @@ class TaskQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the id as a string instead of an int will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->taskQueries->deleteTask('id', 'user');
     }
 }

@@ -21,6 +21,18 @@ class FakeFileSystem implements FileSystemInterface
     private array $dirs = [];
 
     /**
+     * Check if a directory exists in memory.
+     *
+     * @param string $path Directory path
+     *
+     * @return bool True if directory exists, false otherwise
+     */
+    public function hasDir(string $path): bool
+    {
+        return isset($this->dirs[$path]);
+    }
+
+    /**
      * Write content to a file in memory.
      *
      * @param string $path    File path
@@ -66,7 +78,10 @@ class FakeFileSystem implements FileSystemInterface
         $regex = '#^' . str_replace(['*', '?'], ['.*', '.'], $pattern) . '$#';
 
         // Filter file paths using regex
-        return array_values(array_filter(array_keys($this->files), fn($f) => preg_match($regex, $f)));
+        return array_values(array_filter(
+            array_keys($this->files),
+            fn(string $f): bool => (bool) preg_match($regex, $f)
+        ));
     }
 
     /**

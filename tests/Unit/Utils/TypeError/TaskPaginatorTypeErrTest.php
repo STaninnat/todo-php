@@ -27,9 +27,7 @@ final class TaskPaginatorTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        // Sending the taskQueries as a string instead of a TaskQueries instance
-        // will cause a TypeError.
-        /** @phpstan-ignore-next-line */
+        // Sending the taskQueries as a string instead of a TaskQueries instance will cause a TypeError.
         new TaskPaginator('not-a-taskqueries');
     }
 
@@ -46,7 +44,6 @@ final class TaskPaginatorTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the perPage as a string instead of an int will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $paginator->calculateTotalPages('not-an-int');
     }
 }

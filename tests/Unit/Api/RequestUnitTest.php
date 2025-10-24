@@ -19,7 +19,7 @@ use App\Api\Request;
  *
  * @package Tests\Unit\Api
  */
-class RequestTest extends TestCase
+class RequestUnitTest extends TestCase
 {
     /**
      * Test that Request correctly initializes from PHP superglobals.

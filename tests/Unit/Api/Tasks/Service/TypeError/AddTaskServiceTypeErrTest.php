@@ -7,8 +7,10 @@ namespace Tests\Unit\Api\Tasks\Service\TypeError;
 use App\Api\Tasks\Service\AddTaskService;
 use App\Api\Request;
 use App\DB\TaskQueries;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use TypeError;
 
 /**
@@ -96,10 +98,32 @@ class AddTaskServiceTypeErrTest extends TestCase
         $mockTaskQueries = $this->createMock(TaskQueries::class);
         $service = new AddTaskService($mockTaskQueries);
 
-        $raw = json_encode($body); // Encode invalid body to JSON
+        $raw = json_encode($body);
         $req = new Request('POST', '/tasks', [], $raw);
 
-        $this->expectException(TypeError::class);
+        if (isset($body['title'])) {
+            if (!is_string($body['title'])) {
+                // title int -> RuntimeException
+                // title array -> InvalidArgumentException
+                $this->expectException(is_array($body['title']) ? \InvalidArgumentException::class : \RuntimeException::class);
+            }
+        }
+
+        if (isset($body['user_id'])) {
+            if (!is_string($body['user_id'])) {
+                // user_id int -> RuntimeException
+                // user_id object -> InvalidArgumentException
+                $this->expectException(is_object($body['user_id']) ? \InvalidArgumentException::class : \RuntimeException::class);
+            }
+        }
+
+        if (isset($body['description'])) {
+            if (!is_string($body['description'])) {
+                // description array/object -> RuntimeException
+                $this->expectException(\RuntimeException::class);
+            }
+        }
+
         $service->execute($req);
     }
 

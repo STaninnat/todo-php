@@ -27,11 +27,11 @@ trait TestHelperTrait
      * different request types (e.g., GET, POST) with various
      * query or body parameters.
      *
-     * @param array  $body    Optional JSON body content.
-     * @param array  $query   Optional query parameters.
-     * @param array  $params  Optional route parameters.
-     * @param string $method  HTTP method (default: 'POST').
-     * @param string $path    Request path (default: '/').
+     * @param array<string, mixed>  $body    Optional JSON body content.
+     * @param array<string, mixed>  $query   Optional query parameters.
+     * @param array<string, mixed>  $params  Optional route parameters.
+     * @param string                $method  HTTP method (default: 'POST').
+     * @param string                $path    Request path (default: '/').
      *
      * @return Request A fully initialized Request instance.
      */
@@ -44,6 +44,9 @@ trait TestHelperTrait
     ): Request {
         // Encode body to JSON if provided
         $rawInput = !empty($body) ? json_encode($body) : null;
+        if ($rawInput === false) {
+            $rawInput = null;
+        }
 
         // Instantiate the Request with named arguments for clarity
         $req = new Request(

@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use App\DB\UserQueries;
 use PDOStatement;
 use PDO;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Class UserQueriesTest
@@ -22,10 +23,14 @@ use PDO;
  *
  * @package Tests\Unit\DB
  */
-class UserQueriesTest extends TestCase
+class UserQueriesUnitTest extends TestCase
 {
-    private $pdo;
-    private $stmt;
+    /** @var PDO&MockObject */
+    private PDO $pdo;
+
+    /** @var PDOStatement&MockObject */
+    private PDOStatement $stmt;
+
     private UserQueries $userQueries;
 
     /**
@@ -76,7 +81,7 @@ class UserQueriesTest extends TestCase
      */
     public function testCreateUserFail(): void
     {
-        $error = ['code' => '123', 'message' => 'DB error'];
+        $error = ['123', 'DB error'];
         $this->stmt->method('execute')->willReturn(false);
         $this->stmt->method('errorInfo')->willReturn($error);
 
@@ -146,7 +151,7 @@ class UserQueriesTest extends TestCase
      */
     public function testGetUserByNameFail(): void
     {
-        $error = ['code' => 'err', 'message' => 'DB fail'];
+        $error = ['err', 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
         $this->stmt->method('errorInfo')->willReturn($error);
 
@@ -199,7 +204,7 @@ class UserQueriesTest extends TestCase
      */
     public function testGetUserByIDFail(): void
     {
-        $error = ['code' => 'err', 'message' => 'DB fail'];
+        $error = ['err', 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
         $this->stmt->method('errorInfo')->willReturn($error);
 
@@ -251,7 +256,7 @@ class UserQueriesTest extends TestCase
      */
     public function testCheckUserExistsFail(): void
     {
-        $error = ['code' => 'err', 'message' => 'DB fail'];
+        $error = ['err', 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
         $this->stmt->method('errorInfo')->willReturn($error);
 
@@ -286,7 +291,7 @@ class UserQueriesTest extends TestCase
      */
     public function testUpdateUserFail(): void
     {
-        $error = ['code' => 'err', 'message' => 'DB fail'];
+        $error = ['err', 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
         $this->stmt->method('errorInfo')->willReturn($error);
 
@@ -337,7 +342,7 @@ class UserQueriesTest extends TestCase
      */
     public function testDeleteUserFail(): void
     {
-        $error = ['code' => 'err', 'message' => 'DB fail'];
+        $error = ['err', 'DB fail'];
         $this->stmt->method('execute')->willReturn(false);
         $this->stmt->method('errorInfo')->willReturn($error);
 

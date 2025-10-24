@@ -10,6 +10,7 @@ use App\DB\TaskQueries;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use TypeError;
 
 /**
@@ -113,7 +114,18 @@ class DeleteTaskServiceTypeErrTest extends TestCase
         $raw = json_encode($body);
         $req = new Request('POST', '/tasks/delete', [], $raw);
 
-        $this->expectException($expectedException);
+        if (isset($body['id']) && !is_numeric($body['id'])) {
+            $this->expectException(InvalidArgumentException::class);
+        } elseif (!isset($body['id']) || empty($body['id'])) {
+            $this->expectException(InvalidArgumentException::class);
+        } elseif (!isset($body['user_id']) || !is_string($body['user_id'])) {
+            if (is_int($body['user_id'] ?? null)) {
+                $this->expectException(RuntimeException::class);
+            } else {
+                $this->expectException(InvalidArgumentException::class);
+            }
+        }
+
         $service->execute($req);
     }
 

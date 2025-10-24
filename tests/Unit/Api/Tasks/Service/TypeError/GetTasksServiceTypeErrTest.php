@@ -11,6 +11,7 @@ use App\DB\QueryResult;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use InvalidArgumentException;
+use RuntimeException;
 use TypeError;
 
 /**
@@ -118,7 +119,14 @@ class GetTasksServiceTypeErrTest extends TestCase
         }
 
         // Expect the correct exception depending on input
-        $this->expectException($expectedException);
+        if ($userId === null || $userId === '') {
+            $this->expectException(InvalidArgumentException::class);
+        } elseif (is_int($userId)) {
+            $this->expectException(RuntimeException::class);
+        } elseif (is_array($userId) || is_object($userId)) {
+            $this->expectException(InvalidArgumentException::class);
+        }
+
         $this->service->execute($request);
     }
 

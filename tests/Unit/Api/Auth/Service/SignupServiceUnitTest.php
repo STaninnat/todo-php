@@ -28,7 +28,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Auth\Service
  */
-class SignupServiceTest extends TestCase
+class SignupServiceUnitTest extends TestCase
 {
     /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject Mock for database user queries. */
     private UserQueries $userQueries;
@@ -73,7 +73,7 @@ class SignupServiceTest extends TestCase
      *
      * Tests missing or malformed fields (username, email, password).
      *
-     * @return array<string, array{0:array}>
+     * @return array<string, array{0: array<string,mixed>}>
      */
     public static function invalidInputProvider(): array
     {
@@ -92,7 +92,7 @@ class SignupServiceTest extends TestCase
      * Ensures that execute() throws InvalidArgumentException
      * when provided with invalid or missing input fields.
      *
-     * @param array $input Test input data.
+     * @param array<string,mixed> $input Test input data.
      *
      * @return void
      */
@@ -101,6 +101,7 @@ class SignupServiceTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
+        /** @var array<string,mixed> $input */
         $req = $this->makeRequest($input);
         $this->service->execute($req);
     }

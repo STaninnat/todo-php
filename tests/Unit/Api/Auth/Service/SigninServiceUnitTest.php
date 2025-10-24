@@ -33,7 +33,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Auth\Service
  */
-class SigninServiceTest extends TestCase
+class SigninServiceUnitTest extends TestCase
 {
     /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject Mocked dependency for DB access */
     private UserQueries $userQueries;
@@ -78,7 +78,7 @@ class SigninServiceTest extends TestCase
      *
      * Covers missing or empty username/password combinations.
      *
-     * @return array<string, array{0:array}>
+     * @return array<string, array{0: array<string,mixed>}>
      */
     public static function invalidInputProvider(): array
     {
@@ -95,7 +95,7 @@ class SigninServiceTest extends TestCase
      *
      * Uses the invalidInputProvider for multiple cases.
      *
-     * @param array $input Invalid request body data.
+     * @param array<string,mixed> $input Invalid request body data.
      *
      * @return void
      */
@@ -105,6 +105,7 @@ class SigninServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         // Create mock request with invalid input
+        /** @var array<string,mixed> $input */
         $req = $this->makeRequest($input);
 
         // Expect exception due to invalid username/password

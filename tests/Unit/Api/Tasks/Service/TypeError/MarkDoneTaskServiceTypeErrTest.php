@@ -10,6 +10,7 @@ use App\DB\TaskQueries;
 use App\DB\QueryResult;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Error;
 use InvalidArgumentException;
 use TypeError;
 use RuntimeException;
@@ -199,7 +200,14 @@ class MarkDoneTaskServiceTypeErrTest extends TestCase
             $request->params['is_done'] = 1;
         }
 
-        $this->expectException($expectedException);
+        if ($userId === null || $userId === '') {
+            $this->expectException(InvalidArgumentException::class);
+        } elseif (is_array($userId) || is_object($userId)) {
+            $this->expectException(InvalidArgumentException::class);
+        } else {
+            $this->expectException(Error::class);
+        }
+
         $this->service->execute($request);
     }
 

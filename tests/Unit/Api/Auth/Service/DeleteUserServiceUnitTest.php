@@ -29,7 +29,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Auth\Service
  */
-class DeleteUserServiceTest extends TestCase
+class DeleteUserServiceUnitTest extends TestCase
 {
     /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject Mocked database query handler */
     private $userQueries;

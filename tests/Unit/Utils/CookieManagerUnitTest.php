@@ -7,6 +7,7 @@ namespace Tests\Unit\Utils;
 use PHPUnit\Framework\TestCase;
 use App\Utils\CookieManager;
 use App\Utils\CookieStorageInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Class CookieManagerTest
@@ -20,10 +21,13 @@ use App\Utils\CookieStorageInterface;
  *
  * @package Tests\Unit\Utils
  */
-class CookieManagerTest extends TestCase
+class CookieManagerUnitTest extends TestCase
 {
-    private $cookieManager;
-    private $storageMock;
+    /** @var CookieManager&MockObject */
+    private CookieManager $cookieManager;
+
+    /** @var CookieStorageInterface&MockObject */
+    private CookieStorageInterface $storageMock;
 
     /**
      * Set up the test environment before each test.

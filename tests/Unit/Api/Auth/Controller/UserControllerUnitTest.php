@@ -31,7 +31,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Auth\Controller
  */
-class UserControllerTest extends TestCase
+class UserControllerUnitTest extends TestCase
 {
     /** @var DeleteUserService&\PHPUnit\Framework\MockObject\MockObject Mock for delete user service */
     private $deleteUserService;

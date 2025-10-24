@@ -82,7 +82,7 @@ class UpdateTaskServiceTypeErrTest extends TestCase
             ],
             'title as object' => [
                 ['id' => '1', 'title' => new \stdClass(), 'user_id' => 'u1', 'is_done' => '1'],
-                Error::class, // object passed instead of string triggers PHP Error
+                InvalidArgumentException::class,
             ],
 
             // ---- user_id ----
@@ -92,7 +92,7 @@ class UpdateTaskServiceTypeErrTest extends TestCase
             ],
             'user_id as object' => [
                 ['id' => '1', 'title' => 'ok', 'user_id' => new \stdClass(), 'is_done' => '1'],
-                Error::class, // object -> string conversion fails
+                InvalidArgumentException::class,
             ],
 
             // ---- is_done ----

@@ -27,7 +27,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Middlewares
  */
-class AuthMiddlewareTest extends TestCase
+class AuthMiddlewareUnitTest extends TestCase
 {
     /** @var CookieManager&\PHPUnit\Framework\MockObject\MockObject */
     private $cookieManager;
@@ -65,12 +65,12 @@ class AuthMiddlewareTest extends TestCase
     /**
      * Test: refreshJwt() behavior for various token scenarios.
      *
-     * @param string      $token                      Token string returned by CookieManager
-     * @param ?array      $verifyResult               Decoded payload returned by JwtService::verify()
-     * @param bool        $shouldRefresh              Whether JwtService::shouldRefresh() returns true
-     * @param ?string     $refreshResult              New token returned by JwtService::refresh()
-     * @param mixed       $expectAuthSet              Expected value of $request->auth after refreshJwt()
-     * @param bool        $expectSetAccessTokenCalled Whether CookieManager::setAccessToken() should be called
+     * @param string                    $token                      Token string returned by CookieManager
+     * @param ?array<string,mixed>      $verifyResult               Decoded payload returned by JwtService::verify()
+     * @param bool                      $shouldRefresh              Whether JwtService::shouldRefresh() returns true
+     * @param ?string                   $refreshResult              New token returned by JwtService::refresh()
+     * @param mixed                     $expectAuthSet              Expected value of $request->auth after refreshJwt()
+     * @param bool                      $expectSetAccessTokenCalled Whether CookieManager::setAccessToken() should be called
      *
      * @return void
      */
@@ -130,7 +130,7 @@ class AuthMiddlewareTest extends TestCase
      * - payload missing user_id
      * - payload with future iat
      *
-     * @return array<string, array>
+     * @return array<string, array{0: string, 1: ?array<string,int>, 2: bool, 3: ?string, 4: mixed, 5: bool}>
      */
     public static function refreshJwtProvider(): array
     {

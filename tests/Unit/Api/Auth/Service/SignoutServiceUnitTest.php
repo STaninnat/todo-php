@@ -17,7 +17,7 @@ use App\Utils\CookieManager;
  *
  * @package Tests\Unit\Api\Auth\Service
  */
-class SignoutServiceTest extends TestCase
+class SignoutServiceUnitTest extends TestCase
 {
     /** @var CookieManager&\PHPUnit\Framework\MockObject\MockObject */
     private CookieManager $cookieManager;

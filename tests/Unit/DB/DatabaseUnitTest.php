@@ -23,7 +23,7 @@ use PDO;
  *
  * @package Tests\Unit\DB
  */
-class DatabaseTest extends TestCase
+class DatabaseUnitTest extends TestCase
 {
     /**
      * Helper method to create a Database instance with a PDO mock.
@@ -31,8 +31,8 @@ class DatabaseTest extends TestCase
      * Replaces real DB connection with a mock PDO object, optionally applies
      * temporary environment variables, and restores original $_ENV after test.
      *
-     * @param PDO   $mockPdo Mock PDO object to inject.
-     * @param array $envVars Optional environment variables.
+     * @param PDO                   $mockPdo Mock PDO object to inject.
+     * @param array<string, string> $envVars Optional environment variables.
      *
      * @return Database Database instance with mocked connection.
      */

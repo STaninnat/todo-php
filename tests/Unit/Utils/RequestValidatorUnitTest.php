@@ -23,15 +23,18 @@ use RuntimeException;
 class DummyResult
 {
     public bool $success;
+
+    /** @var list<string>|array<string, mixed>|null */
     public ?array $error;
+
     private bool $changed;
 
     /**
      * Constructor.
      *
-     * @param bool       $success Indicates whether the operation succeeded.
-     * @param bool       $changed Indicates whether the result was changed.
-     * @param array|null $error   Optional error details.
+     * @param bool                  $success Indicates whether the operation succeeded.
+     * @param bool                  $changed Indicates whether the result was changed.
+     * @param list<string>|null     $error   Optional error details.
      */
     public function __construct(bool $success, bool $changed, ?array $error = null)
     {
@@ -65,7 +68,7 @@ class DummyResult
  *
  * @package Tests\Unit\Utils
  */
-class RequestValidatorTest extends TestCase
+class RequestValidatorUnitTest extends TestCase
 {
     /** @var Request&MockObject */
     private Request $req;
@@ -90,7 +93,7 @@ class RequestValidatorTest extends TestCase
     /**
      * Data provider for valid integer parameters.
      *
-     * @return array
+     * @return array<string, array{string, int}>
      */
     public static function intProvider(): array
     {
@@ -121,7 +124,7 @@ class RequestValidatorTest extends TestCase
     /**
      * Data provider for invalid integer parameters.
      *
-     * @return array
+     * @return array<string, array{mixed}>
      */
     public static function intInvalidProvider(): array
     {
@@ -156,7 +159,7 @@ class RequestValidatorTest extends TestCase
     /**
      * Data provider for boolean parameters.
      *
-     * @return array
+     * @return array<string, array{string, bool}>
      */
     public static function boolProvider(): array
     {
@@ -207,7 +210,7 @@ class RequestValidatorTest extends TestCase
     /**
      * Data provider for valid string parameters.
      *
-     * @return array
+     * @return array<string, array{string, string}>
      */
     public static function stringProvider(): array
     {
@@ -238,7 +241,7 @@ class RequestValidatorTest extends TestCase
     /**
      * Data provider for invalid string parameters.
      *
-     * @return array
+     * @return array<string, array{mixed}>
      */
     public static function stringInvalidProvider(): array
     {
@@ -274,7 +277,7 @@ class RequestValidatorTest extends TestCase
     /**
      * Data provider for valid email parameters.
      *
-     * @return array
+     * @return array<string, array{string, string}>
      */
     public static function emailProvider(): array
     {
@@ -305,7 +308,7 @@ class RequestValidatorTest extends TestCase
     /**
      * Data provider for invalid email parameters.
      *
-     * @return array
+     * @return array<string, array{mixed}>
      */
     public static function emailInvalidProvider(): array
     {
@@ -341,7 +344,7 @@ class RequestValidatorTest extends TestCase
     /**
      * Data provider for ensureSuccess test cases.
      *
-     * @return array
+     * @return array<string, array{bool, bool, class-string<\Throwable>|null}>
      */
     public static function ensureSuccessProvider(): array
     {
@@ -355,9 +358,9 @@ class RequestValidatorTest extends TestCase
     /**
      * Test that ensureSuccess behaves correctly depending on result state.
      *
-     * @param bool        $success           Whether the operation succeeded.
-     * @param bool        $isChanged         Whether the result was changed.
-     * @param string|null $expectedException Expected exception class, if any.
+     * @param bool        $success                              Whether the operation succeeded.
+     * @param bool        $isChanged                            Whether the result was changed.
+     * @param class-string<\Throwable>|null $expectedException  Expected exception class, if any.
      *
      * @return void
      */
@@ -367,7 +370,7 @@ class RequestValidatorTest extends TestCase
         $result = new DummyResult(
             $success,
             $isChanged,
-            $success ? null : ['Some error']
+            $success ? null : ['Some error']    // list<string>
         );
 
         if ($expectedException) {
@@ -376,6 +379,6 @@ class RequestValidatorTest extends TestCase
 
         RequestValidator::ensureSuccess($result, 'testing');
 
-        $this->assertTrue(true); // reached only if no exception
+        $this->assertInstanceOf(DummyResult::class, $result);
     }
 }

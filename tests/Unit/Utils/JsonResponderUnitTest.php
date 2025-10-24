@@ -21,7 +21,7 @@ use App\Utils\JsonResponder;
  *
  * @package Tests\Unit\Utils
  */
-class JsonResponderTest extends TestCase
+class JsonResponderUnitTest extends TestCase
 {
     /**
      * Test the success() factory method with default type and HTTP status.
@@ -179,7 +179,6 @@ class JsonResponderTest extends TestCase
         $responder = JsonResponder::success('Send test')->withData(['x' => 1]);
         $result = $responder->send(false, true);
 
-        $this->assertIsArray($result);
         $this->assertSame('Send test', $result['message']);
         $this->assertSame(['x' => 1], $result['data']);
     }

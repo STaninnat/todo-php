@@ -23,7 +23,7 @@ use App\DB\QueryResult;
  *
  * @package Tests\Unit\Utils
  */
-class TaskPaginatorTest extends TestCase
+class TaskPaginatorUnitTest extends TestCase
 {
     /**
      * Test that calculateTotalPages() returns 1 when query fails or returns invalid data.

@@ -27,7 +27,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Tasks\Service
  */
-class GetTasksServiceTest extends TestCase
+class GetTasksServiceUnitTest extends TestCase
 {
     /** @var TaskQueries&\PHPUnit\Framework\MockObject\MockObject */
     private $taskQueries;
@@ -130,7 +130,6 @@ class GetTasksServiceTest extends TestCase
         $result = $this->service->execute($req);
 
         // Assertions for structure and values
-        $this->assertIsArray($result);
         $this->assertSame($tasks, $result['task']);
         $this->assertCount(2, $result['task']);
         $this->assertSame(2, $result['totalPages']); // ceil(20 / 10)

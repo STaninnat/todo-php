@@ -44,7 +44,6 @@ class UserQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the parameter all wrong types will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->userQueries->createUser(123, [], null, true);
     }
 
@@ -58,7 +57,6 @@ class UserQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the username as an int instead of a string will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->userQueries->getUserByName(123);
     }
 
@@ -72,7 +70,6 @@ class UserQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the id as an int instead of a string will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->userQueries->getUserByID(456);
     }
 
@@ -86,7 +83,6 @@ class UserQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the title as an array, null instead of a string will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->userQueries->checkUserExists([], null);
     }
 
@@ -100,7 +96,6 @@ class UserQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the parameter all wrong types will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->userQueries->updateUser(1, true, []);
     }
 
@@ -114,7 +109,6 @@ class UserQueriesTypeErrTest extends TestCase
         $this->expectException(\TypeError::class);
 
         // Sending the id as an int instead of a string will cause a TypeError.
-        /** @phpstan-ignore-next-line */
         $this->userQueries->deleteUser(999);
     }
 }

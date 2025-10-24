@@ -21,7 +21,7 @@ use Throwable;
  *
  * @package Tests\Unit\Utils
  */
-class JwtServiceTest extends TestCase
+class JwtServiceUnitTest extends TestCase
 {
     /**
      * Test that constructor throws RuntimeException when no secret is set
@@ -34,19 +34,21 @@ class JwtServiceTest extends TestCase
      */
     public function testConstructorThrowsWhenNoSecret(): void
     {
-        $original = $_ENV['JWT_SECRET'] ?? null;
-        unset($_ENV['JWT_SECRET']); // Temporarily remove JWT_SECRET
+        $original = getenv('JWT_SECRET') ?: null;
+
+        // Temporarily remove JWT_SECRET
+        putenv('JWT_SECRET'); // unset by emptying
 
         try {
             $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage('JWT_SECRET is not set');
             new JwtService(null); // Should throw due to missing secret
         } finally {
-            // Restore environment variable to avoid side effects
+            // Restore environment variable
             if ($original !== null) {
-                $_ENV['JWT_SECRET'] = $original;
+                putenv("JWT_SECRET=$original");
             } else {
-                unset($_ENV['JWT_SECRET']);
+                putenv('JWT_SECRET'); // unset
             }
         }
     }

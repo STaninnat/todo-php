@@ -28,7 +28,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Tasks\Service
  */
-class AddTaskServiceTest extends TestCase
+class AddTaskServiceUnitTest extends TestCase
 {
     /** 
      * Mocked TaskQueries dependency used for database simulation.

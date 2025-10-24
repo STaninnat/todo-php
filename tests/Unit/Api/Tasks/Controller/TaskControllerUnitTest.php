@@ -28,7 +28,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Tasks\Controller
  */
-class TaskControllerTest extends TestCase
+class TaskControllerUnitTest extends TestCase
 {
     /** @var AddTaskService&\PHPUnit\Framework\MockObject\MockObject Mocked add service */
     private $addService;
@@ -90,10 +90,20 @@ class TaskControllerTest extends TestCase
         $this->addService->method('execute')->willReturn($taskData);
 
         $req = $this->makeRequest(['title' => 'Task']);
+
+        /** @var array{
+         *   success: bool,
+         *   message: string,
+         *   data: array{
+         *     task: array<string, mixed>,
+         *     id?: int
+         *   },
+         *   totalPages: int
+         * } $decoded
+         */
         $decoded = $this->controller->addTask($req, true);
 
-        // ✅ Assert successful creation
-        $this->assertNotNull($decoded);
+        // Assert successful creation
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task added successfully', $decoded['message']);
         $this->assertSame($taskData['task'], $decoded['data']['task']);
@@ -119,9 +129,16 @@ class TaskControllerTest extends TestCase
             method: 'DELETE',
             path: '/tasks/1'
         );
+
+        /** @var array{
+         *   success: bool,
+         *   message: string,
+         *   data: array{id: int},
+         *   totalPages: int
+         * } $decoded
+         */
         $decoded = $this->controller->deleteTask($req, true);
 
-        $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task deleted successfully', $decoded['message']);
         $this->assertSame($taskData['id'], $decoded['data']['id']);
@@ -148,9 +165,16 @@ class TaskControllerTest extends TestCase
             method: 'PUT',
             path: '/tasks/1'
         );
+
+        /** @var array{
+         *   success: bool,
+         *   message: string,
+         *   data: array{task: array{id: int, title: string}},
+         *   totalPages: int
+         * } $decoded
+         */
         $decoded = $this->controller->updateTask($req, true);
 
-        $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task updated successfully', $decoded['message']);
         $this->assertSame($taskData['task'], $decoded['data']['task']);
@@ -175,9 +199,16 @@ class TaskControllerTest extends TestCase
             method: 'PATCH',
             path: '/tasks/1/done'
         );
+
+        /** @var array{
+         *   success: bool,
+         *   message: string,
+         *   data: array{task: array{id: int, is_done: bool}},
+         *   totalPages: int
+         * } $decoded
+         */
         $decoded = $this->controller->markDoneTask($req, true);
 
-        $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task status updated successfully', $decoded['message']);
         $this->assertSame($taskData['task'], $decoded['data']['task']);
@@ -202,9 +233,16 @@ class TaskControllerTest extends TestCase
             method: 'GET',
             path: '/tasks'
         );
+
+        /** @var array{
+         *   success: bool,
+         *   message: string,
+         *   data: array{task: list<array{id: int, title: string}>},
+         *   totalPages: int
+         * } $decoded
+         */
         $decoded = $this->controller->getTasks($req, true);
 
-        $this->assertNotNull($decoded);
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task retrieved successfully', $decoded['message']);
         $this->assertSame($taskData['task'], $decoded['data']['task']);

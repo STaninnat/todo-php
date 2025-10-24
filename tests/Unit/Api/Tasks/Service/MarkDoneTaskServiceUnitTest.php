@@ -27,7 +27,7 @@ use Error;
  *
  * @package Tests\Unit\Api\Tasks\Service
  */
-class MarkDoneTaskServiceTest extends TestCase
+class MarkDoneTaskServiceUnitTest extends TestCase
 {
     /** 
      * @var TaskQueries&\PHPUnit\Framework\MockObject\MockObject 
@@ -211,7 +211,6 @@ class MarkDoneTaskServiceTest extends TestCase
 
         $result = $this->service->execute($req);
 
-        $this->assertIsArray($result);
         $this->assertSame($task, $result['task']);
         $this->assertSame(2, $result['totalPages']); // ceil(15 / 10)
     }
@@ -241,7 +240,7 @@ class MarkDoneTaskServiceTest extends TestCase
             'is_done' => "0"
         ]);
         $result = $this->service->execute($req);
-        $this->assertIsArray($result);
+
         $this->assertSame($task, $result['task']);
 
         // --- case "1"
@@ -251,7 +250,7 @@ class MarkDoneTaskServiceTest extends TestCase
             'is_done' => "1"
         ]);
         $result = $this->service->execute($req);
-        $this->assertIsArray($result);
+
         $this->assertSame($task, $result['task']);
     }
 

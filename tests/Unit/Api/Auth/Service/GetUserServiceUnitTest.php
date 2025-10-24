@@ -29,7 +29,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Auth\Service
  */
-class GetUserServiceTest extends TestCase
+class GetUserServiceUnitTest extends TestCase
 {
     /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject Mocked user queries dependency */
     private $userQueries;
@@ -58,7 +58,7 @@ class GetUserServiceTest extends TestCase
     /**
      * Provides invalid `user_id` cases to trigger validation errors.
      *
-     * @return array<string, array{0:array}>
+     * @return array<string, array{0: array<string,mixed>}>
      */
     public static function userIdProvider(): array
     {
@@ -73,7 +73,7 @@ class GetUserServiceTest extends TestCase
      * Test that execute() throws InvalidArgumentException
      * when `user_id` is missing or invalid.
      *
-     * @param array $body Request body containing user_id field.
+     * @param array<string,mixed> $body Request body containing user_id field.
      *
      * @return void
      */

@@ -20,7 +20,7 @@ use App\DB\QueryResult;
  *
  * @package Tests\Unit\DB
  */
-class QueryResultTest extends TestCase
+class QueryResultUnitTest extends TestCase
 {
     /**
      * Test: ok() without data should produce a successful result

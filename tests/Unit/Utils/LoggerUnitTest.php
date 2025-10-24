@@ -23,7 +23,7 @@ use Tests\Unit\Utils\Fakes\FakeClock;
  *
  * @package Tests\Unit\Utils
  */
-class LoggerTest extends TestCase
+class LoggerUnitTest extends TestCase
 {
     /**
      * Test that an info log is correctly written with timestamp and level.
@@ -45,7 +45,7 @@ class LoggerTest extends TestCase
         $this->assertTrue($fs->hasFile($expectedFile));
         $this->assertStringContainsString(
             '[2025-09-12 10:00:00][INFO] Hello World',
-            $fs->getFileContent($expectedFile)
+            $fs->getFileContent($expectedFile) ?? ''
         );
     }
 
@@ -63,7 +63,7 @@ class LoggerTest extends TestCase
         $logger->warning('Something odd');
 
         $expectedFile = '/logs/router-2025-09-12.log';
-        $this->assertStringContainsString('[WARNING] Something odd', $fs->getFileContent($expectedFile));
+        $this->assertStringContainsString('[WARNING] Something odd', $fs->getFileContent($expectedFile) ?? '');
     }
 
     /**
@@ -80,7 +80,7 @@ class LoggerTest extends TestCase
         $logger->error('Something failed');
 
         $expectedFile = '/logs/router-2025-09-12.log';
-        $this->assertStringContainsString('[ERROR] Something failed', $fs->getFileContent($expectedFile));
+        $this->assertStringContainsString('[ERROR] Something failed', $fs->getFileContent($expectedFile) ?? '');
     }
 
     /**

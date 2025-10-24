@@ -25,7 +25,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Tasks\Service
  */
-class DeleteTaskServiceTest extends TestCase
+class DeleteTaskServiceUnitTest extends TestCase
 {
     /** @var TaskQueries&\PHPUnit\Framework\MockObject\MockObject Mocked TaskQueries instance. */
     private $taskQueries;
@@ -168,7 +168,6 @@ class DeleteTaskServiceTest extends TestCase
         $result = $this->service->execute($req);
 
         // Verify structure and values of the returned array
-        $this->assertIsArray($result);
         $this->assertSame(1, $result['id']);
         $this->assertSame(3, $result['totalPages']); // 25 tasks -> 3 pages expected
     }

@@ -28,7 +28,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Tasks\Service
  */
-class UpdateTaskServiceTest extends TestCase
+class UpdateTaskServiceUnitTest extends TestCase
 {
     /** @var TaskQueries&\PHPUnit\Framework\MockObject\MockObject Mocked TaskQueries dependency */
     private $taskQueries;

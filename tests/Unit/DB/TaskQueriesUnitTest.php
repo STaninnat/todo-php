@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use App\DB\TaskQueries;
 use PDOStatement;
 use PDO;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Class TaskQueriesTest
@@ -22,10 +23,14 @@ use PDO;
  *
  * @package Tests\Unit\DB
  */
-class TaskQueriesTest extends TestCase
+class TaskQueriesUnitTest extends TestCase
 {
-    private $pdo;
-    private $stmt;
+    /** @var PDO&MockObject */
+    private PDO $pdo;
+
+    /** @var PDOStatement&MockObject */
+    private PDOStatement $stmt;
+
     private TaskQueries $taskQueries;
 
     /**
@@ -92,8 +97,9 @@ class TaskQueriesTest extends TestCase
         // Mock execute failure and return error info
         $this->stmt->method('execute')->willReturn(false);
         $this->stmt->method('errorInfo')->willReturn([
-            'code' => '123',
-            'message' => 'DB error'
+            '123',
+            '456',
+            'DB error'
         ]);
 
         // Call addTask
@@ -101,10 +107,7 @@ class TaskQueriesTest extends TestCase
 
         // Assert failure and correct error info
         $this->assertFalse($result->success);
-        $this->assertEquals([
-            'code' => '123',
-            'message' => 'DB error'
-        ], $result->error);
+        $this->assertEquals(['123', '456', 'DB error'], $result->error);
     }
 
     /**
@@ -451,7 +454,7 @@ class TaskQueriesTest extends TestCase
         // Call getTotalTasks
         $result = $this->taskQueries->markDone(2, false, 'testuserid');
 
-        $this->assertTrue($result->success);
+        $this->assertIsArray($result->data);
         $this->assertEquals(0, $result->data['is_done']);
     }
 

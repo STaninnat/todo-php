@@ -23,7 +23,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api
  */
-class RouterTest extends TestCase
+class RouterUnitTest extends TestCase
 {
     /**
      * Test that a registered handler executes correctly
@@ -41,6 +41,11 @@ class RouterTest extends TestCase
 
         $req = new Request(method: 'GET', path: '/hello');
         $response = $router->dispatch($req, true);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('success', $response);
+        $this->assertArrayHasKey('message', $response);
+        $this->assertArrayHasKey('type', $response);
 
         // Validate success structure returned by JsonResponder
         $this->assertEquals([
@@ -66,6 +71,8 @@ class RouterTest extends TestCase
         $response = $router->dispatch($req, true);
 
         // Assert that handler correctly accessed $r->method
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('message', $response);
         $this->assertEquals('method=POST', $response['message']);
     }
 
@@ -83,7 +90,8 @@ class RouterTest extends TestCase
         $req = new Request(method: 'GET', path: '/array');
         $response = $router->dispatch($req, true);
 
-        // Assert raw array response is preserved
+        // Assert raw array response is preservedฃ
+        $this->assertIsArray($response);
         $this->assertEquals(['foo' => 'bar'], $response);
     }
 
@@ -130,6 +138,11 @@ class RouterTest extends TestCase
 
         $response = $router->dispatch($req, true);
 
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('success', $response);
+        $this->assertArrayHasKey('message', $response);
+        $this->assertIsString($response['message']);
+
         // Expect a standardized "Route not found" message
         $this->assertFalse($response['success']);
         $this->assertStringContainsString('Route not found', $response['message']);
@@ -150,6 +163,11 @@ class RouterTest extends TestCase
         $req = new Request(method: 'GET', path: '/boom');
         $response = $router->dispatch($req, true);
 
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('success', $response);
+        $this->assertArrayHasKey('message', $response);
+
+
         // Router should catch and normalize the exception
         $this->assertFalse($response['success']);
         $this->assertEquals('fail', $response['message']);
@@ -169,6 +187,11 @@ class RouterTest extends TestCase
 
         $req = new Request(method: 'GET', path: '/oops');
         $response = $router->dispatch($req, true);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('success', $response);
+        $this->assertArrayHasKey('message', $response);
+        $this->assertIsString($response['message']);
 
         // Ensure internal errors are handled gracefully
         $this->assertFalse($response['success']);

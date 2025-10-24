@@ -29,7 +29,7 @@ use RuntimeException;
  *
  * @package Tests\Unit\Api\Auth\Service
  */
-class UpdateUserServiceTest extends TestCase
+class UpdateUserServiceUnitTest extends TestCase
 {
     /** @var UserQueries&\PHPUnit\Framework\MockObject\MockObject Mocked UserQueries instance */
     private $userQueries;

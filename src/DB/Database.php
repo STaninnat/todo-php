@@ -32,30 +32,38 @@ class Database
      */
     public function __construct(?string $dsn = null, ?string $user = null, ?string $pass = null)
     {
-        // If DSN is not provided, load environment variables
-        if ($dsn === null) {
+        // Load .env only if running outside Docker (no DB_HOST env set)
+        if (!getenv('DB_HOST') && file_exists(dirname(__DIR__) . '/.env')) {
             $envFile = getenv('APP_ENV') === 'testing' ? '.env.test' : '.env';
             $dotenv = Dotenv::createImmutable(dirname(__DIR__), $envFile);
             $dotenv->safeLoad();
-
-            $host = $_ENV['DB_HOST'] ?? null;
-            $db   = $_ENV['DB_NAME'] ?? null;
-            $user = $_ENV['DB_USER'] ?? null;
-            $pass = $_ENV['DB_PASS'] ?? null;
-
-
-            // Ensure required environment variables are set
-            if (!is_string($host) || !is_string($db) || !is_string($user)) {
-                throw new Exception("DB environment variables are not set.");
-            }
-
-            if ($pass !== null && !is_string($pass)) {
-                throw new Exception("DB_PASS must be a string or null.");
-            }
-
-            // Build DSN string for MySQL connection
-            $dsn = "mysql:host={$host};dbname={$db};charset=utf8mb4";
         }
+
+        // Get environment variables
+        $host = getenv('DB_HOST') ?: $_ENV['DB_HOST'] ?? null;
+        $db   = getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?? null;
+        $user = $user ?? getenv('DB_USER') ?: $_ENV['DB_USER'] ?? null;
+        $pass = $pass ?? getenv('DB_PASS') ?: $_ENV['DB_PASS'] ?? null;
+        $port = getenv('DB_PORT') ?: $_ENV['DB_PORT'] ?? '3306';
+
+        // Ensure required vars exist and are strings
+        if (!is_string($host) || $host === '') {
+            throw new Exception("Missing or invalid DB_HOST.");
+        }
+        if (!is_string($db) || $db === '') {
+            throw new Exception("Missing or invalid DB_NAME.");
+        }
+        if (!is_string($user) || $user === '') {
+            throw new Exception("Missing or invalid DB_USER.");
+        }
+        if ($pass !== null && !is_string($pass)) {
+            throw new Exception("DB_PASS must be a string or null.");
+        }
+        if (!is_string($port) || $port === '') {
+            $port = '3306';
+        }
+
+        $dsn = $dsn ?? "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
 
         // Attempt to create PDO connection
         try {

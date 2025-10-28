@@ -46,12 +46,21 @@ class Database
         $pass = $pass ?? getenv('DB_PASS') ?: $_ENV['DB_PASS'] ?? null;
         $port = getenv('DB_PORT') ?: $_ENV['DB_PORT'] ?? '3306';
 
-        if (!$host || !$db || !$user) {
-            throw new Exception("Missing required DB environment variables.");
+        // Ensure required vars exist and are strings
+        if (!is_string($host) || $host === '') {
+            throw new Exception("Missing or invalid DB_HOST.");
         }
-
+        if (!is_string($db) || $db === '') {
+            throw new Exception("Missing or invalid DB_NAME.");
+        }
+        if (!is_string($user) || $user === '') {
+            throw new Exception("Missing or invalid DB_USER.");
+        }
         if ($pass !== null && !is_string($pass)) {
-            throw new Exception("DB_PASS must be a string or null."); // optional
+            throw new Exception("DB_PASS must be a string or null.");
+        }
+        if (!is_string($port) || $port === '') {
+            $port = '3306';
         }
 
         $dsn = $dsn ?? "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";

@@ -4,4 +4,7 @@ note*
 vendor/
 
 phpunit.xml
+phpunit.xml.dist
 .phpunit.result.cache
+
+tests/bootstrap.php

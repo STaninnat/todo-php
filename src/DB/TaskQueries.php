@@ -136,12 +136,10 @@ class TaskQueries
     public function getTasksByPage(int $page, int $perPage = 10, ?string $userId = null): QueryResult
     {
         $offset = ($page - 1) * $perPage;
-        $params = [];
 
         $query = "SELECT * FROM tasks";
         if ($userId !== null) {
-            $query .= " WHERE user_id = ?";
-            $params[] = $userId;
+            $query .= " WHERE user_id = :user_id";
         }
 
         $query .= " ORDER BY is_done ASC, updated_at DESC LIMIT :limit OFFSET :offset";
@@ -151,10 +149,13 @@ class TaskQueries
             return $this->failFromStmt(false);
         }
 
+        if ($userId !== null) {
+            $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+        }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 
-        if (!$stmt->execute($params)) {
+        if (!$stmt->execute()) {
             return $this->failFromStmt($stmt);
         }
 

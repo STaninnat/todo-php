@@ -65,16 +65,20 @@ class UserQueries
     {
         $query = "INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)";
 
-        $stmt = $this->pdo->prepare($query);
-        if ($stmt === false) {
-            return $this->failFromStmt(false);
-        }
+        try {
+            $stmt = $this->pdo->prepare($query);
+            if ($stmt === false) {
+                return $this->failFromStmt(false);
+            }
 
-        if (!$stmt->execute([$id, $username, $email, $pass])) {
-            return $this->failFromStmt($stmt);
-        }
+            if (!$stmt->execute([$id, $username, $email, $pass])) {
+                return $this->failFromStmt($stmt);
+            }
 
-        return $this->getUserByID($id);
+            return $this->getUserByID($id);
+        } catch (\PDOException $e) {
+            return QueryResult::fail([$e->getMessage()]);
+        }
     }
 
     /**

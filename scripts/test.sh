@@ -86,7 +86,7 @@ run_integration() {
     echo "Fast mode: using existing docker containers"
 
     # Mount temp folder to /tmp in container
-    docker compose --profile test -f docker-compose.test.yml exec -T \
+    docker compose --profile test -f docker-compose.test.yml run --rm \
       -v "$TEMP_DIR":/tmp php-fpm \
       vendor/bin/phpunit -c phpunit.integration.xml.dist --log-junit /tmp/integration.xml || STATUS=$?
 

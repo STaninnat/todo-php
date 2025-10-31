@@ -63,17 +63,21 @@ class TaskQueries
     {
         $query = "INSERT INTO tasks (title, description, user_id) VALUES (?, ?, ?)";
 
-        $stmt = $this->pdo->prepare($query);
-        if ($stmt === false) {
-            return $this->failFromStmt(false);
-        }
+        try {
+            $stmt = $this->pdo->prepare($query);
+            if ($stmt === false) {
+                return $this->failFromStmt(false);
+            }
 
-        if (!$stmt->execute([$title, $description, $userId])) {
-            return $this->failFromStmt($stmt);
-        }
+            if (!$stmt->execute([$title, $description, $userId])) {
+                return $this->failFromStmt($stmt);
+            }
 
-        $id = (int) $this->pdo->lastInsertId();
-        return $this->getTaskByID($id, $userId);
+            $id = (int)$this->pdo->lastInsertId();
+            return $this->getTaskByID($id, $userId);
+        } catch (\PDOException $e) {
+            return QueryResult::fail([$e->getMessage()]);
+        }
     }
 
     /**
@@ -228,16 +232,20 @@ class TaskQueries
     {
         $query = "UPDATE tasks SET title = ?, description = ?, is_done = ? WHERE id = ? AND user_id = ?";
 
-        $stmt = $this->pdo->prepare($query);
-        if ($stmt === false) {
-            return $this->failFromStmt(false);
-        }
+        try {
+            $stmt = $this->pdo->prepare($query);
+            if ($stmt === false) {
+                return $this->failFromStmt(false);
+            }
 
-        if (!$stmt->execute([$title, $description, $isDone ? 1 : 0, $id, $userId])) {
-            return $this->failFromStmt($stmt);
-        }
+            if (!$stmt->execute([$title, $description, $isDone ? 1 : 0, $id, $userId])) {
+                return $this->failFromStmt($stmt);
+            }
 
-        return $this->getTaskByID($id, $userId);
+            return $this->getTaskByID($id, $userId);
+        } catch (\PDOException $e) {
+            return QueryResult::fail([$e->getMessage()]);
+        }
     }
 
     /**

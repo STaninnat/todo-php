@@ -39,9 +39,9 @@ run_phpunit() {
   vendor/bin/phpunit -c "$CONFIG_FILE" --log-junit "$TEMP_XML" || STATUS=$?
 
   # Read XML report and sum nested testsuites
-  TESTS=$(xmllint --xpath "sum(//testsuite/@tests)" "$TEMP_XML")
-  FAILURES=$(xmllint --xpath "sum(//testsuite/@failures)" "$TEMP_XML")
-  ERRORS=$(xmllint --xpath "sum(//testsuite/@errors)" "$TEMP_XML")
+  TESTS=$(xmllint --xpath "sum(/testsuites/testsuite/@tests)" "$TEMP_XML")
+  FAILURES=$(xmllint --xpath "sum(/testsuites/testsuite/@failures)" "$TEMP_XML")
+  ERRORS=$(xmllint --xpath "sum(/testsuites/testsuite/@errors)" "$TEMP_XML")
   FAILED=$((FAILURES + ERRORS))
   PASSED=$((TESTS - FAILED))
 
@@ -104,9 +104,9 @@ run_integration() {
 
   # Read XML report from host temp folder
   if [ -f "$TEMP_XML" ]; then
-    TESTS=$(xmllint --xpath "sum(//testsuite/@tests)" "$TEMP_XML")
-    FAILURES=$(xmllint --xpath "sum(//testsuite/@failures)" "$TEMP_XML")
-    ERRORS=$(xmllint --xpath "sum(//testsuite/@errors)" "$TEMP_XML")
+    TESTS=$(xmllint --xpath "sum(/testsuites/testsuite/@tests)" "$TEMP_XML")
+    FAILURES=$(xmllint --xpath "sum(/testsuites/testsuite/@failures)" "$TEMP_XML")
+    ERRORS=$(xmllint --xpath "sum(/testsuites/testsuite/@errors)" "$TEMP_XML")
     FAILED=$((FAILURES + ERRORS))
     PASSED=$((TESTS - FAILED))
   else

@@ -70,7 +70,7 @@ class MarkDoneTaskServiceUnitTest extends TestCase
      */
     public function testInvalidStatusValueThrowsException(): void
     {
-        $this->expectException(Error::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $req = $this->makeRequest([
             'id' => '1',
@@ -261,7 +261,7 @@ class MarkDoneTaskServiceUnitTest extends TestCase
      */
     public function testIsDoneInvalidStringThrowsException(): void
     {
-        $this->expectException(Error::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $req = $this->makeRequest([
             'id' => '1',

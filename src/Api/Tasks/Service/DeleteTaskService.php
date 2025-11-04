@@ -64,7 +64,7 @@ class DeleteTaskService
 
         // Attempt to delete the task
         $result = $this->taskQueries->deleteTask($id, $userId);
-        RequestValidator::ensureSuccess($result, 'delete task');
+        RequestValidator::ensureSuccess($result, 'delete task', false);
 
         // Calculate total pages
         $paginator = new TaskPaginator($this->taskQueries);

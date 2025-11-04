@@ -206,7 +206,7 @@ class DeleteUserServiceUnitTest extends TestCase
             'fail with null error' => [
                 '789',
                 QueryResult::fail(null),
-                'Failed to delete user: No changes were made.',
+                'Failed to delete user: Unknown database error.',
                 false,
             ],
         ];

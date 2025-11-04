@@ -11,6 +11,7 @@ use App\DB\TaskQueries;
 use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use InvalidArgumentException;
 use RuntimeException;
+use Error;
 
 /**
  * Class GetTasksServiceTest
@@ -95,7 +96,7 @@ class GetTasksServiceUnitTest extends TestCase
         $this->taskQueries->method('getTasksByUserID')
             ->willReturn(QueryResult::ok([]));
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(Error::class);
 
         $req = $this->makeRequest(['user_id' => '123']);
         $this->service->execute($req);

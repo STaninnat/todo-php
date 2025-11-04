@@ -128,7 +128,7 @@ class SigninServiceUnitTest extends TestCase
             ],
             'without error' => [
                 QueryResult::fail(null),
-                'Failed to fetch user: No changes were made.'
+                'Failed to fetch user: Unknown database error.'
             ],
         ];
     }
@@ -167,7 +167,7 @@ class SigninServiceUnitTest extends TestCase
         $this->userQueries->method('getUserByName')->willReturn(QueryResult::ok(null, 0));
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to fetch user: No changes were made.');
+        $this->expectExceptionMessage('Failed to fetch user: No data or changes found.');
 
         $req = $this->makeRequest(['username' => 'john', 'password' => 'pass']);
         $this->service->execute($req);

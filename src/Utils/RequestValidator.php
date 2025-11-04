@@ -123,19 +123,34 @@ class RequestValidator
      *
      * @throws InvalidArgumentException If parameter is missing
      */
-    public static function getBoolParam(Request $req, string $key, string $errorMsg): bool
+    public static function getBoolParam(Request $req, string $key, string $errorMsg, bool $normalizeInvalid = false): bool
     {
         $val = $req->getParam($key) ?? $req->getQuery($key) ?? $req->body[$key] ?? null;
         if ($val === null) {
             throw new InvalidArgumentException($errorMsg);
         }
 
-        // Validate numeric boolean representation
-        if (!is_scalar($val) || !ctype_digit((string)$val) || !in_array((int)$val, [0, 1], true)) {
-            return false; // Default to false if invalid
+        if (is_bool($val)) {
+            return $val;
         }
 
-        return (bool)((int)$val);
+        if (is_numeric($val) && in_array((int)$val, [0, 1], true)) {
+            return (bool)((int)$val);
+        }
+
+        if (is_string($val)) {
+            $lower = strtolower(trim($val));
+            if (in_array($lower, ['true', '1'], true)) {
+                return true;
+            }
+            if (in_array($lower, ['false', '0'], true)) {
+                return false;
+            }
+        }
+
+        if ($normalizeInvalid) return false;
+
+        throw new InvalidArgumentException($errorMsg);
     }
 
     /**
@@ -151,21 +166,26 @@ class RequestValidator
      *
      * @throws RuntimeException If the operation failed or made no changes
      */
-    public static function ensureSuccess(object $result, string $action): void
+    public static function ensureSuccess(object $result, string $action, bool $requireData = true, bool $ignoreChanges = false): void
     {
         // Check required properties/methods exist
-        if (!isset($result->success) || !is_bool($result->success) || !is_callable([$result, 'isChanged'])) {
+        if (!isset($result->success) || !is_bool($result->success)) {
             throw new RuntimeException("Invalid result object passed to ensureSuccess");
         }
 
-        if (!$result->success || !$result->isChanged()) {
-            $errorInfo = 'No changes were made.';
-
-            if (isset($result->error) && is_array($result->error)) {
-                $errorInfo = implode(' | ', $result->error);
-            }
-
+        if (!$result->success) {
+            $errorInfo = isset($result->error) && is_array($result->error)
+                ? implode(' | ', $result->error)
+                : 'Unknown database error.';
             throw new RuntimeException("Failed to {$action}: {$errorInfo}");
+        }
+
+        if (!$ignoreChanges && method_exists($result, 'isChanged') && !$result->isChanged()) {
+            throw new RuntimeException("Failed to {$action}: No data or changes found.");
+        }
+
+        if ($requireData && (!property_exists($result, 'data') || $result->data === null)) {
+            throw new RuntimeException("Failed to {$action}: No data or changes found.");
         }
     }
 }

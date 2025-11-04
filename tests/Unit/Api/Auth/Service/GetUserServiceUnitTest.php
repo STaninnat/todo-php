@@ -7,7 +7,6 @@ namespace Tests\Unit\Api\Auth\Service;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use App\Api\Auth\Service\GetUserService;
-use App\Api\Request;
 use App\DB\QueryResult;
 use App\DB\UserQueries;
 use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
@@ -103,7 +102,7 @@ class GetUserServiceUnitTest extends TestCase
             ],
             'fail without error'   => [
                 QueryResult::fail(null),
-                'Failed to fetch user: No changes were made.'
+                'Failed to fetch user: Unknown database error.'
             ],
         ];
     }
@@ -147,7 +146,7 @@ class GetUserServiceUnitTest extends TestCase
             ->willReturn(QueryResult::ok(null, 0));
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to fetch user: No changes were made.');
+        $this->expectExceptionMessage('Failed to fetch user: No data or changes found.');
 
         $req = $this->makeRequest(['user_id' => '123']);
         $this->service->execute($req);

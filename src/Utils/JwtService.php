@@ -154,6 +154,7 @@ class JwtService
     {
         // Remove standard claims before recreating token
         unset($payload['iat'], $payload['nbf'], $payload['exp']);
+        $now = $now ?? time();
 
         // Re-create JWT with same custom claims
         return $this->create($payload, $now);

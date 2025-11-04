@@ -99,7 +99,7 @@ class RequestValidatorTypeErrTest extends TestCase
     public function testEnsureSuccessThrowsTypeErrorWhenResultIsNotObject(): void
     {
         $this->expectException(TypeError::class);
-        RequestValidator::ensureSuccess(null, 'delete');
+        RequestValidator::ensureSuccess(null, 'delete', false);
     }
 
     public function testEnsureSuccessThrowsTypeErrorWhenActionIsNotString(): void

@@ -49,11 +49,14 @@ class AuthMiddleware
      * - Refresh token and update cookies if near expiration.
      *
      * @param Request $req The incoming request instance, enriched with authentication data.
+     * @param int|null $now Optional current timestamp (for testing or override); defaults to `time()`.
      *
      * @return void
      */
-    public function refreshJwt(Request $req): void
+    public function refreshJwt(Request $req, ?int $now = null): void
     {
+        $now = $now ?? time();
+
         // Retrieve current access token from cookies
         $token = $this->cookieManager->getAccessToken();
 
@@ -65,11 +68,11 @@ class AuthMiddleware
             $req->auth = $payload;
 
             // Refresh token if it's close to expiration
-            if ($this->jwt->shouldRefresh($payload)) {
-                $newToken = $this->jwt->refresh($payload);
+            if ($this->jwt->shouldRefresh($payload, $now)) {
+                $newToken = $this->jwt->refresh($payload, $now);
 
                 // Save refreshed token in cookies (valid for 1 hour)
-                $this->cookieManager->setAccessToken($newToken, time() + 3600);
+                $this->cookieManager->setAccessToken($newToken, $now + 3600);
             }
         }
     }

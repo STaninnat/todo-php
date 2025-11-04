@@ -65,7 +65,7 @@ class DeleteUserService
 
         // Attempt to delete user from database
         $result = $this->userQueries->deleteUser($userId);
-        RequestValidator::ensureSuccess($result, 'delete user');
+        RequestValidator::ensureSuccess($result, 'delete user', false, true);
 
         // Clear access token cookies after deletion
         $this->cookieManager->clearAccessToken();

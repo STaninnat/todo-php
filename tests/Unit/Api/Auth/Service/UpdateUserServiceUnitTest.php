@@ -101,7 +101,7 @@ class UpdateUserServiceUnitTest extends TestCase
             ],
             'without error'   => [
                 QueryResult::fail(null),
-                'Failed to check user existence: No changes were made.'
+                'Failed to check user existence: Unknown database error.'
             ],
         ];
     }
@@ -153,11 +153,11 @@ class UpdateUserServiceUnitTest extends TestCase
         return [
             'fail with error info' => [
                 QueryResult::fail(['SQLSTATE[HY000]', 'Update error']),
-                'Failed to check user existence: No changes were made.'
+                'Failed to check user existence: No data or changes found.'
             ],
             'fail without error' => [
                 QueryResult::fail(null),
-                'Failed to check user existence: No changes were made.'
+                'Failed to check user existence: No data or changes found.'
             ],
         ];
     }
@@ -198,7 +198,7 @@ class UpdateUserServiceUnitTest extends TestCase
         $this->userQueries->method('updateUser')->willReturn($result);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to check user existence: No changes were made.');
+        $this->expectExceptionMessage('Failed to check user existence: No data or changes found.');
 
         $req = $this->makeRequest(['user_id' => '1', 'username' => 'john', 'email' => 'john@example.com']);
         $this->service->execute($req);

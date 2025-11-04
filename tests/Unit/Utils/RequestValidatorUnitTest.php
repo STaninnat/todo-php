@@ -29,6 +29,8 @@ class DummyResult
 
     private bool $changed;
 
+    public $data;
+
     /**
      * Constructor.
      *
@@ -41,6 +43,7 @@ class DummyResult
         $this->success = $success;
         $this->changed = $changed;
         $this->error   = $error;
+        $this->data = $success ? ['dummy'] : null;
     }
 
     /**
@@ -185,7 +188,7 @@ class RequestValidatorUnitTest extends TestCase
         $this->req->method('getQuery')->willReturn(null);
         $this->req->body = [];
 
-        $this->assertSame($expected, RequestValidator::getBoolParam($this->req, 'flag', 'Invalid flag'));
+        $this->assertSame($expected, RequestValidator::getBoolParam($this->req, 'flag', 'Invalid flag', true));
     }
 
     /**

@@ -62,7 +62,7 @@ class GetTasksService
 
         // Fetch tasks via TaskQueries
         $result = $this->taskQueries->getTasksByUserID($userId);
-        RequestValidator::ensureSuccess($result, 'retrieve tasks');
+        RequestValidator::ensureSuccess($result, 'retrieve tasks', false, true);
 
         // Calculate total pages for pagination
         $paginator = new TaskPaginator($this->taskQueries);

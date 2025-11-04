@@ -69,7 +69,8 @@ class TaskQueries
                 return $this->failFromStmt(false);
             }
 
-            if (!$stmt->execute([$title, $description, $userId])) {
+            $ok = $stmt->execute([$title, $description, $userId]);
+            if ($ok === false) {
                 return $this->failFromStmt($stmt);
             }
 
@@ -178,18 +179,23 @@ class TaskQueries
     {
         $query = "SELECT * FROM tasks WHERE user_id = ?";
 
-        $stmt = $this->pdo->prepare($query);
-        if ($stmt === false) {
-            return $this->failFromStmt(false);
+        try {
+            $stmt = $this->pdo->prepare($query);
+            if ($stmt === false) {
+                return $this->failFromStmt(false);
+            }
+
+            $ok = $stmt->execute([$userId]);
+            if ($ok === false) {
+                return $this->failFromStmt($stmt);
+            }
+
+            $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return QueryResult::ok($tasks, count($tasks));
+        } catch (\Throwable $e) {
+            return QueryResult::fail([$e->getMessage()]);
         }
-
-        if (!$stmt->execute([$userId])) {
-            return $this->failFromStmt($stmt);
-        }
-
-        $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return QueryResult::ok($tasks, count($tasks));
     }
 
     /**
@@ -205,16 +211,22 @@ class TaskQueries
     {
         $query = "UPDATE tasks SET is_done = ? WHERE id = ? AND user_id = ?";
 
-        $stmt = $this->pdo->prepare($query);
-        if ($stmt === false) {
-            return $this->failFromStmt(false);
-        }
+        try {
+            $stmt = $this->pdo->prepare($query);
+            if ($stmt === false) {
+                return $this->failFromStmt(false);
+            }
 
-        if (!$stmt->execute([$isDone ? 1 : 0, $id, $userId])) {
-            return $this->failFromStmt($stmt);
-        }
+            if (!$stmt->execute([$isDone ? 1 : 0, $id, $userId])) {
+                return $this->failFromStmt($stmt);
+            }
 
-        return $this->getTaskByID($id, $userId);
+            // Return updated task
+            return $this->getTaskByID($id, $userId);
+        } catch (\PDOException $e) {
+            // Gracefully handle SQL or connection errors
+            return QueryResult::fail([$e->getMessage()]);
+        }
     }
 
     /**

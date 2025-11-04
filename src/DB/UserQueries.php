@@ -92,18 +92,19 @@ class UserQueries
     {
         $query = "SELECT * FROM users WHERE username = ? LIMIT 1";
 
-        $stmt = $this->pdo->prepare($query);
-        if ($stmt === false) {
-            return $this->failFromStmt(false);
+        try {
+            $stmt = $this->pdo->prepare($query);
+            if ($stmt === false) {
+                return $this->failFromStmt(false);
+            }
+            if (!$stmt->execute([$username])) {
+                return $this->failFromStmt($stmt);
+            }
+            $user = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            return QueryResult::ok($user, $user ? 1 : 0);
+        } catch (\PDOException $e) {
+            return QueryResult::fail([$e->getMessage()]);
         }
-
-        if (!$stmt->execute([$username])) {
-            return $this->failFromStmt($stmt);
-        }
-
-        $user = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-
-        return QueryResult::ok($user, $user ? 1 : 0);
     }
 
     /**

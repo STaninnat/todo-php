@@ -178,7 +178,7 @@ class GetUserServiceTypeErrTest extends TestCase
             ->willReturn($result);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to fetch user: No changes were made.');
+        $this->expectExceptionMessage('Failed to fetch user: No data or changes found.');
 
         $this->service->execute($req);
     }

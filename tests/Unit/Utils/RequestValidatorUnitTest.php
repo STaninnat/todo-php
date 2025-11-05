@@ -29,6 +29,9 @@ class DummyResult
 
     private bool $changed;
 
+    /**
+     * @var list<string>|null
+     */
     public $data;
 
     /**

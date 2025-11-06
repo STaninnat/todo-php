@@ -77,6 +77,9 @@ final class TaskControllerIntegrationTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * @param array<string, mixed> $body
+     */
     private function makeRequestFromBody(array $body, string $method = 'POST'): Request
     {
         $json = json_encode($body);
@@ -95,9 +98,15 @@ final class TaskControllerIntegrationTest extends TestCase
             'user_id' => $this->userId,
         ]);
 
+        /** @var array{
+         *   success: bool,
+         *   type: string,
+         *   message: string,
+         *   data: array{task: array{id: int|string}}
+         * } $res
+         */
         $res = $this->controller->addTask($req, true);
 
-        $this->assertIsArray($res);
         $this->assertTrue($res['success']);
         $this->assertSame('success', $res['type']);
         $this->assertSame('Task added successfully', $res['message']);
@@ -147,13 +156,17 @@ final class TaskControllerIntegrationTest extends TestCase
         ");
 
         $req = $this->makeRequestFromBody(['user_id' => $this->userId], 'GET');
+
+        /** @var array{
+         *   success: bool,
+         *   message: string,
+         *   data: array{task: list<array{user_id: string}>}
+         * } $res
+         */
         $res = $this->controller->getTasks($req, true);
 
         $this->assertTrue($res['success']);
         $this->assertSame('Task retrieved successfully', $res['message']);
-        $this->assertArrayHasKey('data', $res);
-        $this->assertArrayHasKey('task', $res['data']);
-        $this->assertIsArray($res['data']['task']);
         $this->assertCount(2, $res['data']['task']);
         foreach ($res['data']['task'] as $t) {
             $this->assertSame($this->userId, $t['user_id']);
@@ -170,6 +183,12 @@ final class TaskControllerIntegrationTest extends TestCase
         ");
 
         $req = $this->makeRequestFromBody(['user_id' => $this->userId], 'GET');
+
+        /** @var array{
+         *   success: bool,
+         *   data: array{task: list<array{user_id: string}>}
+         * } $res
+         */
         $res = $this->controller->getTasks($req, true);
 
         $this->assertCount(1, $res['data']['task']);
@@ -186,8 +205,15 @@ final class TaskControllerIntegrationTest extends TestCase
         ");
 
         $req = $this->makeRequestFromBody(['user_id' => $this->userId], 'GET');
+
+        /** @var array{
+         *   success: bool,
+         *   data: array{task: list<array{title: string}>}
+         * } $res
+         */
         $res = $this->controller->getTasks($req, true);
 
+        $this->assertTrue($res['success']);
         $this->assertCount(2, $res['data']['task']);
         $this->assertSame('First', $res['data']['task'][0]['title']);
         $this->assertSame('Second', $res['data']['task'][1]['title']);
@@ -209,6 +235,12 @@ final class TaskControllerIntegrationTest extends TestCase
             'is_done' => true,
         ]);
 
+        /** @var array{
+         *   success: bool,
+         *   message: string,
+         *   data: array{task: array{title: string, description: string, is_done: int|bool}}
+         * } $res
+         */
         $res = $this->controller->updateTask($req, true);
 
         $this->assertTrue($res['success']);
@@ -247,6 +279,12 @@ final class TaskControllerIntegrationTest extends TestCase
             'is_done' => true,
         ]);
 
+        /** @var array{
+         *   success: bool,
+         *   message: string,
+         *   data: array{task: array{is_done: int|bool}}
+         * } $res
+         */
         $res = $this->controller->markDoneTask($req, true);
 
         $this->assertTrue($res['success']);
@@ -280,13 +318,19 @@ final class TaskControllerIntegrationTest extends TestCase
             'user_id' => $this->userId,
         ]);
 
+        /** @var array{
+         *   success: bool,
+         *   message: string,
+         *   data: array{id: int}
+         * } $res
+         */
         $res = $this->controller->deleteTask($req, true);
 
         $this->assertTrue($res['success']);
         $this->assertSame('Task deleted successfully', $res['message']);
         $this->assertSame($id, $res['data']['id']);
 
-        $fetch = $this->queries->getTaskByID($id, $this->userId);
+        $fetch = $this->queries->getTaskByID((int) $id, $this->userId);
         $this->assertTrue($fetch->success);
         $this->assertNull($fetch->data);
     }
@@ -310,6 +354,12 @@ final class TaskControllerIntegrationTest extends TestCase
             'description' => 'Test full flow',
             'user_id' => $this->userId,
         ]);
+
+        /** @var array{
+         *   success: bool,
+         *   data: array{task: array{id: int|string}}
+         * } $addRes
+         */
         $addRes = $this->controller->addTask($addReq, true);
         $this->assertTrue($addRes['success']);
         $taskId = $addRes['data']['task']['id'];
@@ -322,6 +372,12 @@ final class TaskControllerIntegrationTest extends TestCase
             'user_id' => $this->userId,
             'is_done' => false,
         ]);
+
+        /** @var array{
+         *   success: bool,
+         *   data: array{task: array{title: string}}
+         * } $updateRes
+         */
         $updateRes = $this->controller->updateTask($updateReq, true);
         $this->assertTrue($updateRes['success']);
         $this->assertSame('Lifecycle updated', $updateRes['data']['task']['title']);
@@ -332,12 +388,24 @@ final class TaskControllerIntegrationTest extends TestCase
             'user_id' => $this->userId,
             'is_done' => true,
         ]);
+
+        /** @var array{
+         *   success: bool,
+         *   data: array{task: array{is_done: int|bool}}
+         * } $doneRes
+         */
         $doneRes = $this->controller->markDoneTask($doneReq, true);
         $this->assertTrue($doneRes['success']);
         $this->assertSame(1, (int)$doneRes['data']['task']['is_done']);
 
         // Get
         $getReq = $this->makeRequestFromBody(['user_id' => $this->userId], 'GET');
+
+        /** @var array{
+         *   success: bool,
+         *   data: array{task: list<array{title: string, is_done: int|bool}>}
+         * } $getRes
+         */
         $getRes = $this->controller->getTasks($getReq, true);
         $this->assertCount(1, $getRes['data']['task']);
         $this->assertSame('Lifecycle updated', $getRes['data']['task'][0]['title']);
@@ -348,11 +416,13 @@ final class TaskControllerIntegrationTest extends TestCase
             'id' => $taskId,
             'user_id' => $this->userId,
         ]);
+
+        /** @var array{success: bool} $deleteRes */
         $deleteRes = $this->controller->deleteTask($deleteReq, true);
         $this->assertTrue($deleteRes['success']);
 
         // Verify deleted
-        $fetch = $this->queries->getTaskByID($taskId, $this->userId);
+        $fetch = $this->queries->getTaskByID((int) $taskId, $this->userId);
         $this->assertNull($fetch->data);
     }
 }

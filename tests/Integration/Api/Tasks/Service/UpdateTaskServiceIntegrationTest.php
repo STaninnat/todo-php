@@ -13,6 +13,21 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use PDO;
 
+/**
+ * Class UpdateTaskServiceIntegrationTest
+ *
+ * Integration tests for the UpdateTaskService class.
+ *
+ * This suite verifies:
+ * - Proper validation of required fields (title, user_id, id)
+ * - Successful update of existing tasks
+ * - Correct handling of missing or invalid inputs
+ * - Graceful error responses for non-existent or invalid records
+ *
+ * Uses a temporary `tasks` table created and reset per test run.
+ *
+ * @package Tests\Integration\Api\Tasks\Service
+ */
 final class UpdateTaskServiceIntegrationTest extends TestCase
 {
     /**
@@ -25,6 +40,14 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
      */
     private TaskQueries $queries;
 
+    /**
+     * Setup a clean database and table before each test.
+     *
+     * Loads the test DB environment, ensures the connection is available,
+     * and initializes a fresh `tasks` table.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -57,13 +80,23 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
         ");
     }
 
+    /**
+     * Tear down the test environment.
+     *
+     * Drops the temporary table and calls parent teardown.
+     *
+     * @return void
+     */
     protected function tearDown(): void
     {
         $this->pdo->exec('DROP TABLE IF EXISTS tasks');
+        parent::tearDown();
     }
 
     /**
-     * @return array<string, int|string>
+     * Create a sample task record for update testing.
+     *
+     * @return array<string, int|string> Inserted task data
      */
     private function createSampleTask(): array
     {
@@ -80,7 +113,11 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $body
+     * Helper to construct a Request object for testing.
+     *
+     * @param array<string, mixed> $body Request body content
+     * 
+     * @return Request
      */
     private function makeRequest(array $body): Request
     {
@@ -92,6 +129,15 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
         return new Request('PUT', '/tasks/update', [], $json);
     }
 
+    /**
+     * Test successful task update with valid input.
+     *
+     * Verifies that:
+     * - Task fields are properly updated in the database
+     * - Response structure contains expected values
+     *
+     * @return void
+     */
     public function testUpdateTaskSuccessfully(): void
     {
         $task = $this->createSampleTask();
@@ -105,9 +151,13 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'user_id' => $task['user_id'],
         ]);
 
+        // Execute service
         $result = $service->execute($req);
 
+        // Inline: Ensure the returned data contains numeric 'is_done'
         assert(isset($result['task']['is_done']) && is_numeric($result['task']['is_done']));
+
+        // Validate response structure and updated data
         $this->assertArrayHasKey('task', $result);
         $this->assertSame('Updated Title', $result['task']['title']);
         $this->assertSame('Updated description', $result['task']['description']);
@@ -115,6 +165,13 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
         $this->assertSame(1, $result['totalPages']);
     }
 
+    /**
+     * Test missing title validation.
+     *
+     * Expects InvalidArgumentException with "Task title is required."
+     *
+     * @return void
+     */
     public function testUpdateTaskWithoutTitleThrowsException(): void
     {
         $task = $this->createSampleTask();
@@ -126,11 +183,19 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'user_id' => $task['user_id'],
         ]);
 
+        // Expect validation failure due to missing title
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Task title is required.');
         $service->execute($req);
     }
 
+    /**
+     * Test missing user_id validation.
+     *
+     * Expects InvalidArgumentException with "User ID is required."
+     *
+     * @return void
+     */
     public function testUpdateTaskWithoutUserIdThrowsException(): void
     {
         $task = $this->createSampleTask();
@@ -142,11 +207,19 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'is_done' => false,
         ]);
 
+        // Expect validation failure due to missing user_id
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('User ID is required.');
         $service->execute($req);
     }
 
+    /**
+     * Test validation of incorrect input types.
+     *
+     * Ensures invalid data types trigger InvalidArgumentException.
+     *
+     * @return void
+     */
     public function testUpdateTaskWithInvalidTypesThrowsException(): void
     {
         $task = $this->createSampleTask();
@@ -159,10 +232,18 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'user_id' => $task['user_id'],
         ]);
 
+        // Expect validation failure
         $this->expectException(InvalidArgumentException::class);
         $service->execute($req);
     }
 
+    /**
+     * Test behavior when attempting to update a non-existent task.
+     *
+     * Expects RuntimeException with message "No task found."
+     *
+     * @return void
+     */
     public function testUpdateTaskFailsWhenTaskNotFound(): void
     {
         $service = new UpdateTaskService($this->queries);
@@ -175,17 +256,27 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'user_id' => 'user_123',
         ]);
 
+        // Expect runtime exception due to missing record
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('No task found.');
         $service->execute($req);
     }
 
+    /**
+     * Test handling of database errors (e.g. constraint violations).
+     *
+     * Simulates SQL error by exceeding VARCHAR(255) column limit.
+     *
+     * Expects RuntimeException with message containing "update task".
+     *
+     * @return void
+     */
     public function testUpdateTaskFailsOnDatabaseError(): void
     {
         $task = $this->createSampleTask();
         $service = new UpdateTaskService($this->queries);
 
-        // title longer than 255 → SQL error
+        // Overly long title to force SQL error
         $longTitle = str_repeat('x', 300);
         $req = $this->makeRequest([
             'id' => $task['id'],
@@ -195,6 +286,7 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'user_id' => $task['user_id'],
         ]);
 
+        // Expect RuntimeException on failed update
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('update task');
         $service->execute($req);

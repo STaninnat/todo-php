@@ -18,6 +18,22 @@ use PHPUnit\Framework\TestCase;
 use PDO;
 use RuntimeException;
 
+/**
+ * Class TaskControllerIntegrationTest
+ *
+ * Integration tests for the TaskController class.
+ *
+ * This test suite verifies the controller’s end-to-end behavior against
+ * a real database connection (via PDO and TaskQueries).
+ *
+ * Covered scenarios:
+ * - Successful task lifecycle operations (add, update, mark done, delete, get)
+ * - Proper validation for required fields and data constraints
+ * - Correct data persistence and retrieval from database
+ * - Exception propagation on invalid or failed operations
+ *
+ * @package Tests\Integration\Api\Tasks\Controller
+ */
 final class TaskControllerIntegrationTest extends TestCase
 {
     /**
@@ -29,9 +45,26 @@ final class TaskControllerIntegrationTest extends TestCase
      * @var TaskQueries TaskQueries instance for testing
      */
     private TaskQueries $queries;
+
+    /** 
+     * @var TaskController Controller under test 
+     */
     private TaskController $controller;
+
+    /** 
+     * @var string Simulated user ID used in integration tests 
+     */
     private string $userId = 'user_integ';
 
+    /**
+     * Sets up the integration test environment.
+     *
+     * - Waits for DB to be ready
+     * - Creates schema for `tasks` table
+     * - Instantiates TaskController with real service dependencies
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -62,6 +95,7 @@ final class TaskControllerIntegrationTest extends TestCase
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
 
+        // Instantiate controller with actual service layers
         $this->controller = new TaskController(
             new AddTaskService($this->queries),
             new DeleteTaskService($this->queries),
@@ -71,6 +105,11 @@ final class TaskControllerIntegrationTest extends TestCase
         );
     }
 
+    /**
+     * Cleans up after each test by dropping the tasks table.
+     *
+     * @return void
+     */
     protected function tearDown(): void
     {
         $this->pdo->exec('DROP TABLE IF EXISTS tasks');
@@ -78,7 +117,12 @@ final class TaskControllerIntegrationTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $body
+     * Helper method to build a Request object from an associative array.
+     *
+     * @param array<string, mixed> $body Request body data
+     * @param string $method HTTP method (default: POST)
+     * 
+     * @return Request
      */
     private function makeRequestFromBody(array $body, string $method = 'POST'): Request
     {
@@ -87,9 +131,17 @@ final class TaskControllerIntegrationTest extends TestCase
             throw new RuntimeException('Failed to encode request body to JSON.');
         }
 
+        // Create Request with encoded JSON payload
         return new Request($method, '/', [], $json);
     }
 
+    /**
+     * Test successful task creation through controller and DB persistence.
+     *
+     * Ensures returned data matches inserted record and DB contains 1 row.
+     *
+     * @return void
+     */
     public function testAddTaskSuccess(): void
     {
         $req = $this->makeRequestFromBody([
@@ -107,6 +159,7 @@ final class TaskControllerIntegrationTest extends TestCase
          */
         $res = $this->controller->addTask($req, true);
 
+        // Assertions on response structure 
         $this->assertTrue($res['success']);
         $this->assertSame('success', $res['type']);
         $this->assertSame('Task added successfully', $res['message']);
@@ -114,12 +167,18 @@ final class TaskControllerIntegrationTest extends TestCase
         $this->assertArrayHasKey('task', $res['data']);
         $this->assertArrayHasKey('id', $res['data']['task']);
 
+        // Verify persistence in database 
         $stmt = $this->pdo->query('SELECT COUNT(*) FROM tasks');
         $this->assertNotFalse($stmt);
         $count = (int) $stmt->fetchColumn();
         $this->assertSame(1, $count);
     }
 
+    /**
+     * Test that missing title field triggers validation error.
+     *
+     * @return void
+     */
     public function testAddTaskMissingTitleThrows(): void
     {
         $req = $this->makeRequestFromBody([
@@ -127,11 +186,17 @@ final class TaskControllerIntegrationTest extends TestCase
             'user_id' => $this->userId,
         ]);
 
+        // Expect validation failure due to missing title
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Task title is required.');
         $this->controller->addTask($req, true);
     }
 
+    /**
+     * Test that excessively long title causes database error.
+     *
+     * @return void
+     */
     public function testAddTaskWithLongTitleFails(): void
     {
         $longTitle = str_repeat('A', 300); // more than VARCHAR(255)
@@ -145,6 +210,11 @@ final class TaskControllerIntegrationTest extends TestCase
         $this->controller->addTask($req, true);
     }
 
+    /**
+     * Test retrieval of all tasks belonging to the given user.
+     *
+     * @return void
+     */
     public function testGetTasksReturnsUserTasks(): void
     {
         $this->pdo->exec("
@@ -165,14 +235,22 @@ final class TaskControllerIntegrationTest extends TestCase
          */
         $res = $this->controller->getTasks($req, true);
 
+        // Assertions 
         $this->assertTrue($res['success']);
         $this->assertSame('Task retrieved successfully', $res['message']);
         $this->assertCount(2, $res['data']['task']);
+
+        // Ensure all tasks belong to current user
         foreach ($res['data']['task'] as $t) {
             $this->assertSame($this->userId, $t['user_id']);
         }
     }
 
+    /**
+     * Test that tasks between users remain isolated.
+     *
+     * @return void
+     */
     public function testTasksAreIsolatedBetweenUsers(): void
     {
         $this->pdo->exec("
@@ -191,10 +269,16 @@ final class TaskControllerIntegrationTest extends TestCase
          */
         $res = $this->controller->getTasks($req, true);
 
+        // Expect only tasks belonging to current user
         $this->assertCount(1, $res['data']['task']);
         $this->assertSame($this->userId, $res['data']['task'][0]['user_id']);
     }
 
+    /**
+     * Test that retrieved tasks are ordered chronologically by creation date.
+     *
+     * @return void
+     */
     public function testTasksReturnedInChronologicalOrder(): void
     {
         $this->pdo->exec("
@@ -213,12 +297,18 @@ final class TaskControllerIntegrationTest extends TestCase
          */
         $res = $this->controller->getTasks($req, true);
 
+        // Ensure chronological order (ascending)
         $this->assertTrue($res['success']);
         $this->assertCount(2, $res['data']['task']);
         $this->assertSame('First', $res['data']['task'][0]['title']);
         $this->assertSame('Second', $res['data']['task'][1]['title']);
     }
 
+    /**
+     * Test successful task update flow.
+     *
+     * @return void
+     */
     public function testUpdateTaskSuccess(): void
     {
         $this->pdo->exec("
@@ -243,6 +333,7 @@ final class TaskControllerIntegrationTest extends TestCase
          */
         $res = $this->controller->updateTask($req, true);
 
+        // Assertions on updated data
         $this->assertTrue($res['success']);
         $this->assertSame('Task updated successfully', $res['message']);
         $this->assertSame('New title', $res['data']['task']['title']);
@@ -250,6 +341,11 @@ final class TaskControllerIntegrationTest extends TestCase
         $this->assertSame(1, (int)$res['data']['task']['is_done']);
     }
 
+    /**
+     * Test update behavior when the task does not exist.
+     *
+     * @return void
+     */
     public function testUpdateTaskNotFoundThrows(): void
     {
         $req = $this->makeRequestFromBody([
@@ -265,6 +361,11 @@ final class TaskControllerIntegrationTest extends TestCase
         $this->controller->updateTask($req, true);
     }
 
+    /**
+     * Test marking a task as done successfully.
+     *
+     * @return void
+     */
     public function testMarkDoneTaskSuccess(): void
     {
         $this->pdo->exec("
@@ -292,6 +393,11 @@ final class TaskControllerIntegrationTest extends TestCase
         $this->assertSame(1, (int)$res['data']['task']['is_done']);
     }
 
+    /**
+     * Test that marking a non-existent task throws exception.
+     *
+     * @return void
+     */
     public function testMarkDoneTaskNotFoundThrows(): void
     {
         $req = $this->makeRequestFromBody([
@@ -305,6 +411,11 @@ final class TaskControllerIntegrationTest extends TestCase
         $this->controller->markDoneTask($req, true);
     }
 
+    /**
+     * Test successful task deletion and database cleanup.
+     *
+     * @return void
+     */
     public function testDeleteTaskSuccess(): void
     {
         $this->pdo->exec("
@@ -326,15 +437,22 @@ final class TaskControllerIntegrationTest extends TestCase
          */
         $res = $this->controller->deleteTask($req, true);
 
+        // Verify deletion response
         $this->assertTrue($res['success']);
         $this->assertSame('Task deleted successfully', $res['message']);
         $this->assertSame($id, $res['data']['id']);
 
+        // Verify record no longer exists
         $fetch = $this->queries->getTaskByID((int) $id, $this->userId);
         $this->assertTrue($fetch->success);
         $this->assertNull($fetch->data);
     }
 
+    /**
+     * Test that deleting a non-existent task throws exception.
+     *
+     * @return void
+     */
     public function testDeleteTaskNotFoundThrows(): void
     {
         $req = $this->makeRequestFromBody([
@@ -346,6 +464,15 @@ final class TaskControllerIntegrationTest extends TestCase
         $this->controller->deleteTask($req, true);
     }
 
+    /**
+     * Full integration test covering entire task lifecycle.
+     *
+     * Sequence tested:
+     * 1. Add → 2. Update → 3. Mark Done → 4. Get → 5. Delete
+     * Ensures DB state transitions and responses are consistent.
+     *
+     * @return void
+     */
     public function testFullTaskLifecycle(): void
     {
         // Add

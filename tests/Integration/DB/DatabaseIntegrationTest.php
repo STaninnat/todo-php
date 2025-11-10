@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\DB;
 
 use App\DB\Database;
+use function Tests\Integration\waitForDatabase;
 use PHPUnit\Framework\TestCase;
 use PDO;
 
@@ -41,9 +42,6 @@ final class DatabaseIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Bootstrap environment variables and database setup
-        require_once __DIR__ . '/../bootstrap_db.php';
 
         // Get DB host and port from environment or defaults
         $dbHost = $this->getEnvString('DB_HOST', 'db_test');

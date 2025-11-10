@@ -6,6 +6,7 @@ namespace Tests\Integration\DB;
 
 use App\DB\Database;
 use App\DB\UserQueries;
+use function Tests\Integration\waitForDatabase;
 use PHPUnit\Framework\TestCase;
 use PDO;
 
@@ -52,9 +53,6 @@ final class UserQueriesIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Bootstrap environment & database
-        require_once __DIR__ . '/../bootstrap_db.php';
 
         $dbHost = $_ENV['DB_HOST'] ?? 'db_test';
         assert(is_string($dbHost));

@@ -13,6 +13,7 @@ use App\Api\Tasks\Service\MarkDoneTaskService;
 use App\Api\Tasks\Service\UpdateTaskService;
 use App\DB\Database;
 use App\DB\TaskQueries;
+use function Tests\Integration\waitForDatabase;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use PDO;
@@ -68,8 +69,6 @@ final class TaskControllerIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        require_once __DIR__ . '/../../../bootstrap_db.php';
 
         $dbHost = $_ENV['DB_HOST'] ?? 'db_test';
         assert(is_string($dbHost));

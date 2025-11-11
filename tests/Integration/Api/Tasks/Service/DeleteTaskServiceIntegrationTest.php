@@ -13,6 +13,8 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use PDO;
 
+require_once __DIR__ . '/../../../bootstrap_db.php';
+
 /**
  * Class DeleteTaskServiceIntegrationTest
  *
@@ -49,8 +51,6 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        require_once __DIR__ . '/../../../bootstrap_db.php';
 
         $dbHost = $_ENV['DB_HOST'] ?? 'db_test';
         assert(is_string($dbHost));

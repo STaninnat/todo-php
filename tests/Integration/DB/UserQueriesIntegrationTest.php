@@ -9,6 +9,8 @@ use App\DB\UserQueries;
 use PHPUnit\Framework\TestCase;
 use PDO;
 
+require_once __DIR__ . '/../bootstrap_db.php';
+
 /**
  * Class UserQueriesIntegrationTest
  *
@@ -52,9 +54,6 @@ final class UserQueriesIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Bootstrap environment & database
-        require_once __DIR__ . '/../bootstrap_db.php';
 
         $dbHost = $_ENV['DB_HOST'] ?? 'db_test';
         assert(is_string($dbHost));

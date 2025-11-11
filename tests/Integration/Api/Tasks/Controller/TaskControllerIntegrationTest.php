@@ -18,6 +18,8 @@ use PHPUnit\Framework\TestCase;
 use PDO;
 use RuntimeException;
 
+require_once __DIR__ . '/../../../bootstrap_db.php';
+
 /**
  * Class TaskControllerIntegrationTest
  *
@@ -68,8 +70,6 @@ final class TaskControllerIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        require_once __DIR__ . '/../../../bootstrap_db.php';
 
         $dbHost = $_ENV['DB_HOST'] ?? 'db_test';
         assert(is_string($dbHost));

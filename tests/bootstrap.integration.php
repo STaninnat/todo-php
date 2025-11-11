@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/Integration/bootstrap_db.php';
 
 /**
  * Load environment variables from .env.test file if it exists.
@@ -37,8 +38,6 @@ if (is_file($envFile)) {
         putenv("$key=$value");
     }
 }
-
-require_once __DIR__ . '/Integration/bootstrap_db.php';
 
 /**
  * @var string $dbHost Database host for integration tests

@@ -79,8 +79,6 @@ class SignupService
 
         // Ensure username or email does not already exist
         $existsResult = $this->userQueries->checkUserExists($username, $email);
-        RequestValidator::ensureSuccess($existsResult, 'check user existence');
-
         if ($existsResult->data === true) {
             throw new InvalidArgumentException("Username or email already exists.");
         }

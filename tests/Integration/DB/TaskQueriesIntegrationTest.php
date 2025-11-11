@@ -9,6 +9,7 @@ use App\DB\TaskQueries;
 use PHPUnit\Framework\TestCase;
 use PDO;
 
+require_once __DIR__ . '/../bootstrap_db.php';
 /**
  * Class TaskQueriesIntegrationTest
  *
@@ -52,9 +53,6 @@ final class TaskQueriesIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Bootstrap environment & DB connection
-        require_once __DIR__ . '/../bootstrap_db.php';
 
         $dbHost = $_ENV['DB_HOST'] ?? 'db_test';
         assert(is_string($dbHost));

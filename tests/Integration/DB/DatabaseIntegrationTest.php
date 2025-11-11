@@ -8,6 +8,8 @@ use App\DB\Database;
 use PHPUnit\Framework\TestCase;
 use PDO;
 
+require_once __DIR__ . '/../bootstrap_db.php';
+
 /**
  * Class DatabaseIntegrationTest
  *
@@ -41,9 +43,6 @@ final class DatabaseIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Bootstrap environment variables and database setup
-        require_once __DIR__ . '/../bootstrap_db.php';
 
         // Get DB host and port from environment or defaults
         $dbHost = $this->getEnvString('DB_HOST', 'db_test');

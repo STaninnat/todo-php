@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Tests;
-
-use function Tests\Integration\waitForDatabase;
+require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/Integration/bootstrap_db.php';
 
 /**
  * Load environment variables from .env.test file if it exists.

@@ -2,10 +2,6 @@
 
 declare(strict_types=1);
 
-namespace Tests\Integration;
-
-use RuntimeException;
-
 /**
  * Waits for the database service to become available.
  *

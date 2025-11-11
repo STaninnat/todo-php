@@ -13,11 +13,12 @@ use App\Api\Tasks\Service\MarkDoneTaskService;
 use App\Api\Tasks\Service\UpdateTaskService;
 use App\DB\Database;
 use App\DB\TaskQueries;
-use function Tests\Integration\waitForDatabase;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use PDO;
 use RuntimeException;
+
+require_once __DIR__ . '/../../../bootstrap_db.php';
 
 /**
  * Class TaskControllerIntegrationTest

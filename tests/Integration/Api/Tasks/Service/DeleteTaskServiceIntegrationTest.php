@@ -8,11 +8,12 @@ use App\Api\Request;
 use App\Api\Tasks\Service\DeleteTaskService;
 use App\DB\Database;
 use App\DB\TaskQueries;
-use function Tests\Integration\waitForDatabase;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use PDO;
+
+require_once __DIR__ . '/../../../bootstrap_db.php';
 
 /**
  * Class DeleteTaskServiceIntegrationTest

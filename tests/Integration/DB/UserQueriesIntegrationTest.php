@@ -6,9 +6,10 @@ namespace Tests\Integration\DB;
 
 use App\DB\Database;
 use App\DB\UserQueries;
-use function Tests\Integration\waitForDatabase;
 use PHPUnit\Framework\TestCase;
 use PDO;
+
+require_once __DIR__ . '/../bootstrap_db.php';
 
 /**
  * Class UserQueriesIntegrationTest

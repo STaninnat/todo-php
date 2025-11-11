@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Tests\Integration\DB;
 
 use App\DB\Database;
-use function Tests\Integration\waitForDatabase;
 use PHPUnit\Framework\TestCase;
 use PDO;
+
+require_once __DIR__ . '/../bootstrap_db.php';
 
 /**
  * Class DatabaseIntegrationTest

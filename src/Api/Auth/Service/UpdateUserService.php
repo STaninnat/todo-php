@@ -58,7 +58,7 @@ class UpdateUserService
 
         // Check for existing username or email to prevent duplication
         $existsResult = $this->userQueries->checkUserExists($username, $email);
-        RequestValidator::ensureSuccess($existsResult, 'check user existence');
+        RequestValidator::ensureSuccess($existsResult, 'check user existence', false, true);
 
         if ($existsResult->data === true) {
             throw new RuntimeException("Username or email already exists.");

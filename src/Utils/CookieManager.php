@@ -21,6 +21,8 @@ class CookieManager
      */
     private CookieStorageInterface $storage;
 
+    private ?string $lastSetCookieName = null;
+
     /**
      * Constructor.
      *
@@ -49,7 +51,8 @@ class CookieManager
      */
     public function setAccessToken(string $token, int $expires): void
     {
-        $this->setCookie('access_token', $token, $expires);
+        $this->lastSetCookieName = 'access_token';
+        $this->storage->set('access_token', $token, $expires);
     }
 
     /**
@@ -57,24 +60,13 @@ class CookieManager
      */
     public function clearAccessToken(): void
     {
-        $this->setCookie('access_token', '', time() - 3600);
+        $this->lastSetCookieName = 'access_token';
+        $this->storage->delete('access_token');
     }
 
-    /**
-     * Internal method to set a cookie with secure defaults.
-     *
-     * @param string $name The name of the cookie.
-     * @param string $value The value to store in the cookie.
-     * @param int $expires The Unix timestamp when the cookie should expire.
-     */
-    protected function setCookie(string $name, string $value, int $expires): void
+    // for test
+    public function getLastSetCookieName(): ?string
     {
-        setcookie($name, $value, [
-            'expires'  => $expires,
-            'path'     => '/',
-            'secure'   => true,
-            'httponly' => true,
-            'samesite' => 'Strict',
-        ]);
+        return $this->lastSetCookieName;
     }
 }

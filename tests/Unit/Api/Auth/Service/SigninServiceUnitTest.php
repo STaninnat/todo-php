@@ -166,8 +166,8 @@ class SigninServiceUnitTest extends TestCase
     {
         $this->userQueries->method('getUserByName')->willReturn(QueryResult::ok(null, 0));
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to fetch user: No data or changes found.');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid username or password.');
 
         $req = $this->makeRequest(['username' => 'john', 'password' => 'pass']);
         $this->service->execute($req);

@@ -23,16 +23,16 @@ use PHPUnit\Framework\MockObject\MockObject;
  */
 class CookieManagerUnitTest extends TestCase
 {
-    /** @var CookieManager&MockObject */
+    /** @var CookieManager CookieManager instance using a mock storage */
     private CookieManager $cookieManager;
 
-    /** @var CookieStorageInterface&MockObject */
+    /** @var CookieStorageInterface&MockObject Mocked storage for CookieManager */
     private CookieStorageInterface $storageMock;
 
     /**
      * Set up the test environment before each test.
      *
-     * Creates a mock storage and a CookieManager instance with setCookie mocked.
+     * Creates a mock storage and a CookieManager instance with the mock injected.
      *
      * @return void
      */
@@ -41,12 +41,8 @@ class CookieManagerUnitTest extends TestCase
         // Create a mock for CookieStorageInterface
         $this->storageMock = $this->createMock(CookieStorageInterface::class);
 
-        // Create a CookieManager instance using the mock storage,
-        // but override the setCookie method so we can track calls without actually setting cookies
-        $this->cookieManager = $this->getMockBuilder(CookieManager::class)
-            ->setConstructorArgs([$this->storageMock])
-            ->onlyMethods(['setCookie'])
-            ->getMock();
+        // Create a CookieManager instance using the mock storage
+        $this->cookieManager = new CookieManager($this->storageMock);
     }
 
     /**
@@ -70,65 +66,56 @@ class CookieManagerUnitTest extends TestCase
      */
     public function testGetAccessTokenReturnsValidToken(): void
     {
-        // Configure the storage mock to return 'abc123' for 'access_token'
+        // Configure the storage mock to return a valid token
         $this->storageMock->method('get')->with('access_token')->willReturn('abc123');
 
         // Assert that CookieManager returns the same token
         $this->assertSame('abc123', $this->cookieManager->getAccessToken());
     }
 
+
     /**
-     * Test that setAccessToken calls setCookie with correct arguments.
+     * Test that setAccessToken calls storage set method with correct arguments.
      * 
      * @return void
      */
-    public function testSetAccessTokenCallsSetCookieWithCorrectArgs(): void
+    public function testSetAccessTokenCallsStorageSet(): void
     {
         $token = 'xyz-token';
         $expires = time() + 3600;
-        $calls = []; // array to track calls to setCookie
 
-        // Override setCookie to capture arguments instead of actually setting cookies
-        $this->cookieManager->method('setCookie')
-            ->willReturnCallback(function ($name, $value, $exp) use (&$calls) {
-                $calls[] = [$name, $value, $exp];
-            });
+        // Expect the storage set method to be called once with correct args
+        $this->storageMock->expects($this->once())
+            ->method('set')
+            ->with('access_token', $token, $expires);
 
-        // Call setAccessToken, which should internally call setCookie
         $this->cookieManager->setAccessToken($token, $expires);
 
-        // Assert that setCookie was called once with the correct arguments
-        $this->assertCount(1, $calls);
-        $this->assertSame(['access_token', $token, $expires], $calls[0]);
+        // Verify lastSetCookieName updated
+        $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
     }
 
     /**
-     * Test that clearAccessToken calls setCookie with an expired timestamp.
+     * Test that clearAccessToken calls storage delete method.
      * 
      * @return void
      */
-    public function testClearAccessTokenCallsSetCookieWithExpiredTime(): void
+    public function testClearAccessTokenCallsStorageDelete(): void
     {
-        $calls = [];
+        $this->storageMock->expects($this->once())
+            ->method('delete')
+            ->with('access_token');
 
-        // Override setCookie to capture arguments
-        $this->cookieManager->method('setCookie')
-            ->willReturnCallback(function ($name, $value, $exp) use (&$calls) {
-                $calls[] = [$name, $value, $exp];
-            });
-
-        // Call clearAccessToken, which should set an expired cookie
         $this->cookieManager->clearAccessToken();
 
-        // Assert that setCookie was called once with 'access_token' and empty value
-        $this->assertCount(1, $calls);
-        $this->assertSame('access_token', $calls[0][0]);
-        $this->assertSame('', $calls[0][1]);
-        $this->assertLessThanOrEqual(time() - 3600, $calls[0][2]); // Ensure expiration is in the past
+        // Verify lastSetCookieName updated
+        $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
     }
 
     /**
-     * Test that setting and then clearing the access token produces the correct call order.
+     * Test the order of setAccessToken followed by clearAccessToken calls.
+     * 
+     * Ensures that set is called first, then delete.
      * 
      * @return void
      */
@@ -138,30 +125,31 @@ class CookieManagerUnitTest extends TestCase
         $expires = time() + 3600;
         $calls = [];
 
-        // Capture calls to setCookie
-        $this->cookieManager->method('setCookie')
+        // Capture calls to set
+        $this->storageMock->method('set')
             ->willReturnCallback(function ($name, $value, $exp) use (&$calls) {
-                $calls[] = [$name, $value, $exp];
+                $calls[] = ['set', $name, $value, $exp]; // inline comment: track set calls
             });
 
-        // First set the token, then clear it
+        // Capture calls to delete
+        $this->storageMock->method('delete')
+            ->willReturnCallback(function ($name) use (&$calls) {
+                $calls[] = ['delete', $name]; // inline comment: track delete calls
+            });
+
         $this->cookieManager->setAccessToken($token, $expires);
         $this->cookieManager->clearAccessToken();
 
-        // Assert that two calls were made in correct order
+        // Ensure exactly 2 calls were made
         $this->assertCount(2, $calls);
 
-        // First call: set token
-        $this->assertSame(['access_token', $token, $expires], $calls[0]);
-
-        // Second call: clear token
-        $this->assertSame('access_token', $calls[1][0]);
-        $this->assertSame('', $calls[1][1]);
-        $this->assertLessThanOrEqual(time() - 3600, $calls[1][2]);
+        // Verify call order and arguments
+        $this->assertSame(['set', 'access_token', $token, $expires], $calls[0]);
+        $this->assertSame(['delete', 'access_token'], $calls[1]);
     }
 
     /**
-     * Test that multiple calls to setAccessToken overwrite the previous values correctly.
+     * Test that multiple calls to setAccessToken overwrite previous values correctly.
      * 
      * @return void
      */
@@ -171,21 +159,38 @@ class CookieManagerUnitTest extends TestCase
         $expires = time() + 3600;
         $calls = [];
 
-        // Capture calls to setCookie
-        $this->cookieManager->method('setCookie')
+        // Capture all set calls
+        $this->storageMock->method('set')
             ->willReturnCallback(function ($name, $value, $exp) use (&$calls) {
                 $calls[] = [$name, $value, $exp];
             });
 
-        // Call setAccessToken multiple times
         foreach ($tokens as $token) {
             $this->cookieManager->setAccessToken($token, $expires);
         }
 
-        // Assert that three calls were made and each token matches
-        $this->assertCount(3, $calls);
+        // Ensure call count matches number of tokens
+        $this->assertCount(count($tokens), $calls);
+
+        // Verify each call matches expected token
         foreach ($tokens as $i => $token) {
             $this->assertSame(['access_token', $token, $expires], $calls[$i]);
         }
+    }
+
+    /**
+     * Test that clearAccessToken does not throw and updates lastSetCookieName.
+     * 
+     * @return void
+     */
+    public function testClearAccessTokenDoesNotThrow(): void
+    {
+        // Call delete (no expectation, just ensure no exception)
+        $this->storageMock->method('delete')->with('access_token');
+
+        $this->cookieManager->clearAccessToken();
+
+        // Verify lastSetCookieName updated
+        $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
     }
 }

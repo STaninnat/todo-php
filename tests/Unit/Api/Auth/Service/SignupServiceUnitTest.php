@@ -179,11 +179,11 @@ class SignupServiceUnitTest extends TestCase
         return [
             'fail with error info' => [
                 QueryResult::fail(['SQLSTATE[HY000]', 'Insert error']),
-                'Failed to check user existence: No data or changes found.'
+                'Failed to sign up: SQLSTATE[HY000] | Insert error'
             ],
             'fail without error' => [
                 QueryResult::fail(null),
-                'Failed to check user existence: No data or changes found.'
+                'Failed to sign up: Unknown database error.'
             ],
         ];
     }
@@ -226,7 +226,7 @@ class SignupServiceUnitTest extends TestCase
         $this->userQueries->method('createUser')->willReturn($result);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to check user existence: No data or changes found.');
+        $this->expectExceptionMessage('Failed to sign up: No data or changes found.');
 
         $req = $this->makeRequest(['username' => 'john', 'email' => 'john@example.com', 'password' => 'pass']);
         $this->service->execute($req);

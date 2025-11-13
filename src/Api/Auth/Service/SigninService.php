@@ -76,7 +76,7 @@ class SigninService
 
         // Fetch user data by username
         $result = $this->userQueries->getUserByName($username);
-        RequestValidator::ensureSuccess($result, 'fetch user');
+        RequestValidator::ensureSuccess($result, 'fetch user', false, true);
 
         if (!$result->hasData() || !$result->data) {
             throw new InvalidArgumentException('Invalid username or password.');

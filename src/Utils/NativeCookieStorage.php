@@ -35,4 +35,27 @@ class NativeCookieStorage implements CookieStorageInterface
 
         return $val;
     }
+
+    public function set(string $name, string $value, int $expires): void
+    {
+        setcookie($name, $value, [
+            'expires'  => $expires,
+            'path'     => '/',
+            'secure'   => true,
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
+    }
+
+    public function delete(string $name): void
+    {
+        setcookie($name, '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'secure'   => true,
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
+        unset($_COOKIE[$name]);
+    }
 }

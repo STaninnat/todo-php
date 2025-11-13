@@ -14,22 +14,25 @@ use App\Utils\CookieStorageInterface;
  * Unit tests for CookieManager to ensure type safety.
  * Specifically tests that TypeErrors are thrown when invalid types are passed.
  *
+ * This suite verifies that:
+ * - setAccessToken throws TypeError for invalid token type
+ * - setAccessToken throws TypeError for non-int expiration
+ * - clearAccessToken works correctly without throwing
+ *
  * @package Tests\Unit\Utils\TypeError
  */
 class CookieManagerTypeErrTest extends TestCase
 {
-    /** @var CookieManager&\PHPUnit\Framework\MockObject\MockObject */
+    /** @var CookieManager CookieManager instance with mock storage */
     private CookieManager $cookieManager;
 
-    /**
-     * @var CookieStorageInterface|\PHPUnit\Framework\MockObject\MockObject Mocked storage for CookieManager.
-     */
-    private $storageMock;
+    /** @var CookieStorageInterface Mocked storage for CookieManager */
+    private CookieStorageInterface $storageMock;
 
     /**
      * Set up the test environment before each test.
      *
-     * Creates a mock storage and a CookieManager instance with setCookie mocked.
+     * Creates a mock storage and a CookieManager instance.
      *
      * @return void
      */
@@ -38,16 +41,12 @@ class CookieManagerTypeErrTest extends TestCase
         // Create a mock for CookieStorageInterface
         $this->storageMock = $this->createMock(CookieStorageInterface::class);
 
-        // Create a CookieManager instance using the mock storage,
-        // but override the setCookie method so we can track calls without actually setting cookies
-        $this->cookieManager = $this->getMockBuilder(CookieManager::class)
-            ->setConstructorArgs([$this->storageMock])
-            ->onlyMethods(['setCookie'])
-            ->getMock();
+        // Create a CookieManager instance using the mock storage
+        $this->cookieManager = new CookieManager($this->storageMock);
     }
 
     /**
-     * Test that setAccessToken throws TypeError when given wrong types.
+     * Test that setAccessToken throws TypeError when token is not a string.
      *
      * @return void
      */
@@ -55,7 +54,7 @@ class CookieManagerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        // Sending the token as an int instead of a string will cause a TypeError.
+        // Sending the token as an int instead of a string should throw a TypeError
         $this->cookieManager->setAccessToken(12345, time() + 3600);
     }
 
@@ -68,28 +67,21 @@ class CookieManagerTypeErrTest extends TestCase
     {
         $this->expectException(\TypeError::class);
 
-        // Sending expires as a string instead of an int will cause a TypeError.
+        // Sending expires as a string instead of int should throw a TypeError
         $this->cookieManager->setAccessToken('token', 'invalid-expiry');
     }
 
     /**
-     * Test that clearAccessToken works without throwing TypeError.
+     * Test that clearAccessToken does not throw any exception and updates lastSetCookieName.
      *
      * @return void
      */
     public function testClearAccessTokenDoesNotThrow(): void
     {
-        $calls = [];
-
-        $this->cookieManager->method('setCookie')
-            ->willReturnCallback(function ($name, $value, $exp) use (&$calls) {
-                $calls[] = [$name, $value, $exp];
-            });
-
-        // Calling a normal function should not cause a TypeError.
+        // Should not throw; lastSetCookieName should still be updated
         $this->cookieManager->clearAccessToken();
 
-        $this->assertCount(1, $calls);
-        $this->assertSame('access_token', $calls[0][0]);
+        // Verify lastSetCookieName updated correctly
+        $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
     }
 }

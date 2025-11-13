@@ -79,8 +79,14 @@ class SignupService
 
         // Ensure username or email does not already exist
         $existsResult = $this->userQueries->checkUserExists($username, $email);
+        RequestValidator::ensureSuccess($existsResult, 'check user existence', false, true);
+
         if ($existsResult->data === true) {
             throw new InvalidArgumentException("Username or email already exists.");
+        }
+
+        if (strlen($username) > 255) {
+            throw new RuntimeException('Username too long');
         }
 
         // Generate unique ID and securely hash password

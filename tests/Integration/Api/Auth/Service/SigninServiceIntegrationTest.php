@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Api\Auth\Service;
 
-use App\Api\Auth\Service\SignupService;
+use App\Api\Auth\Service\SigninService;
 use App\Api\Request;
 use App\DB\Database;
 use App\DB\UserQueries;
@@ -18,7 +18,7 @@ use RuntimeException;
 
 require_once __DIR__ . '/../../../bootstrap_db.php';
 
-class SignupServiceIntegrationTest extends TestCase
+class SigninServiceIntegrationTest extends TestCase
 {
     /**
      * @var PDO PDO instance for integration testing
@@ -34,7 +34,7 @@ class SignupServiceIntegrationTest extends TestCase
 
     private CookieManager $cookieManager;
 
-    private SignupService $service;
+    private SigninService $service;
 
     protected function setUp(): void
     {
@@ -53,7 +53,7 @@ class SignupServiceIntegrationTest extends TestCase
         $this->userQueries = new UserQueries($this->pdo);
         $this->jwt = new JwtService('test-secret-key');
 
-        // Recreate users table for clean test state
+        // Reset table
         $this->pdo->exec('DROP TABLE IF EXISTS users');
         $this->pdo->exec("
             CREATE TABLE users (
@@ -69,7 +69,7 @@ class SignupServiceIntegrationTest extends TestCase
         $storage = new TestCookieStorage();
         $this->cookieManager = new CookieManager($storage);
 
-        $this->service = new SignupService(
+        $this->service = new SigninService(
             $this->userQueries,
             $this->cookieManager,
             $this->jwt
@@ -83,152 +83,138 @@ class SignupServiceIntegrationTest extends TestCase
     }
 
     /**
-     * Helper to build Request objects.
-     *
      * @param array<string, mixed> $body
-     * 
-     * @return Request
      */
     private function makeRequest(array $body): Request
     {
-        return new Request('POST', '/signup', null, null, $body);
+        return new Request('POST', '/signin', null, null, $body);
     }
 
-    public function testSignupSuccess(): void
+    public function testSigninSuccess(): void
     {
+        $id = 'u123';
+        $username = 'johnny';
+        $email = 'johnny@example.com';
+        $hash = password_hash('secure123', PASSWORD_DEFAULT);
+
+        $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
+            ->execute([$id, $username, $email, $hash]);
+
         $req = $this->makeRequest([
-            'username' => 'john_doe',
-            'email' => 'john@example.com',
-            'password' => 'securePass123',
+            'username' => 'johnny',
+            'password' => 'secure123',
         ]);
 
         $this->service->execute($req);
-
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE username = ?");
-        $stmt->execute(['john_doe']);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        $this->assertIsArray($user);
-        $this->assertSame('john_doe', $user['username']);
-        $this->assertSame('john@example.com', $user['email']);
-        $this->assertIsString($user['password']);
-        $this->assertTrue(password_verify('securePass123', $user['password']));
-
-        $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
 
         $token = $this->cookieManager->getAccessToken();
         $this->assertNotEmpty($token);
         $this->assertIsString($token);
 
         $payload = $this->jwt->decodeStrict($token);
-        $this->assertSame($user['id'], $payload['id']);
+        $this->assertSame($id, $payload['id']);
     }
 
-    public function testDuplicateUsernameThrowsException(): void
+    public function testInvalidPasswordThrowsException(): void
     {
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
-            ->execute(['1', 'existing', 'existing@example.com', password_hash('x', PASSWORD_DEFAULT)]);
+            ->execute(['id1', 'bob', 'b@example.com', password_hash('realpass', PASSWORD_DEFAULT)]);
 
         $req = $this->makeRequest([
-            'username' => 'existing',
-            'email' => 'new@example.com',
-            'password' => 'any',
+            'username' => 'bob',
+            'password' => 'wrongpass',
         ]);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('already exists');
+        $this->expectExceptionMessage('Invalid username or password.');
 
         $this->service->execute($req);
     }
 
-    public function testDuplicateEmailThrowsException(): void
+    public function testUnknownUserThrowsException(): void
     {
-        $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
-            ->execute(['2', 'uniqueuser', 'dup@example.com', password_hash('x', PASSWORD_DEFAULT)]);
-
         $req = $this->makeRequest([
-            'username' => 'newuser',
-            'email' => 'dup@example.com',
-            'password' => 'password',
+            'username' => 'ghost',
+            'password' => 'irrelevant',
         ]);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('already exists');
+        $this->expectExceptionMessage('Invalid username or password.');
 
-        $this->service->execute($req);
-    }
-
-    public function testInvalidEmailThrowsException(): void
-    {
-        $req = $this->makeRequest([
-            'username' => 'userx',
-            'email' => 'not-an-email',
-            'password' => 'abc123',
-        ]);
-
-        $this->expectException(InvalidArgumentException::class);
         $this->service->execute($req);
     }
 
     public function testMissingPasswordThrowsException(): void
     {
-        $req = $this->makeRequest([
-            'username' => 'abc',
-            'email' => 'abc@example.com',
-        ]);
+        $req = $this->makeRequest(['username' => 'someone']);
 
         $this->expectException(InvalidArgumentException::class);
         $this->service->execute($req);
     }
 
-    public function testSignupGeneratesValidJwtToken(): void
+    public function testMissingUsernameThrowsException(): void
     {
+        $req = $this->makeRequest(['password' => 'pass']);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->service->execute($req);
+    }
+
+    public function testGenerateValidJwtToken(): void
+    {
+        $id = 'jwt123';
+        $username = 'jwtuser';
+        $email = 'jwt@example.com';
+        $hash = password_hash('abc12345', PASSWORD_DEFAULT);
+
+        $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
+            ->execute([$id, $username, $email, $hash]);
+
         $req = $this->makeRequest([
-            'username' => 'jwt_user',
-            'email' => 'jwt@example.com',
+            'username' => 'jwtuser',
             'password' => 'abc12345',
         ]);
 
         $this->service->execute($req);
 
-        $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
-
         $token = $this->cookieManager->getAccessToken();
         $this->assertNotEmpty($token);
+        $this->assertIsString($token);
 
-        /** @var string $token */
         $payload = $this->jwt->decodeStrict($token);
         $this->assertArrayHasKey('id', $payload);
-
-        $stmt = $this->pdo->prepare("SELECT id FROM users WHERE username = ?");
-        $stmt->execute(['jwt_user']);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        $this->assertIsArray($user);
-        $this->assertSame($user['id'], $payload['id']);
+        $this->assertSame($id, $payload['id']);
     }
 
-    public function testCreateUserWithInvalidDataThrowsRuntimeException(): void
+    public function testInvalidUserDataThrowsRuntimeException(): void
     {
-        $longUsername = str_repeat('a', 300);
+        $this->pdo->exec("ALTER TABLE users DROP COLUMN password");
+        $this->pdo->prepare("INSERT INTO users (id, username, email) VALUES (?, ?, ?)")
+            ->execute(['badid', 'broken', 'broken@example.com']);
+
         $req = $this->makeRequest([
-            'username' => $longUsername,
-            'email' => 'invalid@example.com',
-            'password' => 'abc123',
+            'username' => 'broken',
+            'password' => 'pass',
         ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageMatches('/username.*too long/i');
+        $this->expectExceptionMessage('Invalid user data returned from getUserByName.');
 
-        try {
-            $this->service->execute($req);
-        } finally {
-            $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = ?");
-            $stmt->execute(['invalid@example.com']);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            $this->assertFalse((bool)$user);
+        $this->service->execute($req);
+    }
 
-            $this->assertNull($this->cookieManager->getAccessToken());
-        }
+    public function testDatabaseFailThrowsRuntimeException(): void
+    {
+        $this->pdo->exec('DROP TABLE IF EXISTS users');
+
+        $req = $this->makeRequest([
+            'username' => 'any',
+            'password' => 'x',
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/fetch user/i');
+
+        $this->service->execute($req);
     }
 }

@@ -18,6 +18,19 @@ use RuntimeException;
 
 require_once __DIR__ . '/../../../bootstrap_db.php';
 
+/**
+ * Class SigninServiceIntegrationTest
+ *
+ * Integration tests for SigninService.
+ *
+ * This suite validates:
+ * - Successful signin flow and token generation
+ * - Handling of missing fields or invalid credentials
+ * - Behavior when database returns corrupted/invalid user data
+ * - Error handling when DB operations fail
+ *
+ * @package Tests\Integration\Api\Auth\Service
+ */
 class SigninServiceIntegrationTest extends TestCase
 {
     /**
@@ -30,12 +43,29 @@ class SigninServiceIntegrationTest extends TestCase
      */
     private UserQueries $userQueries;
 
+    /**
+     * @var JwtService Handles issuance and decoding of JWT tokens.
+     */
     private JwtService $jwt;
 
+    /**
+     * @var CookieManager Cookie manager used to store signin token.
+     */
     private CookieManager $cookieManager;
 
+    /**
+     * @var SigninService Service under test.
+     */
     private SigninService $service;
 
+    /**
+     * Setup test environment.
+     *
+     * Initializes the database connection, recreates the users table,
+     * and prepares dependencies for SigninUserService.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -47,13 +77,14 @@ class SigninServiceIntegrationTest extends TestCase
         assert(is_numeric($dbPort));
         $dbPort = (int)$dbPort;
 
+        // Wait for test DB readiness
         waitForDatabase($dbHost, $dbPort);
 
         $this->pdo = (new Database())->getConnection();
         $this->userQueries = new UserQueries($this->pdo);
         $this->jwt = new JwtService('test-secret-key');
 
-        // Reset table
+        // Reset table to maintain test isolation
         $this->pdo->exec('DROP TABLE IF EXISTS users');
         $this->pdo->exec("
             CREATE TABLE users (
@@ -76,6 +107,13 @@ class SigninServiceIntegrationTest extends TestCase
         );
     }
 
+    /**
+     * Cleanup database after each test.
+     *
+     * Drops the users table to guarantee clean state.
+     *
+     * @return void
+     */
     protected function tearDown(): void
     {
         $this->pdo->exec('DROP TABLE IF EXISTS users');
@@ -83,13 +121,27 @@ class SigninServiceIntegrationTest extends TestCase
     }
 
     /**
+     * Helper method to construct Request objects.
+     *
      * @param array<string, mixed> $body
+     * 
+     * @return Request
      */
     private function makeRequest(array $body): Request
     {
         return new Request('POST', '/signin', null, null, $body);
     }
 
+    /**
+     * Test successful signin flow.
+     *
+     * Ensures:
+     * - Valid credentials generate a JWT
+     * - Token is stored in cookie manager
+     * - Token payload matches expected user data
+     *
+     * @return void
+     */
     public function testSigninSuccess(): void
     {
         $id = 'u123';
@@ -97,6 +149,7 @@ class SigninServiceIntegrationTest extends TestCase
         $email = 'johnny@example.com';
         $hash = password_hash('secure123', PASSWORD_DEFAULT);
 
+        // Insert user to simulate a real signin scenario
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
             ->execute([$id, $username, $email, $hash]);
 
@@ -111,10 +164,16 @@ class SigninServiceIntegrationTest extends TestCase
         $this->assertNotEmpty($token);
         $this->assertIsString($token);
 
+        // Decode token to verify identity
         $payload = $this->jwt->decodeStrict($token);
         $this->assertSame($id, $payload['id']);
     }
 
+    /**
+     * Test that incorrect password triggers an exception.
+     *
+     * @return void
+     */
     public function testInvalidPasswordThrowsException(): void
     {
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
@@ -128,9 +187,15 @@ class SigninServiceIntegrationTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid username or password.');
 
+        // Execution should fail due to password mismatch
         $this->service->execute($req);
     }
 
+    /**
+     * Test login attempt on a non-existent user.
+     *
+     * @return void
+     */
     public function testUnknownUserThrowsException(): void
     {
         $req = $this->makeRequest([
@@ -141,9 +206,15 @@ class SigninServiceIntegrationTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid username or password.');
 
+        // Should fail because user does not exist
         $this->service->execute($req);
     }
 
+    /**
+     * Test missing password field validation.
+     *
+     * @return void
+     */
     public function testMissingPasswordThrowsException(): void
     {
         $req = $this->makeRequest(['username' => 'someone']);
@@ -152,6 +223,11 @@ class SigninServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test missing username field validation.
+     *
+     * @return void
+     */
     public function testMissingUsernameThrowsException(): void
     {
         $req = $this->makeRequest(['password' => 'pass']);
@@ -160,6 +236,11 @@ class SigninServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test valid JWT payload structure after signin.
+     *
+     * @return void
+     */
     public function testGenerateValidJwtToken(): void
     {
         $id = 'jwt123';
@@ -167,6 +248,7 @@ class SigninServiceIntegrationTest extends TestCase
         $email = 'jwt@example.com';
         $hash = password_hash('abc12345', PASSWORD_DEFAULT);
 
+        // Insert user for signin
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
             ->execute([$id, $username, $email, $hash]);
 
@@ -182,12 +264,23 @@ class SigninServiceIntegrationTest extends TestCase
         $this->assertIsString($token);
 
         $payload = $this->jwt->decodeStrict($token);
+
+        // Validate payload contains required fields
         $this->assertArrayHasKey('id', $payload);
         $this->assertSame($id, $payload['id']);
     }
 
+    /**
+     * Test corrupted user data returned from DB.
+     *
+     * Simulates scenario where DB schema is inconsistent
+     * (e.g., missing password column).
+     *
+     * @return void
+     */
     public function testInvalidUserDataThrowsRuntimeException(): void
     {
+        // Remove password column to break expected structure
         $this->pdo->exec("ALTER TABLE users DROP COLUMN password");
         $this->pdo->prepare("INSERT INTO users (id, username, email) VALUES (?, ?, ?)")
             ->execute(['badid', 'broken', 'broken@example.com']);
@@ -200,11 +293,18 @@ class SigninServiceIntegrationTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Invalid user data returned from getUserByName.');
 
+        // Should fail due to schema mismatch
         $this->service->execute($req);
     }
 
+    /**
+     * Test DB failure scenario where user table does not exist.
+     *
+     * @return void
+     */
     public function testDatabaseFailThrowsRuntimeException(): void
     {
+        // Drop table to simulate DB failure
         $this->pdo->exec('DROP TABLE IF EXISTS users');
 
         $req = $this->makeRequest([
@@ -215,6 +315,7 @@ class SigninServiceIntegrationTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/fetch user/i');
 
+        // Execution expected to fail during user fetch
         $this->service->execute($req);
     }
 }

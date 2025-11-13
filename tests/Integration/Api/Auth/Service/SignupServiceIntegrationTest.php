@@ -18,6 +18,20 @@ use RuntimeException;
 
 require_once __DIR__ . '/../../../bootstrap_db.php';
 
+/**
+ * Class SignupServiceIntegrationTest
+ *
+ * Integration test suite for SignupService.
+ *
+ * Covers:
+ * - Successful signup flow
+ * - Duplicate username/email handling
+ * - Input validation behavior
+ * - JWT issuance and correctness
+ * - Database failure handling and cookie side effects
+ *
+ * @package Tests\Integration\Api\Auth\Service
+ */
 class SignupServiceIntegrationTest extends TestCase
 {
     /**
@@ -30,12 +44,29 @@ class SignupServiceIntegrationTest extends TestCase
      */
     private UserQueries $userQueries;
 
+    /**
+     * @var JwtService JWT generator/decoder for signup flow.
+     */
     private JwtService $jwt;
 
+    /**
+     * @var CookieManager Cookie manager for access token handling.
+     */
     private CookieManager $cookieManager;
 
+    /**
+     * @var SignupService Service under test.
+     */
     private SignupService $service;
 
+    /**
+     * Setup test environment.
+     *
+     * Initializes the database connection, recreates the users table,
+     * and prepares dependencies for SignupUserService.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -53,7 +84,7 @@ class SignupServiceIntegrationTest extends TestCase
         $this->userQueries = new UserQueries($this->pdo);
         $this->jwt = new JwtService('test-secret-key');
 
-        // Recreate users table for clean test state
+        // Reset table for deterministic state between tests
         $this->pdo->exec('DROP TABLE IF EXISTS users');
         $this->pdo->exec("
             CREATE TABLE users (
@@ -76,6 +107,13 @@ class SignupServiceIntegrationTest extends TestCase
         );
     }
 
+    /**
+     * Cleanup database after each test.
+     *
+     * Drops the users table to guarantee clean state.
+     *
+     * @return void
+     */
     protected function tearDown(): void
     {
         $this->pdo->exec('DROP TABLE IF EXISTS users');
@@ -94,6 +132,15 @@ class SignupServiceIntegrationTest extends TestCase
         return new Request('POST', '/signup', null, null, $body);
     }
 
+    /**
+     * Test successful signup and verify:
+     * - User is inserted correctly
+     * - Password is hashed
+     * - Access token cookie is set
+     * - JWT contains correct ID
+     *
+     * @return void
+     */
     public function testSignupSuccess(): void
     {
         $req = $this->makeRequest([
@@ -104,6 +151,7 @@ class SignupServiceIntegrationTest extends TestCase
 
         $this->service->execute($req);
 
+        // Check inserted user
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->execute(['john_doe']);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -114,18 +162,26 @@ class SignupServiceIntegrationTest extends TestCase
         $this->assertIsString($user['password']);
         $this->assertTrue(password_verify('securePass123', $user['password']));
 
+        // Cookie should be set to reflect login state
         $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
 
         $token = $this->cookieManager->getAccessToken();
         $this->assertNotEmpty($token);
         $this->assertIsString($token);
 
+        // Verify JWT payload correctness
         $payload = $this->jwt->decodeStrict($token);
         $this->assertSame($user['id'], $payload['id']);
     }
 
+    /**
+     * Test behavior when trying to sign up using an existing username.
+     *
+     * @return void
+     */
     public function testDuplicateUsernameThrowsException(): void
     {
+        // Pre-insert user to force conflict
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
             ->execute(['1', 'existing', 'existing@example.com', password_hash('x', PASSWORD_DEFAULT)]);
 
@@ -141,8 +197,14 @@ class SignupServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test duplicate email validation.
+     *
+     * @return void
+     */
     public function testDuplicateEmailThrowsException(): void
     {
+        // Force email conflict
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
             ->execute(['2', 'uniqueuser', 'dup@example.com', password_hash('x', PASSWORD_DEFAULT)]);
 
@@ -158,6 +220,11 @@ class SignupServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test email format validation.
+     *
+     * @return void
+     */
     public function testInvalidEmailThrowsException(): void
     {
         $req = $this->makeRequest([
@@ -170,6 +237,11 @@ class SignupServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test missing password handling.
+     *
+     * @return void
+     */
     public function testMissingPasswordThrowsException(): void
     {
         $req = $this->makeRequest([
@@ -181,6 +253,11 @@ class SignupServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Verify JWT generated after signup is valid and contains correct fields.
+     *
+     * @return void
+     */
     public function testSignupGeneratesValidJwtToken(): void
     {
         $req = $this->makeRequest([
@@ -200,6 +277,7 @@ class SignupServiceIntegrationTest extends TestCase
         $payload = $this->jwt->decodeStrict($token);
         $this->assertArrayHasKey('id', $payload);
 
+        // Compare JWT ID with DB ID
         $stmt = $this->pdo->prepare("SELECT id FROM users WHERE username = ?");
         $stmt->execute(['jwt_user']);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -208,8 +286,17 @@ class SignupServiceIntegrationTest extends TestCase
         $this->assertSame($user['id'], $payload['id']);
     }
 
+    /**
+     * Tests failure where invalid data (e.g., too long username)
+     * causes DB-level error and ensures:
+     * - User is not persisted
+     * - Cookie is not set
+     *
+     * @return void
+     */
     public function testCreateUserWithInvalidDataThrowsRuntimeException(): void
     {
+        // Force DB failure with oversized username
         $longUsername = str_repeat('a', 300);
         $req = $this->makeRequest([
             'username' => $longUsername,
@@ -223,11 +310,13 @@ class SignupServiceIntegrationTest extends TestCase
         try {
             $this->service->execute($req);
         } finally {
+            // Ensure user was not inserted after failure
             $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = ?");
             $stmt->execute(['invalid@example.com']);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             $this->assertFalse((bool)$user);
 
+            // Cookie must remain unset due to failed signup
             $this->assertNull($this->cookieManager->getAccessToken());
         }
     }

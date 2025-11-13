@@ -16,6 +16,20 @@ use RuntimeException;
 
 require_once __DIR__ . '/../../../bootstrap_db.php';
 
+/**
+ * Class UpdateUserServiceIntegrationTest
+ *
+ * Integration tests for the UpdateUserService class.
+ *
+ * This suite verifies:
+ * - Successful updates of username and email
+ * - Validation for missing or invalid fields
+ * - Duplicate username/email handling
+ * - Proper handling of whitespace and long input
+ * - Exception propagation for DB failures or invalid return data
+ *
+ * @package Tests\Integration\Api\Auth\Service
+ */
 class UpdateUserServiceIntegrationTest extends TestCase
 {
     /**
@@ -28,8 +42,19 @@ class UpdateUserServiceIntegrationTest extends TestCase
      */
     private UserQueries $userQueries;
 
+    /**
+     * @var UpdateUserService Service under test
+     */
     private UpdateUserService $service;
 
+    /**
+     * Setup test environment.
+     *
+     * Initializes the database connection, recreates the users table,
+     * and prepares dependencies for UpdateUserService.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -64,6 +89,13 @@ class UpdateUserServiceIntegrationTest extends TestCase
             ->execute(['u1', 'john', 'john@example.com', password_hash('pass', PASSWORD_DEFAULT)]);
     }
 
+    /**
+     * Cleanup database after each test.
+     *
+     * Drops the users table to guarantee clean state.
+     *
+     * @return void
+     */
     protected function tearDown(): void
     {
         $this->pdo->exec('DROP TABLE IF EXISTS users');
@@ -71,13 +103,24 @@ class UpdateUserServiceIntegrationTest extends TestCase
     }
 
     /**
+     * Helper to create Request objects.
+     *
      * @param array<string, mixed> $body
+     * 
+     * @return Request
      */
     private function makeRequest(array $body): Request
     {
         return new Request('POST', '/update-user', null, null, $body);
     }
 
+    /**
+     * Test successful update of username and email.
+     *
+     * Verifies both DB persistence and returned data.
+     *
+     * @return void
+     */
     public function testUpdateSuccess(): void
     {
         $req = $this->makeRequest([
@@ -102,6 +145,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->assertSame('john_new@example.com', $user['email']);
     }
 
+    /**
+     * Test that duplicate username triggers RuntimeException.
+     *
+     * @return void
+     */
     public function testDuplicateUsernameThrowsException(): void
     {
         // Insert another user with target username
@@ -120,6 +168,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test that duplicate email triggers RuntimeException.
+     *
+     * @return void
+     */
     public function testDuplicateEmailThrowsException(): void
     {
         // Insert another user with target email
@@ -138,6 +191,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test empty username triggers InvalidArgumentException.
+     *
+     * @return void
+     */
     public function testEmptyUsernameThrowsException(): void
     {
         $req = $this->makeRequest([
@@ -152,6 +210,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test empty email triggers InvalidArgumentException.
+     *
+     * @return void
+     */
     public function testEmptyEmailThrowsException(): void
     {
         $req = $this->makeRequest([
@@ -165,6 +228,13 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test username/email with leading/trailing whitespace.
+     *
+     * Ensures trimming or DB stored values are handled correctly.
+     *
+     * @return void
+     */
     public function testWhitespaceUsernameAndEmail(): void
     {
         $req = $this->makeRequest([
@@ -189,6 +259,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->assertSame($user['email'], $result['email']);
     }
 
+    /**
+     * Test very long username/email triggers InvalidArgumentException.
+     *
+     * @return void
+     */
     public function testVeryLongUsernameAndEmailThrowsException(): void
     {
         $longUsername = str_repeat('a', 250);
@@ -206,6 +281,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test missing user_id triggers InvalidArgumentException.
+     *
+     * @return void
+     */
     public function testMissingUserIdThrowsException(): void
     {
         $req = $this->makeRequest([
@@ -219,6 +299,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test missing username triggers InvalidArgumentException.
+     *
+     * @return void
+     */
     public function testMissingUsernameThrowsException(): void
     {
         $req = $this->makeRequest([
@@ -232,6 +317,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test invalid email triggers InvalidArgumentException.
+     *
+     * @return void
+     */
     public function testInvalidEmailThrowsException(): void
     {
         $req = $this->makeRequest([
@@ -245,6 +335,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test that updateUser returning invalid structure triggers RuntimeException.
+     *
+     * @return void
+     */
     public function testUpdateReturnsInvalidDataThrowsRuntimeException(): void
     {
         $mockQueries = $this->createMock(UserQueries::class);
@@ -265,6 +360,11 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $service->execute($req);
     }
 
+    /**
+     * Test database failure when checking user existence triggers RuntimeException.
+     *
+     * @return void
+     */
     public function testDatabaseFailureThrowsRuntimeException(): void
     {
         $mockQueries = $this->createMock(UserQueries::class);

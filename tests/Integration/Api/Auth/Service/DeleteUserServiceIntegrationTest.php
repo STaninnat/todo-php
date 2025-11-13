@@ -18,6 +18,19 @@ use RuntimeException;
 
 require_once __DIR__ . '/../../../bootstrap_db.php';
 
+/**
+ * Class DeleteUserServiceIntegrationTest
+ *
+ * Integration tests for the DeleteUserService class.
+ *
+ * This suite verifies:
+ * - User deletion behavior from database
+ * - Proper validation for missing user_id
+ * - RuntimeException handling for simulated DB failures
+ * - Cookie clearing logic after user deletion
+ *
+ * @package Tests\Integration\Api\Auth\Service
+ */
 class DeleteUserServiceIntegrationTest extends TestCase
 {
     /**
@@ -30,10 +43,24 @@ class DeleteUserServiceIntegrationTest extends TestCase
      */
     private UserQueries $userQueries;
 
+    /**
+     * @var DeleteUserService Service under test.
+     */
     private DeleteUserService $service;
 
+    /**
+     * @var CookieManager Cookie manager instance for session handling.
+     */
     private CookieManager $cookieManager;
 
+    /**
+     * Setup test environment.
+     *
+     * Initializes the database connection, recreates the users table,
+     * and prepares dependencies for DeleteUserService.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -45,12 +72,13 @@ class DeleteUserServiceIntegrationTest extends TestCase
         assert(is_numeric($dbPort));
         $dbPort = (int)$dbPort;
 
+        // Wait for test DB readiness before continuing
         waitForDatabase($dbHost, $dbPort);
 
         $this->pdo = (new Database())->getConnection();
         $this->userQueries = new UserQueries($this->pdo);
 
-        // Reset users table
+        // Reset the users table to ensure test isolation
         $this->pdo->exec('DROP TABLE IF EXISTS users');
         $this->pdo->exec("
             CREATE TABLE users (
@@ -63,12 +91,20 @@ class DeleteUserServiceIntegrationTest extends TestCase
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
 
+        // Initialize cookie storage for testing logout/session cleanup
         $storage = new TestCookieStorage();
         $this->cookieManager = new CookieManager($storage);
 
         $this->service = new DeleteUserService($this->userQueries, $this->cookieManager);
     }
 
+    /**
+     * Cleanup database after each test.
+     *
+     * Drops the users table to guarantee clean state.
+     *
+     * @return void
+     */
     protected function tearDown(): void
     {
         $this->pdo->exec('DROP TABLE IF EXISTS users');
@@ -76,13 +112,26 @@ class DeleteUserServiceIntegrationTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $body
+     * Helper method to create a Request with JSON body.
+     *
+     * @param array<string, mixed> $body Request body payload.
+     * 
+     * @return Request
      */
     private function makeRequest(array $body): Request
     {
         return new Request('POST', '/delete-user', null, null, $body);
     }
 
+    /**
+     * Test successful user deletion scenario.
+     *
+     * Ensures:
+     * - User is removed from DB
+     * - Cookie is cleared after deletion
+     *
+     * @return void
+     */
     public function testDeleteUserSuccess(): void
     {
         // Insert test user
@@ -94,15 +143,23 @@ class DeleteUserServiceIntegrationTest extends TestCase
 
         $this->service->execute($req);
 
-        // Ensure user is deleted
+        // Ensure user is deleted from DB
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$id]);
         $this->assertFalse((bool)$stmt->fetch(PDO::FETCH_ASSOC));
 
+        // Cookie should be cleared to reflect logout
         $this->assertNull($this->cookieManager->getAccessToken());
         $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
     }
 
+    /**
+     * Test validation when user_id is missing.
+     *
+     * Expects InvalidArgumentException with specific message.
+     *
+     * @return void
+     */
     public function testMissingUserIdThrowsInvalidArgumentException(): void
     {
         $req = $this->makeRequest([]);
@@ -113,9 +170,17 @@ class DeleteUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
+    /**
+     * Test DB failure handling.
+     *
+     * Simulates DB failure by overriding deleteUser() to return a failed QueryResult.
+     * Expects RuntimeException containing "delete user".
+     *
+     * @return void
+     */
     public function testDatabaseFailureThrowsRuntimeException(): void
     {
-        // Simulate DB failure with subclass
+        // Simulate DB error to verify exception propagation
         $failingQueries = new class($this->pdo) extends UserQueries {
             public function deleteUser(string $id): QueryResult
             {
@@ -132,10 +197,18 @@ class DeleteUserServiceIntegrationTest extends TestCase
         try {
             $service->execute($req);
         } finally {
+            // Inline: ensure cookie not left in inconsistent state
             $this->assertNull($this->cookieManager->getAccessToken());
         }
     }
 
+    /**
+     * Test that cookies are cleared properly after successful deletion.
+     *
+     * Ensures consistent post-deletion cleanup.
+     *
+     * @return void
+     */
     public function testDeleteUserSuccessWithCookieClear(): void
     {
         $id = 'u1';
@@ -145,6 +218,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
         $req = $this->makeRequest(['user_id' => $id]);
         $this->service->execute($req);
 
+        // Inline: verify DB deletion consistency
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$id]);
         $this->assertFalse((bool)$stmt->fetch(PDO::FETCH_ASSOC));
@@ -153,8 +227,16 @@ class DeleteUserServiceIntegrationTest extends TestCase
         $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
     }
 
+    /**
+     * Test scenario where DB failure occurs but cookie should not be cleared.
+     *
+     * Verifies that failed deletion does not trigger session cleanup.
+     *
+     * @return void
+     */
     public function testDeleteUserDatabaseFailureDoesNotClearCookie(): void
     {
+        // Inline: ensure service respects failure isolation (cookie remains untouched)
         $failingQueries = new class($this->pdo) extends UserQueries {
             public function deleteUser(string $id): QueryResult
             {

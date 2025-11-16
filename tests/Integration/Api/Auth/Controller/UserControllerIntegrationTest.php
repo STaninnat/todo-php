@@ -24,6 +24,21 @@ use InvalidArgumentException;
 
 require_once __DIR__ . '/../../../bootstrap_db.php';
 
+/**
+ * Class UserControllerIntegrationTest
+ *
+ * Integration tests for UserController.
+ *
+ * This suite verifies:
+ * - User signup, signin, signout, update, get, and delete flows
+ * - Validation rules for required fields and input formats
+ * - Database persistence for each user operation
+ * - Cookie and JWT token handling for authentication
+ *
+ * Relies on a temporary users table created for each test.
+ *
+ * @package Tests\Integration\Api\Auth\Controller
+ */
 class UserControllerIntegrationTest extends TestCase
 {
     /**
@@ -36,10 +51,26 @@ class UserControllerIntegrationTest extends TestCase
      */
     private UserQueries $userQueries;
 
+    /**
+     * @var JwtService JWT generator/decoder for signup flow.
+     */
     private JwtService $jwt;
+
+    /**
+     * @var CookieManager Cookie manager for access token handling.
+     */
     private CookieManager $cookieManager;
+
+    /** 
+     * @var UserController Controller under test 
+     */
     private UserController $controller;
 
+    /**
+     * Setup a fresh database, user table, and controller services before each test.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -51,12 +82,14 @@ class UserControllerIntegrationTest extends TestCase
         assert(is_numeric($dbPort));
         $dbPort = (int) $dbPort;
 
+        // Wait until DB is available
         waitForDatabase($dbHost, $dbPort);
 
         $this->pdo = (new Database())->getConnection();
         $this->userQueries = new UserQueries($this->pdo);
         $this->jwt = new JwtService('test-secret-key');
 
+        // Recreate users table to ensure test isolation
         $this->pdo->exec('DROP TABLE IF EXISTS users');
         $this->pdo->exec("
             CREATE TABLE users (
@@ -82,6 +115,13 @@ class UserControllerIntegrationTest extends TestCase
         );
     }
 
+    /**
+     * Cleanup database after each test.
+     *
+     * Drops the users table to guarantee clean state.
+     *
+     * @return void
+     */
     protected function tearDown(): void
     {
         $this->pdo->exec('DROP TABLE IF EXISTS users');
@@ -89,8 +129,12 @@ class UserControllerIntegrationTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $body Request body data
-     * 
+     * Helper to build Request objects for controller actions.
+     *
+     * @param string $method HTTP method
+     * @param string $path Request path
+     * @param array<string, mixed>|null $body Optional request body
+     *
      * @return Request
      */
     private function makeRequest(string $method, string $path, ?array $body = null): Request
@@ -98,6 +142,16 @@ class UserControllerIntegrationTest extends TestCase
         return new Request($method, $path, null, null, $body);
     }
 
+    /**
+     * Test successful user signup flow.
+     *
+     * Verifies:
+     * - Database entry created correctly
+     * - Password hashed properly
+     * - JWT access token set in cookie
+     *
+     * @return void
+     */
     public function testSignupUserSuccess(): void
     {
         $req = $this->makeRequest('POST', '/signup', [
@@ -123,7 +177,7 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertIsString($user['password']);
         $this->assertTrue(password_verify('securePass123', $user['password']));
 
-        // Verify cookie set
+        // Verify cookie set with JWT token
         $token = $this->cookieManager->getAccessToken();
         $this->assertNotEmpty($token);
         $this->assertIsString($token);
@@ -132,6 +186,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertSame($user['id'], $payload['id']);
     }
 
+    /**
+     * Test signup validation for missing fields.
+     *
+     * Ensures InvalidArgumentException is thrown when required fields are missing.
+     *
+     * @return void
+     */
     public function testSignupMissingFieldsThrows(): void
     {
         // Missing username
@@ -159,6 +220,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->signup($req3, true);
     }
 
+    /**
+     * Test signup with duplicate username/email.
+     *
+     * Ensures the service prevents duplicate entries.
+     *
+     * @return void
+     */
     public function testSignupDuplicateEmailThrows(): void
     {
         // Insert existing user
@@ -186,6 +254,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->signup($req2, true);
     }
 
+    /**
+     * Test signup with overly long username.
+     *
+     * Ensures RuntimeException is thrown for invalid length.
+     *
+     * @return void
+     */
     public function testSignupUsernameTooLongThrows(): void
     {
         $longUsername = str_repeat('a', 300);
@@ -200,6 +275,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->signup($req, true);
     }
 
+    /**
+     * Test successful user signin.
+     *
+     * Verifies JWT token set and decoded payload.
+     *
+     * @return void
+     */
     public function testSigninUserSuccess(): void
     {
         $id = 'u123';
@@ -228,6 +310,11 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertSame($id, $payload['id']);
     }
 
+    /**
+     * Test signin with invalid password.
+     *
+     * @return void
+     */
     public function testSigninInvalidPasswordThrows(): void
     {
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
@@ -243,6 +330,11 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->signin($req, true);
     }
 
+    /**
+     * Test signin with nonexistent username.
+     *
+     * @return void
+     */
     public function testSigninNonexistentEmailThrows(): void
     {
         $req = $this->makeRequest('POST', '/signin', [
@@ -255,6 +347,11 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->signin($req, true);
     }
 
+    /**
+     * Test signout successfully clears cookie.
+     *
+     * @return void
+     */
     public function testSignoutUserSuccess(): void
     {
         $this->cookieManager->setAccessToken('dummy_token', time() + 3600);
@@ -269,6 +366,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertNull($this->cookieManager->getAccessToken());
     }
 
+    /**
+     * Test signout when no cookie exists.
+     *
+     * Ensures no errors and success response returned.
+     *
+     * @return void
+     */
     public function testSignoutWhenNoCookieDoesNotError(): void
     {
         $this->cookieManager->clearAccessToken();
@@ -283,6 +387,11 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertNull($this->cookieManager->getAccessToken());
     }
 
+    /**
+     * Test successful getUser request.
+     *
+     * @return void
+     */
     public function testGetUserSuccess(): void
     {
         $id = 'u123';
@@ -305,6 +414,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertSame('john@example.com', $res['data']['email']);
     }
 
+    /**
+     * Test getUser for nonexistent user.
+     *
+     * Expects RuntimeException.
+     *
+     * @return void
+     */
     public function testGetUserNotFoundThrows(): void
     {
         $req = $this->makeRequest('GET', '/user', ['user_id' => 'nonexistent']);
@@ -315,6 +431,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->getUser($req, true);
     }
 
+    /**
+     * Test getUser with missing user_id.
+     *
+     * Expects InvalidArgumentException.
+     *
+     * @return void
+     */
     public function testGetUserMissingUserIdThrows(): void
     {
         $req = $this->makeRequest('GET', '/user');
@@ -325,6 +448,11 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->getUser($req, true);
     }
 
+    /**
+     * Test successful user update.
+     *
+     * @return void
+     */
     public function testUpdateUserSuccess(): void
     {
         $id = 'u1';
@@ -358,6 +486,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertSame('john_new@example.com', $user['email']);
     }
 
+    /**
+     * Test update for nonexistent user.
+     *
+     * Expects RuntimeException.
+     *
+     * @return void
+     */
     public function testUpdateUserNotFoundThrows(): void
     {
         $req = $this->makeRequest('PUT', '/user', [
@@ -372,6 +507,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->updateUser($req, true);
     }
 
+    /**
+     * Test update with invalid email format.
+     *
+     * Expects InvalidArgumentException.
+     *
+     * @return void
+     */
     public function testUpdateUserInvalidEmailThrows(): void
     {
         $id = 'u1';
@@ -389,6 +531,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->updateUser($req, true);
     }
 
+    /**
+     * Test successful user deletion.
+     *
+     * Ensures user removed from DB and cookie cleared.
+     *
+     * @return void
+     */
     public function testDeleteUserSuccess(): void
     {
         $id = 'u1';
@@ -412,6 +561,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
     }
 
+    /**
+     * Test delete user for nonexistent user.
+     *
+     * Ensures response is success but no DB changes.
+     *
+     * @return void
+     */
     public function testDeleteUserNotFoundThrows(): void
     {
         $req = $this->makeRequest('DELETE', '/user', [
@@ -428,6 +584,13 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertStringContainsString('deleted', $res['message']);
     }
 
+    /**
+     * Test full user lifecycle: signup, signin, get, update, delete, signout.
+     *
+     * Ensures DB persistence, JWT token handling, and controller behavior end-to-end.
+     *
+     * @return void
+     */
     public function testFullUserLifecycle(): void
     {
         $assertToken = function (string $expectedUserId) {

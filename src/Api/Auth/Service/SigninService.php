@@ -71,8 +71,8 @@ class SigninService
      */
     public function execute(Request $req): void
     {
-        $username = RequestValidator::getStringParam($req, 'username', 'Username is required.');
-        $password = RequestValidator::getStringParam($req, 'password', 'Password is required.');
+        $username = RequestValidator::getString($req, 'username', 'Username is required.');
+        $password = RequestValidator::getString($req, 'password', 'Password is required.');
 
         // Fetch user data by username
         $result = $this->userQueries->getUserByName($username);

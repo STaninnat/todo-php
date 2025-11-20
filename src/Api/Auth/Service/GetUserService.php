@@ -54,7 +54,7 @@ class GetUserService
      */
     public function execute(Request $req): array
     {
-        $userId = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
+        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
 
         // Attempt to retrieve user from database
         $result = $this->userQueries->getUserById($userId);

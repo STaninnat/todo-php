@@ -59,13 +59,13 @@ class AddTaskService
      */
     public function execute(Request $req): array
     {
-        $title = RequestValidator::getStringParam($req, 'title', 'Task title is required.');
+        $title = RequestValidator::getString($req, 'title', 'Task title is required.');
         $description = ''; // optional
         if (isset($req->body['description']) && is_string($req->body['description'])) {
             $description = trim(strip_tags($req->body['description']));
         }
 
-        $userId = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
+        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
 
         // Add task to database
         $result = $this->taskQueries->addTask($title, $description, $userId);

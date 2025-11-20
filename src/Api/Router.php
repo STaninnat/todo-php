@@ -3,8 +3,11 @@
 namespace App\Api;
 
 use App\Utils\JsonResponder;
-use InvalidArgumentException;
+use Closure;
 use Exception;
+use InvalidArgumentException;
+use ReflectionFunction;
+use ReflectionMethod;
 use RuntimeException;
 
 /**
@@ -197,14 +200,14 @@ class Router
     private function callHandler(callable $handler, Request $request)
     {
         // Use reflection to inspect handler parameters
-        if ($handler instanceof \Closure) {
-            $ref = new \ReflectionFunction($handler);
+        if ($handler instanceof Closure) {
+            $ref = new ReflectionFunction($handler);
         } elseif (is_array($handler) && count($handler) === 2) {
             /** @var object|string $obj */
             $obj = $handler[0];
             /** @var string $method */
             $method = $handler[1];
-            $ref = new \ReflectionMethod($obj, $method);
+            $ref = new ReflectionMethod($obj, $method);
         } else {
             throw new InvalidArgumentException('Handler must be Closure or [object, method]');
         }

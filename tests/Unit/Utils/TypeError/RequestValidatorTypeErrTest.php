@@ -9,99 +9,189 @@ use App\Utils\RequestValidator;
 use PHPUnit\Framework\TestCase;
 use TypeError;
 
+/**
+ * Class RequestValidatorTypeErrTest
+ *
+ * Unit tests ensuring that RequestValidator correctly throws
+ * TypeError when parameters of incorrect types are passed.
+ *
+ * Covers type errors for:
+ * - getInt
+ * - getString
+ * - getEmail
+ * - getBool
+ * - ensureSuccess
+ *
+ * @package Tests\Unit\Utils\TypeError
+ */
 class RequestValidatorTypeErrTest extends TestCase
 {
-    // -------- getIntParam --------
-    public function testGetIntParamThrowsTypeErrorWhenRequestIsNull(): void
+    // -------- getInt --------
+
+    /**
+     * Ensure getInt throws when request object is null.
+     *
+     * @return void
+     */
+    public function testGetIntThrowsTypeErrorWhenRequestIsNull(): void
     {
         $this->expectException(TypeError::class);
-        RequestValidator::getIntParam(null, 'id', 'error');
+        RequestValidator::getInt(null, 'id', 'error');
     }
 
-    public function testGetIntParamThrowsTypeErrorWhenKeyIsNotString(): void
+    /**
+     * Ensure getInt throws when key is not a string.
+     *
+     * @return void
+     */
+    public function testGetIntThrowsTypeErrorWhenKeyIsNotString(): void
     {
         $req = $this->createMock(Request::class);
         $this->expectException(TypeError::class);
-        RequestValidator::getIntParam($req, 123, 'error');
+        RequestValidator::getInt($req, 123, 'error');
     }
 
-    public function testGetIntParamThrowsTypeErrorWhenErrorMsgIsNotString(): void
+    /**
+     * Ensure getInt throws when error message is not a string.
+     *
+     * @return void
+     */
+    public function testGetIntThrowsTypeErrorWhenErrorMsgIsNotString(): void
     {
         $req = $this->createMock(Request::class);
         $this->expectException(TypeError::class);
-        RequestValidator::getIntParam($req, 'id', 123);
+        RequestValidator::getInt($req, 'id', 123);
     }
 
-    // -------- getStringParam --------
-    public function testGetStringParamThrowsTypeErrorWhenRequestIsNull(): void
+    // -------- getString --------
+
+    /**
+     * Ensure getString throws when request object is null.
+     *
+     * @return void
+     */
+    public function testGetStringThrowsTypeErrorWhenRequestIsNull(): void
     {
         $this->expectException(TypeError::class);
-        RequestValidator::getStringParam(null, 'name', 'error');
+        RequestValidator::getString(null, 'name', 'error');
     }
 
-    public function testGetStringParamThrowsTypeErrorWhenKeyIsNotString(): void
-    {
-        $req = $this->createMock(Request::class);
-        $this->expectException(TypeError::class);
-        RequestValidator::getStringParam($req, 123, 'error');
-    }
-
-    public function testGetStringParamThrowsTypeErrorWhenErrorMsgIsNotString(): void
-    {
-        $req = $this->createMock(Request::class);
-        $this->expectException(TypeError::class);
-        RequestValidator::getStringParam($req, 'name', 456);
-    }
-
-    // -------- getEmailParam --------
-    public function testGetEmailParamThrowsTypeErrorWhenRequestIsNull(): void
-    {
-        $this->expectException(TypeError::class);
-        RequestValidator::getEmailParam(null, 'email', 'error');
-    }
-
-    public function testGetEmailParamThrowsTypeErrorWhenKeyIsNotString(): void
+    /**
+     * Ensure getString throws when key is not a string.
+     *
+     * @return void
+     */
+    public function testGetStringThrowsTypeErrorWhenKeyIsNotString(): void
     {
         $req = $this->createMock(Request::class);
         $this->expectException(TypeError::class);
-        RequestValidator::getEmailParam($req, 123, 'error');
+        RequestValidator::getString($req, 123, 'error');
     }
 
-    public function testGetEmailParamThrowsTypeErrorWhenErrorMsgIsNotString(): void
+    /**
+     * Ensure getString throws when error message is not a string.
+     *
+     * @return void
+     */
+    public function testGetStringThrowsTypeErrorWhenErrorMsgIsNotString(): void
     {
         $req = $this->createMock(Request::class);
         $this->expectException(TypeError::class);
-        RequestValidator::getEmailParam($req, 'email', []);
+        RequestValidator::getString($req, 'name', 456);
     }
 
-    // -------- getBoolParam --------
-    public function testGetBoolParamThrowsTypeErrorWhenRequestIsNull(): void
+    // -------- getEmail --------
+
+    /**
+     * Ensure getEmail throws when request object is null.
+     *
+     * @return void
+     */
+    public function testGetEmailThrowsTypeErrorWhenRequestIsNull(): void
     {
         $this->expectException(TypeError::class);
-        RequestValidator::getBoolParam(null, 'flag', 'error');
+        RequestValidator::getEmail(null, 'email', 'error');
     }
 
-    public function testGetBoolParamThrowsTypeErrorWhenKeyIsNotString(): void
+    /**
+     * Ensure getEmail throws when key is not a string.
+     *
+     * @return void
+     */
+    public function testGetEmailThrowsTypeErrorWhenKeyIsNotString(): void
     {
         $req = $this->createMock(Request::class);
         $this->expectException(TypeError::class);
-        RequestValidator::getBoolParam($req, 123, 'error');
+        RequestValidator::getEmail($req, 123, 'error');
     }
 
-    public function testGetBoolParamThrowsTypeErrorWhenErrorMsgIsNotString(): void
+    /**
+     * Ensure getEmail throws when error message is not a string.
+     *
+     * @return void
+     */
+    public function testGetEmailThrowsTypeErrorWhenErrorMsgIsNotString(): void
     {
         $req = $this->createMock(Request::class);
         $this->expectException(TypeError::class);
-        RequestValidator::getBoolParam($req, 'flag', null);
+        RequestValidator::getEmail($req, 'email', []);
+    }
+
+    // -------- getBool --------
+
+    /**
+     * Ensure getBool throws when request object is null.
+     *
+     * @return void
+     */
+    public function testGetBoolThrowsTypeErrorWhenRequestIsNull(): void
+    {
+        $this->expectException(TypeError::class);
+        RequestValidator::getBool(null, 'flag', 'error');
+    }
+
+    /**
+     * Ensure getBool throws when key is not a string.
+     *
+     * @return void
+     */
+    public function testGetBoolThrowsTypeErrorWhenKeyIsNotString(): void
+    {
+        $req = $this->createMock(Request::class);
+        $this->expectException(TypeError::class);
+        RequestValidator::getBool($req, 123, 'error');
+    }
+
+    /**
+     * Ensure getBool throws when error message is not a string.
+     *
+     * @return void
+     */
+    public function testGetBoolThrowsTypeErrorWhenErrorMsgIsNotString(): void
+    {
+        $req = $this->createMock(Request::class);
+        $this->expectException(TypeError::class);
+        RequestValidator::getBool($req, 'flag', null);
     }
 
     // -------- ensureSuccess --------
+
+    /**
+     * Ensure ensureSuccess throws when result value is not an object.
+     *
+     * @return void
+     */
     public function testEnsureSuccessThrowsTypeErrorWhenResultIsNotObject(): void
     {
         $this->expectException(TypeError::class);
         RequestValidator::ensureSuccess(null, 'delete', false);
     }
 
+    /**
+     * Ensure ensureSuccess throws when action argument is not a string.
+     *
+     * @return void
+     */
     public function testEnsureSuccessThrowsTypeErrorWhenActionIsNotString(): void
     {
         $result = new \stdClass();

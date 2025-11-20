@@ -73,9 +73,9 @@ class SignupService
      */
     public function execute(Request $req): void
     {
-        $username = RequestValidator::getStringParam($req, 'username', 'Username is required.');
-        $email    = RequestValidator::getEmailParam($req, 'email', 'Valid email is required.');
-        $password = RequestValidator::getStringParam($req, 'password', 'Password is required.');
+        $username = RequestValidator::getString($req, 'username', 'Username is required.');
+        $email    = RequestValidator::getEmail($req, 'email', 'Valid email is required.');
+        $password = RequestValidator::getString($req, 'password', 'Password is required.');
 
         // Ensure username or email does not already exist
         $existsResult = $this->userQueries->checkUserExists($username, $email);

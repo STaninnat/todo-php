@@ -60,15 +60,15 @@ class UpdateTaskService
      */
     public function execute(Request $req): array
     {
-        $title = RequestValidator::getStringParam($req, 'title', 'Task title is required.');
+        $title = RequestValidator::getString($req, 'title', 'Task title is required.');
         $description = ''; // optional
         if (isset($req->body['description']) && is_string($req->body['description'])) {
             $description = trim(strip_tags($req->body['description']));
         }
 
-        $id = RequestValidator::getIntParam($req, 'id', 'Task ID must be a numeric string.');
-        $userId = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
-        $isDone = RequestValidator::getBoolParam($req, 'is_done', 'Invalid status value.', true);
+        $id = RequestValidator::getInt($req, 'id', 'Task ID must be a numeric string.');
+        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.', true);
 
         // Verify that the task exists
         $taskResult = $this->taskQueries->getTaskByID($id, $userId);

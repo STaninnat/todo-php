@@ -52,9 +52,9 @@ class UpdateUserService
      */
     public function execute(Request $req): array
     {
-        $userId   = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
-        $username = RequestValidator::getStringParam($req, 'username', 'Username is required.');
-        $email    = RequestValidator::getEmailParam($req, 'email', 'Valid email is required.');
+        $userId   = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        $username = RequestValidator::getString($req, 'username', 'Username is required.');
+        $email    = RequestValidator::getEmail($req, 'email', 'Valid email is required.');
 
         // Check for existing username or email to prevent duplication
         $existsResult = $this->userQueries->checkUserExists($username, $email);

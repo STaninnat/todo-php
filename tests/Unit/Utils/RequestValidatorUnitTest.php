@@ -93,7 +93,7 @@ class RequestValidatorUnitTest extends TestCase
     }
 
     // -------------------------
-    // getIntParam
+    // getInt
     // -------------------------
 
     /**
@@ -110,7 +110,7 @@ class RequestValidatorUnitTest extends TestCase
     }
 
     /**
-     * Test that getIntParam returns valid integers for numeric strings.
+     * Test that getInt returns valid integers for numeric strings.
      *
      * @param string $input    Input value.
      * @param int    $expected Expected integer result.
@@ -118,13 +118,13 @@ class RequestValidatorUnitTest extends TestCase
      * @return void
      */
     #[DataProvider('intProvider')]
-    public function testGetIntParamValid(string $input, int $expected): void
+    public function testGetIntValid(string $input, int $expected): void
     {
         $this->req->method('getParam')->willReturn($input);
         $this->req->method('getQuery')->willReturn(null);
         $this->req->body = [];
 
-        $this->assertSame($expected, RequestValidator::getIntParam($this->req, 'id', 'Invalid id'));
+        $this->assertSame($expected, RequestValidator::getInt($this->req, 'id', 'Invalid id'));
     }
 
     /**
@@ -141,25 +141,25 @@ class RequestValidatorUnitTest extends TestCase
     }
 
     /**
-     * Test that getIntParam throws an exception for invalid inputs.
+     * Test that getInt throws an exception for invalid inputs.
      *
      * @param mixed $input Invalid input.
      *
      * @return void
      */
     #[DataProvider('intInvalidProvider')]
-    public function testGetIntParamThrowsOnInvalid($input): void
+    public function testGetIntThrowsOnInvalid($input): void
     {
         $this->req->method('getParam')->willReturn($input);
         $this->req->method('getQuery')->willReturn(null);
         $this->req->body = [];
 
         $this->expectException(InvalidArgumentException::class);
-        RequestValidator::getIntParam($this->req, 'id', 'Invalid id');
+        RequestValidator::getInt($this->req, 'id', 'Invalid id');
     }
 
     // -------------------------
-    // getBoolParam
+    // getBool
     // -------------------------
 
     /**
@@ -177,7 +177,7 @@ class RequestValidatorUnitTest extends TestCase
     }
 
     /**
-     * Test that getBoolParam correctly parses boolean-like values.
+     * Test that getBool correctly parses boolean-like values.
      *
      * @param string $input    Input value.
      * @param bool   $expected Expected boolean result.
@@ -185,32 +185,32 @@ class RequestValidatorUnitTest extends TestCase
      * @return void
      */
     #[DataProvider('boolProvider')]
-    public function testGetBoolParam(string $input, bool $expected): void
+    public function testGetBool(string $input, bool $expected): void
     {
         $this->req->method('getParam')->willReturn($input);
         $this->req->method('getQuery')->willReturn(null);
         $this->req->body = [];
 
-        $this->assertSame($expected, RequestValidator::getBoolParam($this->req, 'flag', 'Invalid flag', true));
+        $this->assertSame($expected, RequestValidator::getBool($this->req, 'flag', 'Invalid flag', true));
     }
 
     /**
-     * Test that getBoolParam throws an exception when value is missing.
+     * Test that getBool throws an exception when value is missing.
      *
      * @return void
      */
-    public function testGetBoolParamThrowsOnMissing(): void
+    public function testGetBoolThrowsOnMissing(): void
     {
         $this->req->method('getParam')->willReturn(null);
         $this->req->method('getQuery')->willReturn(null);
         $this->req->body = [];
 
         $this->expectException(InvalidArgumentException::class);
-        RequestValidator::getBoolParam($this->req, 'flag', 'Invalid flag');
+        RequestValidator::getBool($this->req, 'flag', 'Invalid flag');
     }
 
     // -------------------------
-    // getStringParam
+    // getString
     // -------------------------
 
     /**
@@ -227,7 +227,7 @@ class RequestValidatorUnitTest extends TestCase
     }
 
     /**
-     * Test that getStringParam sanitizes and returns valid strings.
+     * Test that getString sanitizes and returns valid strings.
      *
      * @param string $input    Input value.
      * @param string $expected Expected sanitized string.
@@ -235,13 +235,13 @@ class RequestValidatorUnitTest extends TestCase
      * @return void
      */
     #[DataProvider('stringProvider')]
-    public function testGetStringParamValid(string $input, string $expected): void
+    public function testGetStringValid(string $input, string $expected): void
     {
         $this->req->method('getParam')->willReturn($input);
         $this->req->method('getQuery')->willReturn(null);
         $this->req->body = [];
 
-        $this->assertSame($expected, RequestValidator::getStringParam($this->req, 'name', 'Invalid name'));
+        $this->assertSame($expected, RequestValidator::getString($this->req, 'name', 'Invalid name'));
     }
 
     /**
@@ -259,25 +259,25 @@ class RequestValidatorUnitTest extends TestCase
     }
 
     /**
-     * Test that getStringParam throws an exception for invalid strings.
+     * Test that getString throws an exception for invalid strings.
      *
      * @param mixed $input Invalid input.
      *
      * @return void
      */
     #[DataProvider('stringInvalidProvider')]
-    public function testGetStringParamThrowsOnInvalid($input): void
+    public function testGetStringThrowsOnInvalid($input): void
     {
         $this->req->method('getParam')->willReturn($input);
         $this->req->method('getQuery')->willReturn(null);
         $this->req->body = [];
 
         $this->expectException(InvalidArgumentException::class);
-        RequestValidator::getStringParam($this->req, 'name', 'Invalid name');
+        RequestValidator::getString($this->req, 'name', 'Invalid name');
     }
 
     // -------------------------
-    // getEmailParam
+    // getEmail
     // -------------------------
 
     /**
@@ -294,7 +294,7 @@ class RequestValidatorUnitTest extends TestCase
     }
 
     /**
-     * Test that getEmailParam validates and trims email addresses.
+     * Test that getEmail validates and trims email addresses.
      *
      * @param string $input    Input email.
      * @param string $expected Expected valid email.
@@ -302,13 +302,13 @@ class RequestValidatorUnitTest extends TestCase
      * @return void
      */
     #[DataProvider('emailProvider')]
-    public function testGetEmailParamValid(string $input, string $expected): void
+    public function testGetEmailValid(string $input, string $expected): void
     {
         $this->req->method('getParam')->willReturn($input);
         $this->req->method('getQuery')->willReturn(null);
         $this->req->body = [];
 
-        $this->assertSame($expected, RequestValidator::getEmailParam($this->req, 'email', 'Invalid email'));
+        $this->assertSame($expected, RequestValidator::getEmail($this->req, 'email', 'Invalid email'));
     }
 
     /**
@@ -326,21 +326,21 @@ class RequestValidatorUnitTest extends TestCase
     }
 
     /**
-     * Test that getEmailParam throws an exception for invalid emails.
+     * Test that getEmail throws an exception for invalid emails.
      *
      * @param mixed $input Invalid email input.
      *
      * @return void
      */
     #[DataProvider('emailInvalidProvider')]
-    public function testGetEmailParamThrowsOnInvalid($input): void
+    public function testGetEmailThrowsOnInvalid($input): void
     {
         $this->req->method('getParam')->willReturn($input);
         $this->req->method('getQuery')->willReturn(null);
         $this->req->body = [];
 
         $this->expectException(InvalidArgumentException::class);
-        RequestValidator::getEmailParam($this->req, 'email', 'Invalid email');
+        RequestValidator::getEmail($this->req, 'email', 'Invalid email');
     }
 
     // -------------------------

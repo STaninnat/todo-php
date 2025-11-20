@@ -58,7 +58,7 @@ class GetTasksService
      */
     public function execute(Request $req): array
     {
-        $userId = RequestValidator::getStringParam($req, 'user_id', 'User ID is required.');
+        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
 
         // Fetch tasks via TaskQueries
         $result = $this->taskQueries->getTasksByUserID($userId);

@@ -32,11 +32,21 @@ try {
         $logger->info("Request Path: {$request->path}");
         $logger->info("Query Params: " . json_encode($request->query));
         $logger->info("Body Params: " . json_encode($request->body));
+
+        if (!empty($request->params)) {
+            $logger->info("Route Params: " . json_encode($request->params));
+        }
+
+        $jsonError = $request->getJsonError();
+        if ($jsonError !== null) {
+            $logger->warning("JSON Decode Error: {$jsonError}");
+        }
+
         $logger->info("========================");
     });
 
     $app->dispatch();
-} catch (\Throwable $e) {
+} catch (Throwable $e) {
     if (isset($logger)) {
         /** @var Logger $logger */
         $logger->error("Bootstrap error: " . $e->getMessage());

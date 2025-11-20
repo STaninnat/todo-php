@@ -14,6 +14,7 @@ use App\Api\Tasks\Controller\TaskController;
 use App\Api\Middlewares\AuthMiddleware;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
+use Throwable;
 
 /**
  * Class RouterApp
@@ -123,7 +124,7 @@ class RouterApp
             try {
                 $this->authMiddleware->refreshJwt($req);
                 $this->logger->info("JWT refresh executed for {$req->method} {$req->path}");
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $this->logger->error("JWT refresh failed: " . $e->getMessage());
                 throw $e;
             }
@@ -145,7 +146,7 @@ class RouterApp
                 try {
                     $this->authMiddleware->requireAuth($req);
                     $this->logger->info("Auth passed for {$req->method} {$req->path}");
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $this->logger->warning("Auth failed for {$req->method} {$req->path}: " . $e->getMessage());
                     throw $e;
                 }
@@ -202,6 +203,11 @@ class RouterApp
             // Register route handler with middleware
             $this->router->register($method, $fullPath, function (Request $req) use ($controller, $handler, $fullPath, $getRequestData) {
                 try {
+                    // Check JSON parse errors from Request
+                    if ($req->getJsonError() !== null) {
+                        $this->logger->warning("Invalid JSON body in {$req->method} {$req->path}: " . $req->getJsonError());
+                    }
+
                     $this->logger->info("Route called: $fullPath -> " . get_class($controller) . "::$handler");
 
                     // Get request data and invoke controller method
@@ -209,7 +215,7 @@ class RouterApp
                     $this->logger->info("Response prepared for $fullPath");
 
                     return $data;
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $this->logger->error("Exception in route $fullPath: " . $e->getMessage());
                     throw $e;
                 }
@@ -240,7 +246,7 @@ class RouterApp
 
             // Ensure all keys are strings for PHPStan
             return array_map(fn($v) => $v, $data);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logger->error("Unhandled exception during dispatch: " . $e->getMessage());
 
             /** @var array<string, mixed> $errorResponse */

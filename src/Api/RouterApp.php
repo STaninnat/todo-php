@@ -191,17 +191,11 @@ class RouterApp
      */
     private function registerRouteBatch(array $routes, object $controller): void
     {
-        // Determine data source for request (GET uses query, others use body)
-        $getRequestData = fn(Request $req) => match ($req->method) {
-            'GET' => $req->query,
-            default => $req->body
-        };
-
         foreach ($routes as [$method, $path, $handler, $middlewares]) {
             $fullPath = $this->apiPrefix . $path;
 
             // Register route handler with middleware
-            $this->router->register($method, $fullPath, function (Request $req) use ($controller, $handler, $fullPath, $getRequestData) {
+            $this->router->register($method, $fullPath, function (Request $req) use ($controller, $handler, $fullPath) {
                 try {
                     // Check JSON parse errors from Request
                     if ($req->getJsonError() !== null) {
@@ -211,7 +205,7 @@ class RouterApp
                     $this->logger->info("Route called: $fullPath -> " . get_class($controller) . "::$handler");
 
                     // Get request data and invoke controller method
-                    $data = $controller->$handler($getRequestData($req));
+                    $data = $controller->$handler($req);
                     $this->logger->info("Response prepared for $fullPath");
 
                     return $data;

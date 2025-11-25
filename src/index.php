@@ -12,6 +12,7 @@ use App\Utils\Logger;
 use App\Utils\SystemClock;
 use App\Utils\NativeFileSystem;
 use App\Utils\JsonResponder;
+use App\Api\Middlewares\DebugMiddleware;
 
 try {
     $logger = new Logger(
@@ -26,24 +27,7 @@ try {
 
     $app = new RouterApp($router, $logger, $database);
 
-    $router->addMiddleware(function (Request $request) use ($logger) {
-        $logger->info("=== Debug Middleware ===");
-        $logger->info("Request Method: {$request->method}");
-        $logger->info("Request Path: {$request->path}");
-        $logger->info("Query Params: " . json_encode($request->query));
-        $logger->info("Body Params: " . json_encode($request->body));
-
-        if (!empty($request->params)) {
-            $logger->info("Route Params: " . json_encode($request->params));
-        }
-
-        $jsonError = $request->getJsonError();
-        if ($jsonError !== null) {
-            $logger->warning("JSON Decode Error: {$jsonError}");
-        }
-
-        $logger->info("========================");
-    });
+    $router->addMiddleware(new DebugMiddleware($logger));
 
     $app->dispatch();
 } catch (Throwable $e) {

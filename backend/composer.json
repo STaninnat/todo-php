@@ -31,9 +31,9 @@
     "test:integration": "cd .. && scripts/test.sh integration",
     "test:integration:fast": "cd .. && scripts/test.sh integration --fast",
     "clean": "cd .. && scripts/clean.sh",
-    "migrate": "cd .. && docker compose exec -T php-fpm vendor/bin/phinx migrate",
-    "rollback": "cd .. && docker compose exec -T php-fpm vendor/bin/phinx rollback",
-    "make:migration": "vendor/bin/phinx create"
+    "phinx:migrate": "cd .. && scripts/phinx.sh migrate",
+    "phinx:rollback": "cd .. && scripts/phinx.sh rollback",
+    "phinx:create": "cd .. && scripts/phinx.sh create"
   },
   "autoload": {
     "psr-4": {

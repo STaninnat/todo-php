@@ -8,3 +8,5 @@ backend/phpunit.xml.dist
 backend/.phpunit.result.cache
 
 backend/tests/bootstrap.php
+
+.vscode/

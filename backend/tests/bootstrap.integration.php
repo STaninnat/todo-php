@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/Integration/bootstrap_db.php';
 
 /**
@@ -29,8 +29,8 @@ if (is_file($envFile)) {
         // Example: 'DB_HOST=localhost' => $key='DB_HOST', $value='localhost'
         [$key, $value] = explode('=', $line, 2) + [1 => ''];
 
-        $key = (string)$key;
-        $value = (string)$value;
+        $key = (string) $key;
+        $value = (string) $value;
 
         // Set the key-value pair in PHP's environment ($_ENV) and system environment
         // Using both ensures compatibility with code that reads either $_ENV or getenv()
@@ -52,7 +52,7 @@ if (isset($_ENV['DB_HOST']) && is_string($_ENV['DB_HOST'])) {
 }
 
 if (isset($_ENV['DB_PORT']) && is_numeric($_ENV['DB_PORT'])) {
-    $dbPort = (int)$_ENV['DB_PORT'];
+    $dbPort = (int) $_ENV['DB_PORT'];
 }
 
 /**

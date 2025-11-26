@@ -58,7 +58,7 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
 
         $dbPort = $_ENV['DB_PORT'] ?? 3306;
         assert(is_numeric($dbPort));
-        $dbPort = (int)$dbPort;
+        $dbPort = (int) $dbPort;
 
         waitForDatabase($dbHost, $dbPort);
 
@@ -71,12 +71,15 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
             CREATE TABLE tasks (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
-                description TEXT NOT NULL,
+                description TEXT DEFAULT NULL,
                 user_id VARCHAR(64) NOT NULL,
                 is_done TINYINT(1) DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_is_done (is_done),
+                INDEX idx_user_done (user_id, is_done)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
         // insert a sample task
@@ -140,7 +143,7 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
         assert(isset($result['task']['is_done']) && is_numeric($result['task']['is_done']));
         $this->assertArrayHasKey('task', $result);
         $this->assertSame(1, $result['task']['id']);
-        $this->assertSame(1, (int)$result['task']['is_done']);
+        $this->assertSame(1, (int) $result['task']['is_done']);
     }
 
     /**
@@ -168,7 +171,7 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
 
         // Inline note: `is_done` must now be 0 (false)
         assert(isset($result['task']['is_done']) && is_numeric($result['task']['is_done']));
-        $this->assertSame(0, (int)$result['task']['is_done']);
+        $this->assertSame(0, (int) $result['task']['is_done']);
     }
 
     /**

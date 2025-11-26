@@ -76,7 +76,7 @@ class SignupServiceIntegrationTest extends TestCase
 
         $dbPort = $_ENV['DB_PORT'] ?? 3306;
         assert(is_numeric($dbPort));
-        $dbPort = (int)$dbPort;
+        $dbPort = (int) $dbPort;
 
         waitForDatabase($dbHost, $dbPort);
 
@@ -89,12 +89,14 @@ class SignupServiceIntegrationTest extends TestCase
         $this->pdo->exec("
             CREATE TABLE users (
                 id VARCHAR(64) PRIMARY KEY,
-                username VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
+                username VARCHAR(255) NOT NULL UNIQUE,
+                email VARCHAR(255) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_username (username),
+                INDEX idx_email (email)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
         $storage = new TestCookieStorage();
@@ -314,7 +316,7 @@ class SignupServiceIntegrationTest extends TestCase
             $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = ?");
             $stmt->execute(['invalid@example.com']);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            $this->assertFalse((bool)$user);
+            $this->assertFalse((bool) $user);
 
             // Cookie must remain unset due to failed signup
             $this->assertNull($this->cookieManager->getAccessToken());

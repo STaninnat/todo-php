@@ -13,6 +13,6 @@ COPY backend/composer.json backend/composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 COPY ./backend/src ./src
-COPY ./frontend/public ./public
+COPY ./backend/public ./public
 
-WORKDIR /app/public
+WORKDIR /app

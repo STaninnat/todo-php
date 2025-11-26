@@ -6,7 +6,8 @@
   },
   "require-dev": {
     "phpunit/phpunit": "^12.3",
-    "phpstan/phpstan": "^2.1"
+    "phpstan/phpstan": "^2.1",
+    "robmorgan/phinx": "^0.16.10"
   },
   "scripts": {
     "lint": "find src tests -name '*.php' -print0 | xargs -0 php -l",
@@ -15,21 +16,24 @@
       "@lint",
       "@phpstan"
     ],
-    "build": "../scripts/env.sh build",
-    "up": "../scripts/env.sh up",
-    "rebuild": "../scripts/env.sh rebuild",
-    "down": "../scripts/env.sh down",
-    "down:clean": "../scripts/env.sh down:clean",
-    "build:test": "../scripts/env.sh build test",
-    "up:test": "../scripts/env.sh up test",
-    "rebuild:test": "../scripts/env.sh rebuild test",
-    "down:test": "../scripts/env.sh down test",
-    "down:test:clean": "../scripts/env.sh down:clean test",
+    "build": "cd .. && scripts/env.sh build",
+    "up": "cd .. && scripts/env.sh up",
+    "rebuild": "cd .. && scripts/env.sh rebuild",
+    "down": "cd .. && scripts/env.sh down",
+    "down:clean": "cd .. && scripts/env.sh down:clean",
+    "build:test": "cd .. && scripts/env.sh build test",
+    "up:test": "cd .. && scripts/env.sh up test",
+    "rebuild:test": "cd .. && scripts/env.sh rebuild test",
+    "down:test": "cd .. && scripts/env.sh down test",
+    "down:test:clean": "cd .. && scripts/env.sh down:clean test",
     "test": "cd .. && scripts/test.sh",
     "test:unit": "cd .. && scripts/test.sh unit",
     "test:integration": "cd .. && scripts/test.sh integration",
     "test:integration:fast": "cd .. && scripts/test.sh integration --fast",
-    "clean": "../scripts/clean.sh"
+    "clean": "cd .. && scripts/clean.sh",
+    "phinx:migrate": "cd .. && scripts/phinx.sh migrate",
+    "phinx:rollback": "cd .. && scripts/phinx.sh rollback",
+    "phinx:create": "cd .. && scripts/phinx.sh create"
   },
   "autoload": {
     "psr-4": {

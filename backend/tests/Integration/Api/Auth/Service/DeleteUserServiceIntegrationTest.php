@@ -70,7 +70,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
 
         $dbPort = $_ENV['DB_PORT'] ?? 3306;
         assert(is_numeric($dbPort));
-        $dbPort = (int)$dbPort;
+        $dbPort = (int) $dbPort;
 
         // Wait for test DB readiness before continuing
         waitForDatabase($dbHost, $dbPort);
@@ -83,12 +83,14 @@ class DeleteUserServiceIntegrationTest extends TestCase
         $this->pdo->exec("
             CREATE TABLE users (
                 id VARCHAR(64) PRIMARY KEY,
-                username VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
+                username VARCHAR(255) NOT NULL UNIQUE,
+                email VARCHAR(255) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_username (username),
+                INDEX idx_email (email)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
         // Initialize cookie storage for testing logout/session cleanup
@@ -146,7 +148,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
         // Ensure user is deleted from DB
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$id]);
-        $this->assertFalse((bool)$stmt->fetch(PDO::FETCH_ASSOC));
+        $this->assertFalse((bool) $stmt->fetch(PDO::FETCH_ASSOC));
 
         // Cookie should be cleared to reflect logout
         $this->assertNull($this->cookieManager->getAccessToken());
@@ -181,7 +183,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
     public function testDatabaseFailureThrowsRuntimeException(): void
     {
         // Simulate DB error to verify exception propagation
-        $failingQueries = new class($this->pdo) extends UserQueries {
+        $failingQueries = new class ($this->pdo) extends UserQueries {
             public function deleteUser(string $id): QueryResult
             {
                 return QueryResult::fail(['Simulated DB error']);
@@ -221,7 +223,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
         // Inline: verify DB deletion consistency
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$id]);
-        $this->assertFalse((bool)$stmt->fetch(PDO::FETCH_ASSOC));
+        $this->assertFalse((bool) $stmt->fetch(PDO::FETCH_ASSOC));
 
         $this->assertNull($this->cookieManager->getAccessToken());
         $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
@@ -237,7 +239,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
     public function testDeleteUserDatabaseFailureDoesNotClearCookie(): void
     {
         // Inline: ensure service respects failure isolation (cookie remains untouched)
-        $failingQueries = new class($this->pdo) extends UserQueries {
+        $failingQueries = new class ($this->pdo) extends UserQueries {
             public function deleteUser(string $id): QueryResult
             {
                 return QueryResult::fail(['Simulated DB error']);

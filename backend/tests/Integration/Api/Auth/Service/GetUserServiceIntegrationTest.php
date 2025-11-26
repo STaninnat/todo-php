@@ -64,7 +64,7 @@ class GetUserServiceIntegrationTest extends TestCase
 
         $dbPort = $_ENV['DB_PORT'] ?? 3306;
         assert(is_numeric($dbPort));
-        $dbPort = (int)$dbPort;
+        $dbPort = (int) $dbPort;
 
         // Ensure DB container is ready before executing queries
         waitForDatabase($dbHost, $dbPort);
@@ -77,12 +77,14 @@ class GetUserServiceIntegrationTest extends TestCase
         $this->pdo->exec("
             CREATE TABLE users (
                 id VARCHAR(64) PRIMARY KEY,
-                username VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
+                username VARCHAR(255) NOT NULL UNIQUE,
+                email VARCHAR(255) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_username (username),
+                INDEX idx_email (email)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
         $this->service = new GetUserService($this->userQueries);

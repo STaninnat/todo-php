@@ -57,7 +57,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
 
         $dbPort = $_ENV['DB_PORT'] ?? 3306;
         assert(is_numeric($dbPort));
-        $dbPort = (int)$dbPort;
+        $dbPort = (int) $dbPort;
 
         // Wait until test DB becomes available
         waitForDatabase($dbHost, $dbPort);
@@ -71,12 +71,15 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
             CREATE TABLE tasks (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
-                description TEXT NOT NULL,
+                description TEXT DEFAULT NULL,
                 user_id VARCHAR(64) NOT NULL,
                 is_done TINYINT(1) DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_is_done (is_done),
+                INDEX idx_user_done (user_id, is_done)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
     }
 
@@ -126,7 +129,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
             INSERT INTO tasks (title, description, user_id)
             VALUES ('Test Task', 'To be deleted', 'user_123')
         ");
-        $taskId = (int)$this->pdo->lastInsertId();
+        $taskId = (int) $this->pdo->lastInsertId();
 
         $service = new DeleteTaskService($this->queries);
         $req = $this->makeRequest([
@@ -146,7 +149,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         if ($stmt === false) {
             throw new RuntimeException('Failed to count tasks.');
         }
-        $count = (int)$stmt->fetchColumn();
+        $count = (int) $stmt->fetchColumn();
         $this->assertSame(0, $count);
     }
 
@@ -232,7 +235,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         if ($stmt === false) {
             throw new RuntimeException('Failed to fetch task id.');
         }
-        $taskId = (int)$stmt->fetchColumn();
+        $taskId = (int) $stmt->fetchColumn();
 
         $service = new DeleteTaskService($this->queries);
         $req = $this->makeRequest(['id' => $taskId, 'user_id' => 'user_abc']);
@@ -248,7 +251,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
             throw new RuntimeException('Failed to count tasks.');
         }
 
-        $count = (int)$stmt->fetchColumn();
+        $count = (int) $stmt->fetchColumn();
         $this->assertSame(10, $count);
     }
 }

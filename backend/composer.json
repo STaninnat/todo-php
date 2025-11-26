@@ -6,7 +6,8 @@
   },
   "require-dev": {
     "phpunit/phpunit": "^12.3",
-    "phpstan/phpstan": "^2.1"
+    "phpstan/phpstan": "^2.1",
+    "robmorgan/phinx": "^0.16.10"
   },
   "scripts": {
     "lint": "find src tests -name '*.php' -print0 | xargs -0 php -l",
@@ -29,7 +30,10 @@
     "test:unit": "cd .. && scripts/test.sh unit",
     "test:integration": "cd .. && scripts/test.sh integration",
     "test:integration:fast": "cd .. && scripts/test.sh integration --fast",
-    "clean": "../scripts/clean.sh"
+    "clean": "cd .. && scripts/clean.sh",
+    "migrate": "cd .. && docker compose exec -T php-fpm vendor/bin/phinx migrate",
+    "rollback": "cd .. && docker compose exec -T php-fpm vendor/bin/phinx rollback",
+    "make:migration": "vendor/bin/phinx create"
   },
   "autoload": {
     "psr-4": {

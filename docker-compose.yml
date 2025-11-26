@@ -8,6 +8,8 @@ services:
       - ./backend/vendor:/app/vendor
       - ./backend/composer.json:/app/composer.json
       - ./backend/composer.lock:/app/composer.lock
+      - ./backend/phinx.php:/app/phinx.php
+      - ./backend/db:/app/db
     environment:
       DB_HOST: ${DB_HOST}
       DB_NAME: ${DB_NAME}

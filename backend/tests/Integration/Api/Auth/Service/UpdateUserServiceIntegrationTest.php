@@ -277,7 +277,7 @@ class UpdateUserServiceIntegrationTest extends TestCase
             'email' => $longEmail,
         ]);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Valid email is required');
 
         $this->service->execute($req);

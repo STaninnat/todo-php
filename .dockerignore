@@ -4,10 +4,15 @@
 *.log
 *.cache
 *.tmp
+*.opcache
 
+note*
+*.txt
 .env*
+.vscode/
 
 backend/vendor/
-
-Dockerfile
-docker-compose.yml
+backend/phpunit.xml
+backend/phpunit.xml.dist
+backend/.phpunit.result.cache
+backend/tests/bootstrap.php

@@ -8,11 +8,11 @@ RUN apk update && apk upgrade --no-cache \
 
 WORKDIR /app
 
-COPY composer.json composer.lock ./
+COPY backend/composer.json backend/composer.lock ./
 
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-COPY ./src ./src
-COPY ./public ./public
+COPY ./backend/src ./src
+COPY ./frontend/public ./public
 
 WORKDIR /app/public

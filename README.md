@@ -80,9 +80,10 @@ composer down
 
 ### 2. Running the Test Suite
 
-To verify the integrity of the codebase and ensure that all implemented features are functioning correctly, run the test suite:
+To verify the integrity of the codebase and ensure that all implemented features are functioning correctly, run the test suite from the `backend` directory:
 
 ```bash
+cd backend
 composer test
 ```
 
@@ -96,6 +97,7 @@ This command performs the following operations:
 You can also run specific test types:
 
 ```bash
+cd backend
 composer test:unit              # Run only unit tests
 composer test:integration       # Run only integration tests
 composer test:integration:fast  # Run integration tests using existing containers
@@ -103,9 +105,10 @@ composer test:integration:fast  # Run integration tests using existing container
 
 ### 3. Code Quality Verification
 
-To maintain high code quality standards, run the static analysis and linting tools:
+To maintain high code quality standards, run the static analysis and linting tools from the `backend` directory:
 
 ```bash
+cd backend
 composer check:hard
 ```
 
@@ -115,6 +118,12 @@ This will perform a rigorous check of the codebase using PHPStan and standard PH
 
 The codebase is organized as follows:
 
-- `src/`: This directory contains the core application source code, including API controllers, business logic, and database interaction layers.
-- `tests/`: This directory houses the comprehensive test suite, ensuring coverage for both unit logic and integration flows.
-- `scripts/`: This directory contains utility shell scripts used to automate Docker management, testing procedures, and maintenance tasks.
+- `backend/`: This directory contains all backend-related code and configuration:
+  - `backend/src/`: Core application source code, including API controllers, business logic, and database interaction layers.
+  - `backend/tests/`: Comprehensive test suite, ensuring coverage for both unit logic and integration flows.
+  - `backend/vendor/`: Composer dependencies.
+  - Backend configuration files: `composer.json`, `phpstan.neon`, `phpunit.*.xml*`.
+- `frontend/`: This directory is prepared for future frontend development:
+  - `frontend/public/`: Frontend assets (currently empty, ready for future use).
+- `scripts/`: Utility shell scripts used to automate Docker management, testing procedures, and maintenance tasks.
+- Root directory: Docker configuration, environment files, and other infrastructure files.

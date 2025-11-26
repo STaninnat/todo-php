@@ -36,7 +36,7 @@ run_phpunit() {
 
   # Run PHPUnit (show output normally, keep XML report)
   STATUS=0
-  vendor/bin/phpunit -c "$CONFIG_FILE" --log-junit "$TEMP_XML" || STATUS=$?
+  backend/vendor/bin/phpunit -c "$CONFIG_FILE" --log-junit "$TEMP_XML" || STATUS=$?
 
   # Read XML report and sum nested testsuites
   TESTS=$(xmllint --xpath "sum(/testsuites/testsuite/@tests)" "$TEMP_XML")
@@ -69,7 +69,7 @@ run_phpunit() {
 
 run_unit() {
   echo "Running unit tests..."
-  run_phpunit phpunit.unit.xml.dist unit
+  run_phpunit backend/phpunit.unit.xml.dist unit
   echo ""
 }
 

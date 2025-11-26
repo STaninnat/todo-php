@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/Integration/bootstrap_db.php';
 
 /**
@@ -11,7 +11,7 @@ require_once __DIR__ . '/Integration/bootstrap_db.php';
  * This allows the test environment to override default settings
  * without affecting production or development environments.
  */
-$envFile = __DIR__ . '/../.env.test';
+$envFile = __DIR__ . '/../../.env.test';
 
 if (is_file($envFile)) {
     /** @var string[] $lines Lines read from the .env.test file */

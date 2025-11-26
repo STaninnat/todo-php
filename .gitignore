@@ -1,10 +1,10 @@
 note*
 *.txt
 .env*
-vendor/
+backend/vendor/
 
-phpunit.xml
-phpunit.xml.dist
-.phpunit.result.cache
+backend/phpunit.xml
+backend/phpunit.xml.dist
+backend/.phpunit.result.cache
 
-tests/bootstrap.php
+backend/tests/bootstrap.php

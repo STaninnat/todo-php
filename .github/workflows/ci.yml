@@ -22,22 +22,22 @@ jobs:
       - name: Cache Composer
         uses: actions/cache@v4
         with:
-          path: vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          path: backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Cache PHPstan
         uses: actions/cache@v4
         with:
           path: ~/.cache/phpstan
-          key: phpstan-${{ runner.os }}-${{ hashFiles('phpstan.neon') }}
+          key: phpstan-${{ runner.os }}-${{ hashFiles('backend/phpstan.neon') }}
           restore-keys: phpstan-${{ runner.os }}-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: cd backend && composer install --no-interaction --prefer-dist
 
       - name: Run Linter and PHPStan
-        run: composer check:hard
+        run: cd backend && composer check:hard
 
   tests:
     name: Tests
@@ -56,12 +56,12 @@ jobs:
       - name: Cache Composer
         uses: actions/cache@v4
         with:
-          path: vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          path: backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: cd backend && composer install --no-interaction --prefer-dist
 
       - name: Run Tests (unit + integration + docker up/down)
-        run: composer test
+        run: cd backend && composer test

@@ -7,7 +7,7 @@
 
 .env*
 
-vendor/
+backend/vendor/
 
 Dockerfile
 docker-compose.yml

@@ -7,12 +7,15 @@ services:
     env_file:
       - .env.test
     volumes:
-      - ./src:/app/src
-      - ./public:/app/public
-      - ./tests:/app/tests
-      - ./phpunit.integration.xml.dist:/app/phpunit.integration.xml.dist
-      - ./phpunit.unit.xml.dist:/app/phpunit.unit.xml.dist
-      - ./phpunit.xml.dist:/app/phpunit.xml.dist
+      - ./backend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./backend/tests:/app/tests
+      - ./backend/vendor:/app/vendor
+      - ./backend/composer.json:/app/composer.json
+      - ./backend/composer.lock:/app/composer.lock
+      - ./backend/phpunit.integration.xml.dist:/app/phpunit.integration.xml.dist
+      - ./backend/phpunit.unit.xml.dist:/app/phpunit.unit.xml.dist
+      - ./backend/phpunit.xml.dist:/app/phpunit.xml.dist
     environment:
       APP_ENV: ${APP_ENV:-testing}
       APP_DEBUG: ${APP_DEBUG:-true}

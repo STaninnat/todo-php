@@ -16,11 +16,9 @@ use App\Api\Middlewares\DebugMiddleware;
 
 try {
     $logger = new Logger(
-        __DIR__ . '/../Logs',
         new NativeFileSystem(),
         new SystemClock(),
-        true,
-        30
+        true
     );
     $router = new Router();
     $database = new Database();

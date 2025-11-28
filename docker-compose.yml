@@ -10,6 +10,27 @@ services:
       - ./backend/composer.lock:/app/composer.lock
       - ./backend/phinx.php:/app/phinx.php
       - ./backend/db:/app/db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+      # --- Future Cloud Logging Examples ---
+      #
+      # 1. AWS CloudWatch (requires AWS credentials on host)
+      # driver: "awslogs"
+      # options:
+      #   awslogs-region: "us-east-1"
+      #   awslogs-group: "todo-app-logs"
+      #   awslogs-stream: "php-fpm"
+      #
+      # 2. Google Cloud Logging (requires GCP credentials on host)
+      # driver: "gcplogs"
+      # options:
+      #   gcp-project: "my-gcp-project-id"
+      #   gcp-log-cmd: "true"
+      
     environment:
       DB_HOST: ${DB_HOST}
       DB_NAME: ${DB_NAME}

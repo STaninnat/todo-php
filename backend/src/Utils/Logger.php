@@ -20,17 +20,8 @@ namespace App\Utils;
  */
 class Logger
 {
-    /** @var string Directory where log files are stored */
-    private string $directory;
-
     /** @var bool Whether logging is enabled */
     private bool $debug;
-
-    /** @var string Current log file name */
-    private string $currentFile;
-
-    /** @var int Maximum number of days to keep logs */
-    private int $maxDays;
 
     /** @var FileSystemInterface File system handler */
     private FileSystemInterface $fs;
@@ -41,44 +32,18 @@ class Logger
     /**
      * Logger constructor.
      *
-     * @param string              $directory Directory for storing log files.
      * @param FileSystemInterface $fs        File system handler (default: NativeFileSystem).
      * @param ClockInterface      $clock     Clock provider (default: SystemClock).
      * @param bool                $debug     Enable or disable logging.
-     * @param int                 $maxDays   Days to keep logs before deletion.
      */
     public function __construct(
-        string $directory,
         FileSystemInterface $fs = new NativeFileSystem(),
         ClockInterface $clock = new SystemClock(),
-        bool $debug = true,
-        int $maxDays = 30
+        bool $debug = true
     ) {
-        $this->directory = rtrim($directory, '/');
         $this->fs = $fs;
         $this->clock = $clock;
         $this->debug = $debug;
-        $this->maxDays = $maxDays;
-
-        // Ensure log directory exists
-        $this->fs->ensureDir($this->directory);
-
-        // Set the current log file for today
-        $this->updateCurrentFile();
-
-        // Remove old log files beyond $maxDays
-        $this->cleanupOldLogs();
-    }
-
-    /**
-     * Update the current log file based on today's date.
-     *
-     * @return void
-     */
-    private function updateCurrentFile(): void
-    {
-        $date = $this->clock->today();
-        $this->currentFile = $this->directory . "/router-$date.log";
     }
 
     /**
@@ -95,41 +60,14 @@ class Logger
             return; // Skip logging if debug mode is disabled
         }
 
-        // Always refresh current log file and cleanup old logs
-        $this->updateCurrentFile();
-        $this->cleanupOldLogs();
-
         // Format log entry with timestamp and level
         $time = date('Y-m-d H:i:s', $this->clock->now());
-        $this->fs->write($this->currentFile, "[$time][$level] $message\n", true);
-    }
+        $formattedMessage = "[$time][$level] $message\n";
 
-    /**
-     * Remove log files older than $maxDays.
-     *
-     * @return void
-     */
-    private function cleanupOldLogs(): void
-    {
-        $files = $this->fs->listFiles($this->directory . '/router-*.log');
-        $now = $this->clock->now();
+        // Determine stream based on level
+        $stream = ($level === 'ERROR' || $level === 'WARNING') ? 'php://stderr' : 'php://stdout';
 
-        foreach ($files as $file) {
-            // Extract date part from file name: router-YYYY-MM-DD.log
-            $fileDateStr = basename($file, '.log');
-            $datePart = substr($fileDateStr, 7);
-
-            // Convert to timestamp
-            $fileTime = strtotime($datePart);
-            if ($fileTime === false) {
-                continue; // Skip invalid filenames
-            }
-
-            // If older than $maxDays, delete file
-            if (($now - $fileTime) / 86400 > $this->maxDays) {
-                $this->fs->delete($file);
-            }
-        }
+        $this->fs->write($stream, $formattedMessage, true);
     }
 
     /**
@@ -178,17 +116,5 @@ class Logger
     public function setDebug(bool $debug): void
     {
         $this->debug = $debug;
-    }
-
-    /**
-     * Set maximum number of days to keep log files.
-     *
-     * @param int $days Number of days.
-     *
-     * @return void
-     */
-    public function setMaxDays(int $days): void
-    {
-        $this->maxDays = $days;
     }
 }

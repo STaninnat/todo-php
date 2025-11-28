@@ -37,7 +37,7 @@ class RequestValidator
      *
      * @return mixed|null Raw value or null if not found
      */
-    private static function findRaw(Request $req, string $key)
+    private static function findRaw(Request $req, string $key): mixed
     {
         return $req->getParam($key)
             ?? $req->getQuery($key)
@@ -63,7 +63,7 @@ class RequestValidator
         $val = self::findRaw($req, $key);
 
         // Validate integer type (must be scalar digits only)
-        if (!is_scalar($val) || !ctype_digit((string)$val)) {
+        if (!is_scalar($val) || !ctype_digit((string) $val)) {
             throw new InvalidArgumentException($errorMsg);
         }
 
@@ -93,7 +93,7 @@ class RequestValidator
             throw new InvalidArgumentException($errorMsg);
         }
 
-        $val = trim(strip_tags((string)$rawVal));
+        $val = trim(strip_tags((string) $rawVal));
         if ($val === '') {
             throw new InvalidArgumentException($errorMsg);
         }
@@ -124,7 +124,7 @@ class RequestValidator
             throw new InvalidArgumentException($errorMsg);
         }
 
-        $val = trim(strip_tags((string)$rawVal));
+        $val = trim(strip_tags((string) $rawVal));
 
         if ($val === '' || !filter_var($val, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException($errorMsg);
@@ -152,36 +152,69 @@ class RequestValidator
      */
     public static function getBool(Request $req, string $key, string $errorMsg, bool $normalizeInvalid = false): bool
     {
-        $val = self::findRaw($req, $key);
-
-        if ($val === null) {
+        // Retrieve and validate presence
+        $value = self::findRaw($req, $key);
+        if ($value === null) {
             throw new InvalidArgumentException($errorMsg);
         }
 
-        // Direct boolean
-        if (is_bool($val)) {
-            return $val;
+        // PHPStan type assertion: $value is non-null from this point
+        /** @var non-empty-string|int|float|bool|array<mixed> $value */
+
+        // Handle direct boolean
+        if (is_bool($value)) {
+            return $value;
         }
 
-        // Numeric 0/1
-        if (is_numeric($val) && in_array((int)$val, [0, 1], true)) {
-            return (bool)((int)$val);
-        }
-
-        // String interpretation
-        if (is_string($val)) {
-            $lower = strtolower(trim($val));
-            if (in_array($lower, ['true', '1'], true)) {
-                return true;
-            }
-            if (in_array($lower, ['false', '0'], true)) {
+        // Handle numeric values (0 or 1)
+        if (is_numeric($value)) {
+            $asInt = (int) $value;
+            if ($asInt === 0) {
                 return false;
             }
+            if ($asInt === 1) {
+                return true;
+            }
         }
 
-        if ($normalizeInvalid) return false;
+        // Handle string representations
+        if (is_string($value)) {
+            $normalized = strtolower(trim($value));
+            switch ($normalized) {
+                case 'true':
+                case '1':
+                    return true;
+                case 'false':
+                case '0':
+                    return false;
+            }
+        }
+
+        // Handle invalid values
+        if ($normalizeInvalid) {
+            return false;
+        }
 
         throw new InvalidArgumentException($errorMsg);
+    }
+
+    /**
+     * Retrieve the authenticated user ID from the request context.
+     *
+     * - Expects $req->auth['id'] to be set by middleware
+     * - Throws RuntimeException if not found (should be caught by middleware/framework)
+     *
+     * @param Request $req
+     * @return string
+     * @throws RuntimeException If user ID is missing or invalid
+     */
+    public static function getAuthUserId(Request $req): string
+    {
+        if (!isset($req->auth['id']) || !is_string($req->auth['id'])) {
+            throw new RuntimeException('Authenticated user ID not found in request context.');
+        }
+
+        return $req->auth['id'];
     }
 
     /**
@@ -226,4 +259,5 @@ class RequestValidator
             throw new RuntimeException("Failed to {$action}: No data or changes found.");
         }
     }
+
 }

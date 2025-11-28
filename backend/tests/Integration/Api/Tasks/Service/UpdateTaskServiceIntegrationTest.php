@@ -122,14 +122,18 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
      * 
      * @return Request
      */
-    private function makeRequest(array $body): Request
+    private function makeRequest(array $body, ?string $userId = null): Request
     {
         $json = json_encode($body);
         if ($json === false) {
             throw new RuntimeException('Failed to encode request body to JSON.');
         }
 
-        return new Request('PUT', '/tasks/update', [], $json);
+        $req = new Request('PUT', '/tasks/update', [], $json);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -151,8 +155,7 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'title' => 'Updated Title',
             'description' => 'Updated description',
             'is_done' => true,
-            'user_id' => $task['user_id'],
-        ]);
+        ], $task['user_id']);
 
         // Execute service
         $result = $service->execute($req);
@@ -183,8 +186,7 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
         $req = $this->makeRequest([
             'id' => $task['id'],
             'is_done' => true,
-            'user_id' => $task['user_id'],
-        ]);
+        ], $task['user_id']);
 
         // Expect validation failure due to missing title
         $this->expectException(InvalidArgumentException::class);
@@ -192,29 +194,7 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
         $service->execute($req);
     }
 
-    /**
-     * Test missing user_id validation.
-     *
-     * Expects InvalidArgumentException with "User ID is required."
-     *
-     * @return void
-     */
-    public function testUpdateTaskWithoutUserIdThrowsException(): void
-    {
-        $task = $this->createSampleTask();
-        $service = new UpdateTaskService($this->queries);
 
-        $req = $this->makeRequest([
-            'id' => $task['id'],
-            'title' => 'No User',
-            'is_done' => false,
-        ]);
-
-        // Expect validation failure due to missing user_id
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required.');
-        $service->execute($req);
-    }
 
     /**
      * Test validation of incorrect input types.
@@ -232,8 +212,7 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'id' => 'invalid',
             'title' => ['array'],
             'is_done' => 'wrong',
-            'user_id' => $task['user_id'],
-        ]);
+        ], $task['user_id']);
 
         // Expect validation failure
         $this->expectException(InvalidArgumentException::class);
@@ -256,8 +235,7 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'title' => 'Nonexistent',
             'description' => 'Should fail',
             'is_done' => false,
-            'user_id' => 'user_123',
-        ]);
+        ], 'user_123');
 
         // Expect runtime exception due to missing record
         $this->expectException(RuntimeException::class);
@@ -286,8 +264,7 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
             'title' => $longTitle,
             'description' => 'bad data',
             'is_done' => true,
-            'user_id' => $task['user_id'],
-        ]);
+        ], $task['user_id']);
 
         // Expect RuntimeException on failed update
         $this->expectException(RuntimeException::class);

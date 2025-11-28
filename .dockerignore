@@ -5,11 +5,15 @@
 *.cache
 *.tmp
 *.opcache
+README.md
 
 note*
 *.txt
 .env*
 .vscode/
+docs/
+Logs/
+*.puml
 
 backend/vendor/
 backend/phpunit.xml

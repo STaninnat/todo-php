@@ -101,11 +101,13 @@ final class GetTasksServiceIntegrationTest extends TestCase
      * 
      * @return Request
      */
-    private function makeRequest(array $query = []): Request
+    private function makeRequest(array $query = [], ?string $userId = null): Request
     {
         $req = new Request('GET', '/tasks');
         $req->query = $query;   // Inline assignment of simulated query parameters
-
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
         return $req;
     }
 
@@ -129,7 +131,7 @@ final class GetTasksServiceIntegrationTest extends TestCase
         ");
 
         $service = new GetTasksService($this->queries);
-        $req = $this->makeRequest(['user_id' => 'user_123']);
+        $req = $this->makeRequest([], 'user_123');
 
         // Execute service
         $result = $service->execute($req);
@@ -154,16 +156,7 @@ final class GetTasksServiceIntegrationTest extends TestCase
      *
      * @return void
      */
-    public function testGetTasksWithoutUserIdThrowsException(): void
-    {
-        $service = new GetTasksService($this->queries);
-        $req = $this->makeRequest();
 
-        // Expect validation failure due to missing user_id
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required.');
-        $service->execute($req);
-    }
 
     /**
      * Test retrieval when user has no tasks.
@@ -177,7 +170,7 @@ final class GetTasksServiceIntegrationTest extends TestCase
     public function testGetTasksForUserWithNoTasksReturnsEmptyArray(): void
     {
         $service = new GetTasksService($this->queries);
-        $req = $this->makeRequest(['user_id' => 'ghost']);
+        $req = $this->makeRequest([], 'ghost');
         $result = $service->execute($req);
 
         $this->assertArrayHasKey('task', $result);
@@ -199,7 +192,7 @@ final class GetTasksServiceIntegrationTest extends TestCase
         $this->pdo->exec('DROP TABLE IF EXISTS tasks');
 
         $service = new GetTasksService($this->queries);
-        $req = $this->makeRequest(['user_id' => 'user_123']);
+        $req = $this->makeRequest([], 'user_123');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('retrieve tasks');
@@ -224,7 +217,7 @@ final class GetTasksServiceIntegrationTest extends TestCase
         }
 
         $service = new GetTasksService($this->queries);
-        $req = $this->makeRequest(['user_id' => 'user_abc']);
+        $req = $this->makeRequest([], 'user_abc');
         $result = $service->execute($req);
 
         // Service returns all tasks for simplicity

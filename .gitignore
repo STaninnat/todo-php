@@ -2,6 +2,7 @@ note*
 *.txt
 .env*
 .vscode/
+Logs/
 
 backend/vendor/
 backend/phpunit.xml

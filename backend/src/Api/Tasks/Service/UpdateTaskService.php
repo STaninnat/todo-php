@@ -67,7 +67,8 @@ class UpdateTaskService
         }
 
         $id = RequestValidator::getInt($req, 'id', 'Task ID must be a numeric string.');
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
         $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.', true);
 
         // Verify that the task exists
@@ -77,7 +78,7 @@ class UpdateTaskService
         }
 
         // Update task information
-        $result = $this->taskQueries->updateTask($id, $title, $description, (bool)$isDone, $userId);
+        $result = $this->taskQueries->updateTask($id, $title, $description, (bool) $isDone, $userId);
         RequestValidator::ensureSuccess($result, 'update task');
 
         // Calculate total pages for pagination

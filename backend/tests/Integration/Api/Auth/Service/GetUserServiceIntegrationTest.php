@@ -111,9 +111,13 @@ class GetUserServiceIntegrationTest extends TestCase
      * 
      * @return Request
      */
-    private function makeRequest(array $body): Request
+    private function makeRequest(array $body, ?string $userId = null): Request
     {
-        return new Request('POST', '/get-user', null, null, $body);
+        $req = new Request('POST', '/get-user', null, null, $body);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -130,7 +134,7 @@ class GetUserServiceIntegrationTest extends TestCase
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
             ->execute([$id, 'john', 'john@example.com', password_hash('pass', PASSWORD_DEFAULT)]);
 
-        $req = $this->makeRequest(['user_id' => $id]);
+        $req = $this->makeRequest([], $id);
 
         $result = $this->service->execute($req);
 
@@ -141,22 +145,7 @@ class GetUserServiceIntegrationTest extends TestCase
         ], $result);
     }
 
-    /**
-     * Test validation when user_id is missing.
-     *
-     * Expects InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testMissingUserIdThrowsInvalidArgumentException(): void
-    {
-        $req = $this->makeRequest([]);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required');
-
-        $this->service->execute($req);
-    }
 
     /**
      * Test behavior when user does not exist.
@@ -167,7 +156,7 @@ class GetUserServiceIntegrationTest extends TestCase
      */
     public function testUserNotFoundThrowsRuntimeException(): void
     {
-        $req = $this->makeRequest(['user_id' => 'nonexistent']);
+        $req = $this->makeRequest([], 'nonexistent');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to fetch user: No data or changes found.');
@@ -191,7 +180,7 @@ class GetUserServiceIntegrationTest extends TestCase
 
         $service = new GetUserService($userQueriesMock);
 
-        $req = $this->makeRequest(['user_id' => 'u1']);
+        $req = $this->makeRequest([], 'u1');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/fetch user/i');
@@ -215,7 +204,7 @@ class GetUserServiceIntegrationTest extends TestCase
 
         $service = new GetUserService($userQueriesMock);
 
-        $req = $this->makeRequest(['user_id' => 'u1']);
+        $req = $this->makeRequest([], 'u1');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/invalid user data/i');

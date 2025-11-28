@@ -52,9 +52,10 @@ class UpdateUserService
      */
     public function execute(Request $req): array
     {
-        $userId   = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
         $username = RequestValidator::getString($req, 'username', 'Username is required.');
-        $email    = RequestValidator::getEmail($req, 'email', 'Valid email is required.');
+        $email = RequestValidator::getEmail($req, 'email', 'Valid email is required.');
 
         // Check for existing username or email to prevent duplication
         $existsResult = $this->userQueries->checkUserExists($username, $email);

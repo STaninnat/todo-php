@@ -60,7 +60,8 @@ class DeleteTaskService
     public function execute(Request $req): array
     {
         $id = RequestValidator::getInt($req, 'id', 'Task ID must be a numeric string.');
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
 
         // Attempt to delete the task
         $result = $this->taskQueries->deleteTask($id, $userId);

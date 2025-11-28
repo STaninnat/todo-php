@@ -111,9 +111,13 @@ class UpdateUserServiceIntegrationTest extends TestCase
      * 
      * @return Request
      */
-    private function makeRequest(array $body): Request
+    private function makeRequest(array $body, ?string $userId = null): Request
     {
-        return new Request('POST', '/update-user', null, null, $body);
+        $req = new Request('POST', '/update-user', null, null, $body);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -126,10 +130,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
     public function testUpdateSuccess(): void
     {
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => 'john_new',
             'email' => 'john_new@example.com',
-        ]);
+        ], 'u1');
 
         $result = $this->service->execute($req);
 
@@ -159,10 +162,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
             ->execute(['u2', 'existing', 'exist@example.com', password_hash('x', PASSWORD_DEFAULT)]);
 
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => 'existing',
             'email' => 'new@example.com',
-        ]);
+        ], 'u1');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('already exists');
@@ -182,10 +184,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
             ->execute(['u3', 'unique', 'dup@example.com', password_hash('x', PASSWORD_DEFAULT)]);
 
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => 'newuser',
             'email' => 'dup@example.com',
-        ]);
+        ], 'u1');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('already exists');
@@ -201,10 +202,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
     public function testEmptyUsernameThrowsException(): void
     {
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => '',
             'email' => 'new@example.com',
-        ]);
+        ], 'u1');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Username is required');
@@ -220,10 +220,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
     public function testEmptyEmailThrowsException(): void
     {
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => 'newuser',
             'email' => '',
-        ]);
+        ], 'u1');
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -240,10 +239,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
     public function testWhitespaceUsernameAndEmail(): void
     {
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => '   john_new   ',
             'email' => '  john_new@example.com  ',
-        ]);
+        ], 'u1');
 
         $result = $this->service->execute($req);
 
@@ -272,10 +270,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $longEmail = str_repeat('b', 240) . '@example.com';
 
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => $longUsername,
             'email' => $longEmail,
-        ]);
+        ], 'u1');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Valid email is required');
@@ -283,23 +280,7 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->service->execute($req);
     }
 
-    /**
-     * Test missing user_id triggers InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testMissingUserIdThrowsException(): void
-    {
-        $req = $this->makeRequest([
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-        ]);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required');
-
-        $this->service->execute($req);
-    }
 
     /**
      * Test missing username triggers InvalidArgumentException.
@@ -309,9 +290,8 @@ class UpdateUserServiceIntegrationTest extends TestCase
     public function testMissingUsernameThrowsException(): void
     {
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'email' => 'new@example.com',
-        ]);
+        ], 'u1');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Username is required');
@@ -327,10 +307,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
     public function testInvalidEmailThrowsException(): void
     {
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => 'newuser',
             'email' => 'not-an-email',
-        ]);
+        ], 'u1');
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -351,10 +330,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $service = new UpdateUserService($mockQueries);
 
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => 'broken',
             'email' => 'broken@example.com',
-        ]);
+        ], 'u1');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Invalid data returned from updateUser');
@@ -374,10 +352,9 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $service = new UpdateUserService($mockQueries);
 
         $req = $this->makeRequest([
-            'user_id' => 'u1',
             'username' => 'any',
             'email' => 'any@example.com',
-        ]);
+        ], 'u1');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/check user existence/i');

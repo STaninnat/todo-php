@@ -137,9 +137,13 @@ class UserControllerIntegrationTest extends TestCase
      *
      * @return Request
      */
-    private function makeRequest(string $method, string $path, ?array $body = null): Request
+    private function makeRequest(string $method, string $path, ?array $body = null, ?string $userId = null): Request
     {
-        return new Request($method, $path, null, null, $body);
+        $req = new Request($method, $path, null, null, $body);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -401,7 +405,7 @@ class UserControllerIntegrationTest extends TestCase
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
             ->execute([$id, $username, $email, password_hash('pass', PASSWORD_DEFAULT)]);
 
-        $req = $this->makeRequest('GET', '/user', ['user_id' => $id]);
+        $req = $this->makeRequest('GET', '/user', [], $id);
         $res = $this->controller->getUser($req, true);
 
         $this->assertIsArray($res);
@@ -423,7 +427,7 @@ class UserControllerIntegrationTest extends TestCase
      */
     public function testGetUserNotFoundThrows(): void
     {
-        $req = $this->makeRequest('GET', '/user', ['user_id' => 'nonexistent']);
+        $req = $this->makeRequest('GET', '/user', [], 'nonexistent');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to fetch user: No data or changes found.');
@@ -431,22 +435,7 @@ class UserControllerIntegrationTest extends TestCase
         $this->controller->getUser($req, true);
     }
 
-    /**
-     * Test getUser with missing user_id.
-     *
-     * Expects InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testGetUserMissingUserIdThrows(): void
-    {
-        $req = $this->makeRequest('GET', '/user');
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required.');
-
-        $this->controller->getUser($req, true);
-    }
 
     /**
      * Test successful user update.
@@ -460,10 +449,9 @@ class UserControllerIntegrationTest extends TestCase
             ->execute([$id, 'john', 'john@example.com', password_hash('pass', PASSWORD_DEFAULT)]);
 
         $req = $this->makeRequest('PUT', '/user', [
-            'user_id' => $id,
             'username' => 'john_new',
             'email' => 'john_new@example.com',
-        ]);
+        ], $id);
 
         $res = $this->controller->updateUser($req, true);
 
@@ -496,10 +484,9 @@ class UserControllerIntegrationTest extends TestCase
     public function testUpdateUserNotFoundThrows(): void
     {
         $req = $this->makeRequest('PUT', '/user', [
-            'user_id' => 'nonexistent',
             'username' => 'newname',
             'email' => 'new@example.com',
-        ]);
+        ], 'nonexistent');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/update user/i');
@@ -521,10 +508,9 @@ class UserControllerIntegrationTest extends TestCase
             ->execute([$id, 'john', 'john@example.com', password_hash('pass', PASSWORD_DEFAULT)]);
 
         $req = $this->makeRequest('PUT', '/user', [
-            'user_id' => $id,
             'username' => 'john_new',
             'email' => 'invalid-email',
-        ]);
+        ], $id);
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -547,15 +533,13 @@ class UserControllerIntegrationTest extends TestCase
         // Simulate cookie set
         $this->cookieManager->setAccessToken('dummy_token', time() + 3600);
 
-        $req = $this->makeRequest('DELETE', '/user', [
-            'user_id' => $id,
-        ]);
+        $req = $this->makeRequest('DELETE', '/user', [], $id);
 
         $this->controller->deleteUser($req, true);
 
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$id]);
-        $this->assertFalse((bool)$stmt->fetch(\PDO::FETCH_ASSOC));
+        $this->assertFalse((bool) $stmt->fetch(\PDO::FETCH_ASSOC));
 
         $this->assertNull($this->cookieManager->getAccessToken());
         $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
@@ -570,9 +554,7 @@ class UserControllerIntegrationTest extends TestCase
      */
     public function testDeleteUserNotFoundThrows(): void
     {
-        $req = $this->makeRequest('DELETE', '/user', [
-            'user_id' => 'nonexistent',
-        ]);
+        $req = $this->makeRequest('DELETE', '/user', [], 'nonexistent');
 
         $res = $this->controller->deleteUser($req, true);
 
@@ -634,7 +616,7 @@ class UserControllerIntegrationTest extends TestCase
         $assertToken($userId);
 
         // Get user
-        $getReq = $this->makeRequest('GET', '/user', ['user_id' => $userId]);
+        $getReq = $this->makeRequest('GET', '/user', [], $userId);
         $getRes = $this->controller->getUser($getReq, true);
 
         $this->assertIsArray($getRes);
@@ -649,10 +631,9 @@ class UserControllerIntegrationTest extends TestCase
 
         // Update user
         $updateReq = $this->makeRequest('PUT', '/user', [
-            'user_id' => $userId,
             'username' => 'lifecycle_user_updated',
             'email' => 'updated@example.com',
-        ]);
+        ], $userId);
 
         $updateRes = $this->controller->updateUser($updateReq, true);
 
@@ -667,7 +648,7 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertSame('updated@example.com', $updateRes['data']['email']);
 
         // Delete user
-        $deleteReq = $this->makeRequest('DELETE', '/user', ['user_id' => $userId]);
+        $deleteReq = $this->makeRequest('DELETE', '/user', [], $userId);
         $deleteRes = $this->controller->deleteUser($deleteReq, true);
 
         $this->assertIsArray($deleteRes);
@@ -680,7 +661,7 @@ class UserControllerIntegrationTest extends TestCase
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$userId]);
         $user = $stmt->fetch(\PDO::FETCH_ASSOC);
-        $this->assertFalse((bool)$user);
+        $this->assertFalse((bool) $user);
 
         $this->assertNull($this->cookieManager->getAccessToken());
 

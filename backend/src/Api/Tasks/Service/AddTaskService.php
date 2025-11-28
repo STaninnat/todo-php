@@ -65,7 +65,8 @@ class AddTaskService
             $description = trim(strip_tags($req->body['description']));
         }
 
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
 
         // Add task to database
         $result = $this->taskQueries->addTask($title, $description, $userId);

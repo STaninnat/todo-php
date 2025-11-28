@@ -62,7 +62,8 @@ class MarkDoneTaskService
     public function execute(Request $req): array
     {
         $id = RequestValidator::getInt($req, 'id', 'Task ID must be a numeric string.');
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
         $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.');
 
         // Verify that the task exists

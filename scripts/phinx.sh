@@ -3,7 +3,11 @@ set -e
 
 COMMAND=$1
 PROFILE=$2
-shift 2 || true
+if [ -n "$PROFILE" ]; then
+  shift 2
+else
+  shift 1
+fi
 
 if [ -z "$COMMAND" ]; then
   echo "Usage: ./scripts/phinx.sh [migrate|rollback|create|seed:create|seed:run] [test] [extra phinx args]"

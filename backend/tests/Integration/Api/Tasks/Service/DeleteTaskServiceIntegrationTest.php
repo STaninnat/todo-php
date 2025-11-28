@@ -101,7 +101,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
      *
      * @return Request
      */
-    private function makeRequest(array $body): Request
+    private function makeRequest(array $body, ?string $userId = null): Request
     {
         $json = json_encode($body);
         if ($json === false) {
@@ -109,7 +109,11 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         }
 
         // Simulated DELETE API request
-        return new Request('DELETE', '/tasks', [], $json);
+        $req = new Request('DELETE', '/tasks', [], $json);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -134,8 +138,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         $service = new DeleteTaskService($this->queries);
         $req = $this->makeRequest([
             'id' => $taskId,
-            'user_id' => 'user_123',
-        ]);
+        ], 'user_123');
 
         // Execute deletion service
         $result = $service->execute($req);
@@ -164,7 +167,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
     public function testDeleteTaskWithoutIdThrowsException(): void
     {
         $service = new DeleteTaskService($this->queries);
-        $req = $this->makeRequest(['user_id' => 'user_123']);
+        $req = $this->makeRequest([], 'user_123');
 
         // Missing ID -> validation error expected
         $this->expectException(InvalidArgumentException::class);
@@ -180,16 +183,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
      *
      * @return void
      */
-    public function testDeleteTaskWithoutUserIdThrowsException(): void
-    {
-        $service = new DeleteTaskService($this->queries);
-        $req = $this->makeRequest(['id' => 1]);
 
-        // Missing user_id -> validation error expected
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required.');
-        $service->execute($req);
-    }
 
     /**
      * Test deletion of non-existent task.
@@ -203,8 +197,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         $service = new DeleteTaskService($this->queries);
         $req = $this->makeRequest([
             'id' => 999,
-            'user_id' => 'ghost_user',
-        ]);
+        ], 'ghost_user');
 
         // Deleting non-existent task should trigger runtime error
         $this->expectException(RuntimeException::class);
@@ -238,7 +231,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         $taskId = (int) $stmt->fetchColumn();
 
         $service = new DeleteTaskService($this->queries);
-        $req = $this->makeRequest(['id' => $taskId, 'user_id' => 'user_abc']);
+        $req = $this->makeRequest(['id' => $taskId], 'user_abc');
 
         // Execute deletion
         $result = $service->execute($req);

@@ -1,6 +1,7 @@
 services:
   php-fpm:
     build: .
+    image: myapp-php:latest
     container_name: php_fpm
     volumes:
       - ./backend/src:/app/src

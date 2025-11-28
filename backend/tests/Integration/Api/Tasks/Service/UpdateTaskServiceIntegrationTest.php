@@ -99,7 +99,7 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
     /**
      * Create a sample task record for update testing.
      *
-     * @return array<string, int|string> Inserted task data
+     * @return array{id: int, title: string, description: string, user_id: string} Inserted task data
      */
     private function createSampleTask(): array
     {

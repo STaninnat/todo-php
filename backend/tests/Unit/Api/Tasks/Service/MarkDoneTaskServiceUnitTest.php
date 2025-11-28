@@ -186,7 +186,7 @@ class MarkDoneTaskServiceUnitTest extends TestCase
      */
     public function testMarkDoneSuccessReturnsExpectedArray(): void
     {
-        $task = ['id' => 1, 'title' => 'Task', 'is_done' => 1];
+        $task = ['id' => 1, 'title' => 'Task', 'is_done' => 1, 'user_id' => 123, 'created_at' => '2023-01-01'];
 
         $this->taskQueries->method('getTaskByID')
             ->willReturn(QueryResult::ok($task, 1));
@@ -219,7 +219,7 @@ class MarkDoneTaskServiceUnitTest extends TestCase
      */
     public function testIsDoneAcceptsStringZeroOrOne(): void
     {
-        $task = ['id' => 1, 'title' => 'Task', 'is_done' => 1];
+        $task = ['id' => 1, 'title' => 'Task', 'is_done' => 1, 'user_id' => 123, 'created_at' => '2023-01-01'];
 
         $this->taskQueries->method('getTaskByID')
             ->willReturn(QueryResult::ok($task, 1));

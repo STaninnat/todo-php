@@ -50,9 +50,8 @@ class UpdateTaskService
      * @param Request $req Request object containing task update data
      *
      * @return array{
-     *     task: array<int|string, mixed>,
-     *     totalPages: int
-     * } Returns updated task data and pagination info
+     *     task: array<int|string, mixed>
+     * } Returns updated task data
      *
      * @throws InvalidArgumentException If required fields are missing or invalid
      * @throws RuntimeException If the task could not be found or updated

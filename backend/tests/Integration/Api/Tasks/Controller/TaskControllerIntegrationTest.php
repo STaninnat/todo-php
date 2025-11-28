@@ -273,7 +273,7 @@ final class TaskControllerIntegrationTest extends TestCase
 
         /** @var array{
          *   success: bool,
-         *   data: array{task: list<array{user_id: string}>}
+         *   data: array{task: list<array{title: string}>}
          * } $res
          */
         $res = $this->controller->getTasks($req, true);

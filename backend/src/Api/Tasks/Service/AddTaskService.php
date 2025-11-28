@@ -49,9 +49,8 @@ class AddTaskService
      * @param Request $req Incoming request containing task data
      *
      * @return array{
-     *     task: array<int|string, mixed>,
-     *     totalPages: int
-     * } Returns the added task data and total page count
+     *     task: array<int|string, mixed>
+     * } Returns the added task data
      *
      * @throws InvalidArgumentException If required fields are missing or invalid
      * @throws RuntimeException If the task insertion fails in the database

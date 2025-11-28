@@ -49,9 +49,8 @@ class DeleteTaskService
      * @param Request $req Request object containing task identifiers
      *
      * @return array{
-     *     id: int,
-     *     totalPages: int
-     * } Returns deleted task ID and updated total page count
+     *     id: int
+     * } Returns deleted task ID
      *
      * @throws InvalidArgumentException If required fields are missing or invalid
      * @throws RuntimeException If the task deletion operation fails

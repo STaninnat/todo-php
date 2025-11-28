@@ -52,7 +52,7 @@ class MarkDoneTaskService
      *
      * @return array{
      *     task: array<int|string, mixed>
-     * } Returns updated task data and total page count
+     * } Returns updated task data
      *
      * @throws InvalidArgumentException If parameters are missing or invalid
      * @throws RuntimeException If the task does not exist or update fails

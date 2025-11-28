@@ -196,7 +196,7 @@ class UpdateTaskServiceUnitTest extends TestCase
      */
     public function testUpdateTaskSuccessReturnsExpectedArray(): void
     {
-        $task = ['id' => 1, 'title' => 'Updated Task', 'description' => 'Desc', 'is_done' => 1];
+        $task = ['id' => 1, 'title' => 'Updated Task', 'description' => 'Desc', 'is_done' => 1, 'user_id' => 123, 'created_at' => '2023-01-01'];
 
         $this->taskQueries->method('getTaskByID')
             ->willReturn(QueryResult::ok($task, 1));

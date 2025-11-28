@@ -84,8 +84,8 @@ class GetTasksServiceUnitTest extends TestCase
     {
         // Sample mock task data
         $tasks = [
-            ['id' => 1, 'title' => 'Test Task', 'user_id' => 1],
-            ['id' => 2, 'title' => 'Another Task', 'user_id' => 1],
+            ['id' => 1, 'title' => 'Test Task', 'user_id' => 1, 'created_at' => '2023-01-01'],
+            ['id' => 2, 'title' => 'Another Task', 'user_id' => 1, 'created_at' => '2023-01-01'],
         ];
 
         // Simulate successful queries

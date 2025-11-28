@@ -48,9 +48,8 @@ class GetTasksService
      * @param Request $req Request object containing query parameters.
      *
      * @return array{
-     *     task: array<int|string, mixed>,
-     *     totalPages: int
-     * } Array containing task data and total pages.
+     *     task: array<int, array<string, mixed>>
+     * } Array containing task data.
      *
      * @throws InvalidArgumentException If 'user_id' is missing or invalid.
      * @throws RuntimeException If tasks cannot be retrieved from the database.
@@ -64,12 +63,11 @@ class GetTasksService
         $result = $this->taskQueries->getTasksByUserID($userId);
         RequestValidator::ensureSuccess($result, 'retrieve tasks', false, true);
 
+        /** @var array<int, array<string, mixed>> $tasks */
         $tasks = (array) $result->data;
         foreach ($tasks as &$task) {
-            if (is_array($task)) {
-                unset($task['user_id']);
-                unset($task['created_at']);
-            }
+            unset($task['user_id']);
+            unset($task['created_at']);
         }
         unset($task);
 

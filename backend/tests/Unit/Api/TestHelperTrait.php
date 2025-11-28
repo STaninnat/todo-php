@@ -32,6 +32,7 @@ trait TestHelperTrait
      * @param array<string, mixed>  $params  Optional route parameters.
      * @param string                $method  HTTP method (default: 'POST').
      * @param string                $path    Request path (default: '/').
+     * @param array<string, mixed>|null $auth    Optional authentication payload.
      *
      * @return Request A fully initialized Request instance.
      */

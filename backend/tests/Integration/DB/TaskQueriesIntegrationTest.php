@@ -299,22 +299,7 @@ final class TaskQueriesIntegrationTest extends TestCase
         $this->assertNull($fetch->data);
     }
 
-    /**
-     * Test total task count.
-     *
-     * @return void
-     */
-    public function testGetTotalTasks(): void
-    {
-        $this->queries->addTask('T1', 'D1', $this->userId);
-        $this->queries->addTask('T2', 'D2', $this->userId);
 
-        $count = $this->queries->getTotalTasks();
-
-        $this->assertTrue($count->success);
-        $this->assertIsInt($count->data);
-        $this->assertGreaterThanOrEqual(2, $count->data);   // Ensure at least 2 tasks exist
-    }
 
     /**
      * Test updating a task with an invalid ID should return null data.

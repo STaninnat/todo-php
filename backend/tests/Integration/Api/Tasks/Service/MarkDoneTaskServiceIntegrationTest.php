@@ -147,6 +147,7 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('task', $result);
         $this->assertSame(1, $result['task']['id']);
         $this->assertSame(1, (int) $result['task']['is_done']);
+        $this->assertArrayNotHasKey('user_id', $result['task']);
     }
 
     /**

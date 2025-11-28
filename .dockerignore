@@ -10,10 +10,11 @@ README.md
 note*
 *.txt
 .env*
+*.puml
 .vscode/
 docs/
 Logs/
-*.puml
+.phpunit.cache/
 
 backend/vendor/
 backend/phpunit.xml

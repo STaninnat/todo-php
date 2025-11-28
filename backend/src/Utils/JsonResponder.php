@@ -29,7 +29,6 @@ class JsonResponder
     /** @var array<string, mixed>|null */
     private ?array $data = null;
 
-    private ?int $totalPages = null;
     private int $httpStatus;
 
     /**
@@ -181,18 +180,7 @@ class JsonResponder
         return $this->withData($data);
     }
 
-    /**
-     * Set total pages for paginated responses.
-     *
-     * @param int $totalPages The total number of pages.
-     *
-     * @return self
-     */
-    public function withTotalPages(int $totalPages): self
-    {
-        $this->totalPages = $totalPages;
-        return $this;
-    }
+
 
     /**
      * Set response type (success, error, info).
@@ -245,9 +233,7 @@ class JsonResponder
             $response['data'] = $this->data;
         }
 
-        if ($this->totalPages !== null) {
-            $response['totalPages'] = $this->totalPages;
-        }
+
 
         return $response;
     }

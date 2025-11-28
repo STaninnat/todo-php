@@ -144,7 +144,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         $result = $service->execute($req);
 
         $this->assertArrayHasKey('id', $result);
-        $this->assertArrayHasKey('totalPages', $result);
+        $this->assertArrayNotHasKey('totalPages', $result);
         $this->assertSame($taskId, $result['id']);
 
         // Verify task removed from database
@@ -205,46 +205,5 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         $service->execute($req);
     }
 
-    /**
-     * Test pagination adjustment after task deletion.
-     *
-     * Ensures totalPages decreases correctly after removing one task
-     * from a dataset exceeding the pagination threshold (perPage=10).
-     *
-     * @return void
-     */
-    public function testPaginationDecreasesAfterDeletion(): void
-    {
-        // insert 11 tasks → expect totalPages = 2 (perPage=10)
-        for ($i = 1; $i <= 11; $i++) {
-            $this->pdo->exec("
-                INSERT INTO tasks (title, description, user_id)
-                VALUES ('Task {$i}', 'desc', 'user_abc')
-            ");
-        }
 
-        // Fetch the ID of one task to delete
-        $stmt = $this->pdo->query('SELECT id FROM tasks LIMIT 1');
-        if ($stmt === false) {
-            throw new RuntimeException('Failed to fetch task id.');
-        }
-        $taskId = (int) $stmt->fetchColumn();
-
-        $service = new DeleteTaskService($this->queries);
-        $req = $this->makeRequest(['id' => $taskId], 'user_abc');
-
-        // Execute deletion
-        $result = $service->execute($req);
-
-        $this->assertSame(1, $result['totalPages']);
-
-        // Confirm total remaining rows = 10
-        $stmt = $this->pdo->query('SELECT COUNT(*) FROM tasks');
-        if ($stmt === false) {
-            throw new RuntimeException('Failed to count tasks.');
-        }
-
-        $count = (int) $stmt->fetchColumn();
-        $this->assertSame(10, $count);
-    }
 }

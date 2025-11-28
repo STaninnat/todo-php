@@ -246,8 +246,13 @@ final class TaskControllerIntegrationTest extends TestCase
 
         // Ensure all tasks belong to current user
         foreach ($res['data']['task'] as $t) {
-            $this->assertSame($this->userId, $t['user_id']);
+            $this->assertArrayNotHasKey('user_id', $t);
         }
+
+        $titles = array_column($res['data']['task'], 'title');
+        $this->assertContains('T1', $titles);
+        $this->assertContains('T2', $titles);
+        $this->assertNotContains('Other', $titles);
     }
 
     /**
@@ -275,22 +280,20 @@ final class TaskControllerIntegrationTest extends TestCase
 
         // Expect only tasks belonging to current user
         $this->assertCount(1, $res['data']['task']);
-        $this->assertSame($this->userId, $res['data']['task'][0]['user_id']);
+        $this->assertArrayNotHasKey('user_id', $res['data']['task'][0]);
+        $this->assertSame('T1', $res['data']['task'][0]['title']);
     }
 
     /**
-     * Test that retrieved tasks are ordered chronologically by creation date.
+     * Test that retrieved tasks are ordered by updated_at (descending) and is_done (ascending).
      *
      * @return void
      */
-    public function testTasksReturnedInChronologicalOrder(): void
+    public function testTasksReturnedInCorrectOrder(): void
     {
-        $this->pdo->exec("
-            INSERT INTO tasks (title, description, user_id, created_at)
-            VALUES
-            ('First', 'D1', '{$this->userId}', '2024-01-01 00:00:00'),
-            ('Second', 'D2', '{$this->userId}', '2024-01-02 00:00:00');
-        ");
+        $this->queries->addTask('First', 'D1', $this->userId);
+        sleep(1);
+        $this->queries->addTask('Second', 'D2', $this->userId);
 
         $req = $this->makeRequestFromBody([], 'GET', $this->userId);
 
@@ -301,11 +304,11 @@ final class TaskControllerIntegrationTest extends TestCase
          */
         $res = $this->controller->getTasks($req, true);
 
-        // Ensure chronological order (ascending)
+        // Ensure order (Second inserted last, so updated_at is later -> appears first)
         $this->assertTrue($res['success']);
         $this->assertCount(2, $res['data']['task']);
-        $this->assertSame('First', $res['data']['task'][0]['title']);
-        $this->assertSame('Second', $res['data']['task'][1]['title']);
+        $this->assertSame('Second', $res['data']['task'][0]['title']);
+        $this->assertSame('First', $res['data']['task'][1]['title']);
     }
 
     /**

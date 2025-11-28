@@ -94,11 +94,11 @@ class UpdateTaskServiceTypeErrTest extends TestCase
             ],
             'is_done string not numeric' => [
                 ['id' => '1', 'title' => 'ok', 'is_done' => 'maybe'],
-                Error::class,
+                InvalidArgumentException::class,
             ],
             'is_done as object' => [
                 ['id' => '1', 'title' => 'ok', 'is_done' => new \stdClass()],
-                Error::class,
+                InvalidArgumentException::class,
             ],
         ];
     }
@@ -121,8 +121,12 @@ class UpdateTaskServiceTypeErrTest extends TestCase
         $req->auth = ['id' => '1'];
 
         // Assert that executing service triggers expected exception
-        $this->expectException($expectedException);
-
-        $service->execute($req);
+        // Assert that executing service triggers expected exception
+        try {
+            $service->execute($req);
+            $this->fail("Expected exception $expectedException was not thrown.");
+        } catch (\Throwable $e) {
+            $this->assertInstanceOf($expectedException, $e, "Expected $expectedException, got " . get_class($e) . ": " . $e->getMessage());
+        }
     }
 }

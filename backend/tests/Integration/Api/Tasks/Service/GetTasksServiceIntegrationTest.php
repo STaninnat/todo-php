@@ -136,27 +136,20 @@ final class GetTasksServiceIntegrationTest extends TestCase
         // Execute service
         $result = $service->execute($req);
 
-        // Verify result structure
+        // Verify output structure
         $this->assertArrayHasKey('task', $result);
-        $this->assertArrayHasKey('totalPages', $result);
-
-        $this->assertSame(1, $result['totalPages']);
+        $this->assertArrayNotHasKey('totalPages', $result);
         $this->assertCount(2, $result['task']); // only 2 tasks for user_123
 
         $titles = array_column($result['task'], 'title');
         $this->assertContains('Task A', $titles);
         $this->assertContains('Task B', $titles);
         $this->assertNotContains('Task C', $titles);
+
+        foreach ($result['task'] as $task) {
+            $this->assertArrayNotHasKey('user_id', $task);
+        }
     }
-
-    /**
-     * Test missing user_id validation.
-     *
-     * Expects InvalidArgumentException with message "User ID is required."
-     *
-     * @return void
-     */
-
 
     /**
      * Test retrieval when user has no tasks.
@@ -175,7 +168,7 @@ final class GetTasksServiceIntegrationTest extends TestCase
 
         $this->assertArrayHasKey('task', $result);
         $this->assertSame([], $result['task']);
-        $this->assertSame(1, $result['totalPages']); // at least one empty page
+        $this->assertArrayNotHasKey('totalPages', $result);
     }
 
     /**
@@ -199,29 +192,4 @@ final class GetTasksServiceIntegrationTest extends TestCase
         $service->execute($req);
     }
 
-    /**
-     * Test pagination logic for large task sets.
-     *
-     * Ensures:
-     * - totalPages is computed correctly (25 / 10 → 3)
-     * - Returned data count matches inserted tasks
-     *
-     * @return void
-     */
-    public function testPaginationIncreasesWithManyTasks(): void
-    {
-        // 25 tasks for one user
-        $stmt = $this->pdo->prepare("INSERT INTO tasks (title, description, user_id) VALUES (:t, '', :u)");
-        for ($i = 1; $i <= 25; $i++) {
-            $stmt->execute([':t' => "Task {$i}", ':u' => 'user_abc']);
-        }
-
-        $service = new GetTasksService($this->queries);
-        $req = $this->makeRequest([], 'user_abc');
-        $result = $service->execute($req);
-
-        // Service returns all tasks for simplicity
-        $this->assertSame(3, $result['totalPages']); // 10 per page
-        $this->assertCount(25, $result['task']); // returns all for simplicity
-    }
 }

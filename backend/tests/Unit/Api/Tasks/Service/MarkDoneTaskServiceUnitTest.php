@@ -194,8 +194,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
         $this->taskQueries->method('markDone')
             ->willReturn(QueryResult::ok($task, 1));
 
-        $this->taskQueries->method('getTotalTasks')
-            ->willReturn(QueryResult::ok(15)); // For pagination calculation
+        $this->taskQueries->method('markDone')
+            ->willReturn(QueryResult::ok($task, 1));
 
         $req = $this->makeRequest([
             'id' => '1',
@@ -204,8 +204,12 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $result = $this->service->execute($req);
 
-        $this->assertSame($task, $result['task']);
-        $this->assertSame(2, $result['totalPages']); // ceil(15 / 10)
+        $expectedTask = $task;
+        unset($expectedTask['user_id']);
+
+        $this->assertEquals($expectedTask, $result['task']);
+        $this->assertArrayNotHasKey('created_at', $result['task']);
+        $this->assertArrayNotHasKey('totalPages', $result);
     }
 
     /**
@@ -223,8 +227,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
         $this->taskQueries->method('markDone')
             ->willReturn(QueryResult::ok($task, 1));
 
-        $this->taskQueries->method('getTotalTasks')
-            ->willReturn(QueryResult::ok(5));
+        $this->taskQueries->method('markDone')
+            ->willReturn(QueryResult::ok($task, 1));
 
         // --- case "0"
         $req = $this->makeRequest([

@@ -7,7 +7,6 @@ namespace App\Api\Tasks\Service;
 use App\Api\Request;
 use App\DB\TaskQueries;
 use App\Utils\RequestValidator;
-use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -69,7 +68,7 @@ class UpdateTaskService
         $id = RequestValidator::getInt($req, 'id', 'Task ID must be a numeric string.');
         // Retrieve user ID from authenticated session
         $userId = RequestValidator::getAuthUserId($req);
-        $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.', true);
+        $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.', false);
 
         // Verify that the task exists
         $taskResult = $this->taskQueries->getTaskByID($id, $userId);
@@ -81,13 +80,12 @@ class UpdateTaskService
         $result = $this->taskQueries->updateTask($id, $title, $description, (bool) $isDone, $userId);
         RequestValidator::ensureSuccess($result, 'update task');
 
-        // Calculate total pages for pagination
-        $paginator = new TaskPaginator($this->taskQueries);
-        $totalPages = $paginator->calculateTotalPages(10);
+        $taskData = (array) $result->data;
+        unset($taskData['user_id']);
+        unset($taskData['created_at']);
 
         return [
-            'task' => (array) $result->data,
-            'totalPages' => $totalPages,
+            'task' => $taskData,
         ];
     }
 }

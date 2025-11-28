@@ -1,8 +1,11 @@
 note*
 *.txt
 .env*
+*.cache
+*.log
 .vscode/
 Logs/
+.phpunit.cache/
 
 backend/vendor/
 backend/phpunit.xml

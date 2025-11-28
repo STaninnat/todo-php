@@ -145,11 +145,7 @@ class DeleteTaskServiceUnitTest extends TestCase
             ->method('deleteTask')
             ->willReturn(QueryResult::ok(null, 1));
 
-        // Simulate recalculation of total tasks after deletion
-        $this->taskQueries
-            ->expects($this->once())
-            ->method('getTotalTasks')
-            ->willReturn(QueryResult::ok(25));
+
 
         // Valid request body
         $req = $this->makeRequest(['id' => '1'], [], [], 'POST', '/', ['id' => '123']);
@@ -157,6 +153,6 @@ class DeleteTaskServiceUnitTest extends TestCase
 
         // Verify structure and values of the returned array
         $this->assertSame(1, $result['id']);
-        $this->assertSame(3, $result['totalPages']); // 25 tasks -> 3 pages expected
+        $this->assertArrayNotHasKey('totalPages', $result);
     }
 }

@@ -101,17 +101,7 @@ class JsonResponderTypeErrTest extends TestCase
      *
      * @return void
      */
-    public function testWithTotalPagesThrowsTypeErrorOnNonInt(): void
-    {
-        $this->expectException(\TypeError::class);
 
-        $responder = JsonResponder::success('msg');
-
-        // Sending the total as a string instead of an int will cause a TypeError.
-        $invalidTotal = '10';
-
-        $responder->withTotalPages($invalidTotal);
-    }
 
     /**
      * Test that withType() throws TypeError when argument is not a string.

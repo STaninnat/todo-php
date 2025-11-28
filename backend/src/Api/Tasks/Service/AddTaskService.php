@@ -7,7 +7,6 @@ namespace App\Api\Tasks\Service;
 use App\Api\Request;
 use App\DB\TaskQueries;
 use App\Utils\RequestValidator;
-use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -72,14 +71,13 @@ class AddTaskService
         $result = $this->taskQueries->addTask($title, $description, $userId);
         RequestValidator::ensureSuccess($result, 'add task');
 
-        // Calculate total pages
-        $paginator = new TaskPaginator($this->taskQueries);
-        $totalPages = $paginator->calculateTotalPages(10);
+        // Return created task data
+        $taskData = (array) $result->data;
+        unset($taskData['user_id']);
+        unset($taskData['created_at']);
 
-        // Return created task data and pagination info
         return [
-            'task' => (array) $result->data,
-            'totalPages' => $totalPages,
+            'task' => $taskData,
         ];
     }
 }

@@ -85,7 +85,6 @@ class TaskController
         // Build JSON response
         $response = JsonResponder::success('Task added successfully')
             ->withPayload(['task' => $data['task']])
-            ->withTotalPages($data['totalPages'])
             ->send(!$forTest, $forTest);
 
         return $forTest ? $response : null;
@@ -105,7 +104,6 @@ class TaskController
 
         $response = JsonResponder::success('Task deleted successfully')
             ->withPayload(['id' => $data['id']])
-            ->withTotalPages($data['totalPages'])
             ->send(!$forTest, $forTest);
 
         return $forTest ? $response : null;
@@ -125,7 +123,6 @@ class TaskController
 
         $response = JsonResponder::success('Task updated successfully')
             ->withPayload(['task' => $data['task']])
-            ->withTotalPages($data['totalPages'])
             ->send(!$forTest, $forTest);
 
         return $forTest ? $response : null;
@@ -145,7 +142,6 @@ class TaskController
 
         $response = JsonResponder::success('Task status updated successfully')
             ->withPayload(['task' => $data['task']])
-            ->withTotalPages($data['totalPages'])
             ->send(!$forTest, $forTest);
 
         return $forTest ? $response : null;
@@ -165,7 +161,6 @@ class TaskController
 
         $response = JsonResponder::success('Task retrieved successfully')
             ->withPayload(['task' => $data['task']])
-            ->withTotalPages($data['totalPages'])
             ->send(!$forTest, $forTest);
 
         return $forTest ? $response : null;

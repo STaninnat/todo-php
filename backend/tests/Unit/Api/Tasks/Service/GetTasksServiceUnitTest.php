@@ -74,24 +74,6 @@ class GetTasksServiceUnitTest extends TestCase
     }
 
     /**
-     * Test that an empty successful query still triggers RuntimeException.
-     *
-     * Simulates QueryResult::ok([]) — no tasks found.
-     *
-     * @return void
-     */
-    public function testGetTasksReturnsNoDataThrowsRuntimeException(): void
-    {
-        $this->taskQueries->method('getTasksByUserID')
-            ->willReturn(QueryResult::ok([]));
-
-        $this->expectException(Error::class);
-
-        $req = $this->makeRequest([], [], [], 'GET', '/', ['id' => '123']);
-        $this->service->execute($req);
-    }
-
-    /**
      * Test that successful query returns expected array structure.
      *
      * Verifies both task data and calculated pagination (totalPages).
@@ -102,16 +84,17 @@ class GetTasksServiceUnitTest extends TestCase
     {
         // Sample mock task data
         $tasks = [
-            ['id' => 1, 'title' => 'Test Task'],
-            ['id' => 2, 'title' => 'Another Task'],
+            ['id' => 1, 'title' => 'Test Task', 'user_id' => 1],
+            ['id' => 2, 'title' => 'Another Task', 'user_id' => 1],
         ];
 
         // Simulate successful queries
         $this->taskQueries->method('getTasksByUserID')
             ->willReturn(QueryResult::ok($tasks, count($tasks)));
 
-        $this->taskQueries->method('getTotalTasks')
-            ->willReturn(QueryResult::ok(20));
+        // Simulate successful queries
+        $this->taskQueries->method('getTasksByUserID')
+            ->willReturn(QueryResult::ok($tasks, count($tasks)));
 
         // Build request with auth
         $req = $this->makeRequest([], [], [], 'GET', '/', ['id' => '123']);
@@ -120,8 +103,18 @@ class GetTasksServiceUnitTest extends TestCase
         $result = $this->service->execute($req);
 
         // Assertions for structure and values
-        $this->assertSame($tasks, $result['task']);
+        $expectedTasks = array_map(function ($t) {
+            unset($t['user_id']);
+            unset($t['created_at']);
+            return $t;
+        }, $tasks);
+
+        $this->assertEquals($expectedTasks, $result['task']);
         $this->assertCount(2, $result['task']);
-        $this->assertSame(2, $result['totalPages']); // ceil(20 / 10)
+        $this->assertArrayNotHasKey('totalPages', $result);
+
+        foreach ($result['task'] as $t) {
+            $this->assertArrayNotHasKey('created_at', $t);
+        }
     }
 }

@@ -168,7 +168,8 @@ final class UpdateTaskServiceIntegrationTest extends TestCase
         $this->assertSame('Updated Title', $result['task']['title']);
         $this->assertSame('Updated description', $result['task']['description']);
         $this->assertSame(1, (int) $result['task']['is_done']);
-        $this->assertSame(1, $result['totalPages']);
+        $this->assertArrayNotHasKey('user_id', $result['task']);
+        $this->assertArrayNotHasKey('totalPages', $result);
     }
 
     /**

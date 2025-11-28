@@ -7,7 +7,6 @@ namespace App\Api\Tasks\Service;
 use App\Api\Request;
 use App\DB\TaskQueries;
 use App\Utils\RequestValidator;
-use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -52,8 +51,7 @@ class MarkDoneTaskService
      * @param Request $req Incoming request containing task ID and status
      *
      * @return array{
-     *     task: array<int|string, mixed>,
-     *     totalPages: int
+     *     task: array<int|string, mixed>
      * } Returns updated task data and total page count
      *
      * @throws InvalidArgumentException If parameters are missing or invalid
@@ -76,13 +74,12 @@ class MarkDoneTaskService
         $result = $this->taskQueries->markDone($id, (bool) $isDone, $userId);
         RequestValidator::ensureSuccess($result, 'mark task as done');
 
-        // Calculate total pages
-        $paginator = new TaskPaginator($this->taskQueries);
-        $totalPages = $paginator->calculateTotalPages(10);
+        $taskData = (array) $result->data;
+        unset($taskData['user_id']);
+        unset($taskData['created_at']);
 
         return [
-            'task' => (array) $result->data,
-            'totalPages' => $totalPages,
+            'task' => $taskData,
         ];
     }
 }

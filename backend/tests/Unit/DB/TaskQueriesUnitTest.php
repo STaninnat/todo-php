@@ -344,62 +344,7 @@ class TaskQueriesUnitTest extends TestCase
         $this->assertEquals($tasks, $result->data);
     }
 
-    /** ----------------- getTotalTasks ----------------- */
-    /**
-     * Test: getTotalTasks should return total number of tasks successfully.
-     * 
-     * @return void
-     */
-    public function testGetTotalTasksSuccess(): void
-    {
-        // Mock execute success and total count
-        $this->stmt->method('execute')->willReturn(true);
-        $this->stmt->method('fetchColumn')->willReturn(5);
 
-        // Call getTotalTasks
-        $result = $this->taskQueries->getTotalTasks();
-
-        // Assert success and correct total
-        $this->assertTrue($result->success);
-        $this->assertEquals(5, $result->data);
-        $this->assertEquals(5, $result->affected);
-    }
-
-    /**
-     * Test: getTotalTasks should return failure if execute fails.
-     * 
-     * @return void
-     */
-    public function testGetTotalTasksFail(): void
-    {
-        // Mock execute failure
-        $this->stmt->method('execute')->willReturn(false);
-        $this->stmt->method('errorInfo')->willReturn(['code' => 'err']);
-
-        // Call getTotalTasks
-        $result = $this->taskQueries->getTotalTasks();
-
-        // Assert failure
-        $this->assertFalse($result->success);
-    }
-
-    /**
-     * Test: getTotalTasks returns 0 when table is empty.
-     * 
-     * @return void
-     */
-    public function testGetTotalTasksZero(): void
-    {
-        $this->stmt->method('execute')->willReturn(true);
-        $this->stmt->method('fetchColumn')->willReturn(0);
-
-        // Call getTotalTasks
-        $result = $this->taskQueries->getTotalTasks();
-
-        $this->assertTrue($result->success);
-        $this->assertEquals(0, $result->data);
-        $this->assertEquals(0, $result->affected);
-    }
 
     /** ----------------- markDone ----------------- */
     /**

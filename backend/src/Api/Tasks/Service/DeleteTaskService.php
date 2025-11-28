@@ -7,7 +7,6 @@ namespace App\Api\Tasks\Service;
 use App\Api\Request;
 use App\DB\TaskQueries;
 use App\Utils\RequestValidator;
-use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -67,14 +66,9 @@ class DeleteTaskService
         $result = $this->taskQueries->deleteTask($id, $userId);
         RequestValidator::ensureSuccess($result, 'delete task', false);
 
-        // Calculate total pages
-        $paginator = new TaskPaginator($this->taskQueries);
-        $totalPages = $paginator->calculateTotalPages(10);
-
-        // Return deleted task ID and updated pagination info
+        // Return deleted task ID
         return [
             'id' => $id,
-            'totalPages' => $totalPages,
         ];
     }
 }

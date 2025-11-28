@@ -86,7 +86,7 @@ class TaskControllerUnitTest extends TestCase
      */
     public function testAddTaskSuccess(): void
     {
-        $taskData = ['task' => ['id' => 1, 'title' => 'Task'], 'totalPages' => 2];
+        $taskData = ['task' => ['id' => 1, 'title' => 'Task']];
         $this->addService->method('execute')->willReturn($taskData);
 
         $req = $this->makeRequest(['title' => 'Task']);
@@ -97,8 +97,7 @@ class TaskControllerUnitTest extends TestCase
          *   data: array{
          *     task: array<string, mixed>,
          *     id?: int
-         *   },
-         *   totalPages: int
+         *   }
          * } $decoded
          */
         $decoded = $this->controller->addTask($req, true);
@@ -107,7 +106,7 @@ class TaskControllerUnitTest extends TestCase
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task added successfully', $decoded['message']);
         $this->assertSame($taskData['task'], $decoded['data']['task']);
-        $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
+        $this->assertArrayNotHasKey('totalPages', $decoded);
     }
 
     /**
@@ -119,7 +118,7 @@ class TaskControllerUnitTest extends TestCase
      */
     public function testDeleteTaskSuccess(): void
     {
-        $taskData = ['id' => 1, 'totalPages' => 3];
+        $taskData = ['id' => 1];
         $this->deleteService->method('execute')->willReturn($taskData);
 
         // Build DELETE request with task id in both body & params
@@ -133,8 +132,7 @@ class TaskControllerUnitTest extends TestCase
         /** @var array{
          *   success: bool,
          *   message: string,
-         *   data: array{id: int},
-         *   totalPages: int
+         *   data: array{id: int}
          * } $decoded
          */
         $decoded = $this->controller->deleteTask($req, true);
@@ -142,7 +140,7 @@ class TaskControllerUnitTest extends TestCase
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task deleted successfully', $decoded['message']);
         $this->assertSame($taskData['id'], $decoded['data']['id']);
-        $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
+        $this->assertArrayNotHasKey('totalPages', $decoded);
     }
 
     /**
@@ -155,7 +153,7 @@ class TaskControllerUnitTest extends TestCase
      */
     public function testUpdateTaskSuccess(): void
     {
-        $taskData = ['task' => ['id' => 1, 'title' => 'Updated'], 'totalPages' => 4];
+        $taskData = ['task' => ['id' => 1, 'title' => 'Updated']];
         $this->updateService->method('execute')->willReturn($taskData);
 
         // PUT request simulating update
@@ -169,8 +167,7 @@ class TaskControllerUnitTest extends TestCase
         /** @var array{
          *   success: bool,
          *   message: string,
-         *   data: array{task: array{id: int, title: string}},
-         *   totalPages: int
+         *   data: array{task: array{id: int, title: string}}
          * } $decoded
          */
         $decoded = $this->controller->updateTask($req, true);
@@ -178,7 +175,7 @@ class TaskControllerUnitTest extends TestCase
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task updated successfully', $decoded['message']);
         $this->assertSame($taskData['task'], $decoded['data']['task']);
-        $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
+        $this->assertArrayNotHasKey('totalPages', $decoded);
     }
 
     /**
@@ -190,7 +187,7 @@ class TaskControllerUnitTest extends TestCase
      */
     public function testMarkDoneTaskSuccess(): void
     {
-        $taskData = ['task' => ['id' => 1, 'is_done' => true], 'totalPages' => 5];
+        $taskData = ['task' => ['id' => 1, 'is_done' => true]];
         $this->markDoneService->method('execute')->willReturn($taskData);
 
         $req = $this->makeRequest(
@@ -203,8 +200,7 @@ class TaskControllerUnitTest extends TestCase
         /** @var array{
          *   success: bool,
          *   message: string,
-         *   data: array{task: array{id: int, is_done: bool}},
-         *   totalPages: int
+         *   data: array{task: array{id: int, is_done: bool}}
          * } $decoded
          */
         $decoded = $this->controller->markDoneTask($req, true);
@@ -212,7 +208,7 @@ class TaskControllerUnitTest extends TestCase
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task status updated successfully', $decoded['message']);
         $this->assertSame($taskData['task'], $decoded['data']['task']);
-        $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
+        $this->assertArrayNotHasKey('totalPages', $decoded);
     }
 
     /**
@@ -224,7 +220,7 @@ class TaskControllerUnitTest extends TestCase
      */
     public function testGetTasksSuccess(): void
     {
-        $taskData = ['task' => [['id' => 1, 'title' => 'Task']], 'totalPages' => 2];
+        $taskData = ['task' => [['id' => 1, 'title' => 'Task']]];
         $this->getTasksService->method('execute')->willReturn($taskData);
 
         $req = $this->makeRequest(
@@ -237,8 +233,7 @@ class TaskControllerUnitTest extends TestCase
         /** @var array{
          *   success: bool,
          *   message: string,
-         *   data: array{task: list<array{id: int, title: string}>},
-         *   totalPages: int
+         *   data: array{task: list<array{id: int, title: string}>}
          * } $decoded
          */
         $decoded = $this->controller->getTasks($req, true);
@@ -246,7 +241,7 @@ class TaskControllerUnitTest extends TestCase
         $this->assertTrue($decoded['success']);
         $this->assertSame('Task retrieved successfully', $decoded['message']);
         $this->assertSame($taskData['task'], $decoded['data']['task']);
-        $this->assertSame($taskData['totalPages'], $decoded['totalPages']);
+        $this->assertArrayNotHasKey('totalPages', $decoded);
     }
 
     /**

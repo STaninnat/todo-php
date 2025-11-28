@@ -143,14 +143,13 @@ final class AddTaskServiceIntegrationTest extends TestCase
 
         // Verify output structure
         $this->assertArrayHasKey('task', $result);
-        $this->assertArrayHasKey('totalPages', $result);
-        $this->assertSame(1, $result['totalPages']);
+        $this->assertArrayNotHasKey('totalPages', $result);
 
         // Validate inserted data consistency
         $task = $result['task'];
         $this->assertSame('Integration Task', $task['title']);
         $this->assertSame('This is a sample task for integration test.', $task['description']);
-        $this->assertSame('user_123', $task['user_id']);
+        $this->assertArrayNotHasKey('user_id', $task);
 
         // Check actual DB persistence
         $stmt = $this->pdo->query('SELECT COUNT(*) FROM tasks');
@@ -239,21 +238,5 @@ final class AddTaskServiceIntegrationTest extends TestCase
      *
      * @return void
      */
-    public function testPaginationIncreasesWithMultipleTasks(): void
-    {
-        $service = new AddTaskService($this->queries);
 
-        // Insert 25 tasks (perPage = 10 => expect totalPages = 3)
-        for ($i = 1; $i <= 25; $i++) {
-            $req = $this->makeRequest([
-                'title' => "Task {$i}",
-            ], 'user_abc');
-
-            // Inline note: the last iteration's result will reflect the final totalPages
-            $result = $service->execute($req);
-        }
-
-        // Verify computed pagination
-        $this->assertSame(3, $result['totalPages']);
-    }
 }

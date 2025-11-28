@@ -100,6 +100,7 @@ class AddTaskServiceTypeErrTest extends TestCase
 
         $raw = json_encode($body);
         $req = new Request('POST', '/tasks', [], $raw);
+        $req->auth = ['id' => '1'];
 
         if (isset($body['title'])) {
             if (!is_string($body['title'])) {
@@ -109,13 +110,7 @@ class AddTaskServiceTypeErrTest extends TestCase
             }
         }
 
-        if (isset($body['user_id'])) {
-            if (!is_string($body['user_id'])) {
-                // user_id int -> RuntimeException
-                // user_id object -> InvalidArgumentException
-                $this->expectException(is_object($body['user_id']) ? \InvalidArgumentException::class : \RuntimeException::class);
-            }
-        }
+
 
         if (isset($body['description'])) {
             if (!is_string($body['description'])) {
@@ -137,12 +132,10 @@ class AddTaskServiceTypeErrTest extends TestCase
     public static function provideInvalidRequestBodies(): array
     {
         return [
-            'title is int'       => [['title' => 123, 'user_id' => 'u1']],
-            'title is array'     => [['title' => ['bad'], 'user_id' => 'u1']],
-            'user_id is int'     => [['title' => 'ok', 'user_id' => 456]],
-            'user_id is object'  => [['title' => 'ok', 'user_id' => new \stdClass()]],
-            'description array'  => [['title' => 'ok', 'user_id' => 'u1', 'description' => []]],
-            'description object' => [['title' => 'ok', 'user_id' => 'u1', 'description' => new \stdClass()]],
+            'title is int' => [['title' => 123]],
+            'title is array' => [['title' => ['bad']]],
+            'description array' => [['title' => 'ok', 'description' => []]],
+            'description object' => [['title' => 'ok', 'description' => new \stdClass()]],
         ];
     }
 }

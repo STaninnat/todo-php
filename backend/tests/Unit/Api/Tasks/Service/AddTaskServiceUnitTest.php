@@ -71,19 +71,7 @@ class AddTaskServiceUnitTest extends TestCase
         $this->service->execute($req);
     }
 
-    /**
-     * Ensure exception is thrown if "user_id" is missing.
-     *
-     * @return void
-     */
-    public function testThrowsIfUserIdMissing(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
 
-        // Missing 'user_id'
-        $req = $this->makeRequest(['title' => 'My Task', 'description' => 'desc']);
-        $this->service->execute($req);
-    }
 
     /**
      * Ensure RuntimeException is thrown when addTask() fails at DB layer.
@@ -104,8 +92,7 @@ class AddTaskServiceUnitTest extends TestCase
         $req = $this->makeRequest([
             'title' => 'My Task',
             'description' => 'desc',
-            'user_id' => '1',
-        ]);
+        ], [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
@@ -129,8 +116,7 @@ class AddTaskServiceUnitTest extends TestCase
         $req = $this->makeRequest([
             'title' => 'My Task',
             'description' => 'desc',
-            'user_id' => '1',
-        ]);
+        ], [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
@@ -154,8 +140,7 @@ class AddTaskServiceUnitTest extends TestCase
         $req = $this->makeRequest([
             'title' => 'My Task',
             'description' => 'desc',
-            'user_id' => '1',
-        ]);
+        ], [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
@@ -189,8 +174,7 @@ class AddTaskServiceUnitTest extends TestCase
         $req = $this->makeRequest([
             'title' => 'My Task',
             'description' => 'desc',
-            'user_id' => '1',
-        ]);
+        ], [], [], 'POST', '/', ['id' => '1']);
 
         // Execute service and validate result
         $output = $this->service->execute($req);

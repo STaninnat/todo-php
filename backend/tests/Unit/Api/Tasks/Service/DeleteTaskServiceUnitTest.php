@@ -65,19 +65,7 @@ class DeleteTaskServiceUnitTest extends TestCase
         $this->service->execute($req);
     }
 
-    /**
-     * Test that missing user ID throws an InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testMissingUserIdThrowsException(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
 
-        // Missing 'user_id' in request body
-        $req = $this->makeRequest(['id' => '10']);
-        $this->service->execute($req);
-    }
 
     /**
      * Test that non-numeric task ID throws an InvalidArgumentException.
@@ -91,7 +79,7 @@ class DeleteTaskServiceUnitTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         // Invalid 'id' value (should be numeric)
-        $req = $this->makeRequest(['id' => 'abc', 'user_id' => '123']);
+        $req = $this->makeRequest(['id' => 'abc'], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -112,7 +100,7 @@ class DeleteTaskServiceUnitTest extends TestCase
         $this->expectException(RuntimeException::class);
 
         // Both 'id' and 'user_id' are provided
-        $req = $this->makeRequest(['id' => '1', 'user_id' => '123']);
+        $req = $this->makeRequest(['id' => '1'], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -132,7 +120,7 @@ class DeleteTaskServiceUnitTest extends TestCase
 
         $this->expectException(RuntimeException::class);
 
-        $req = $this->makeRequest(['id' => '1', 'user_id' => '123']);
+        $req = $this->makeRequest(['id' => '1'], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -164,7 +152,7 @@ class DeleteTaskServiceUnitTest extends TestCase
             ->willReturn(QueryResult::ok(25));
 
         // Valid request body
-        $req = $this->makeRequest(['id' => '1', 'user_id' => '123']);
+        $req = $this->makeRequest(['id' => '1'], [], [], 'POST', '/', ['id' => '123']);
         $result = $this->service->execute($req);
 
         // Verify structure and values of the returned array

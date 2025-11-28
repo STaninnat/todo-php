@@ -51,13 +51,13 @@ class UpdateTaskServiceUnitTest extends TestCase
     }
 
     /**
-     * Test that missing id or user_id throws InvalidArgumentException.
+     * Test that missing id throws InvalidArgumentException.
      */
-    public function testMissingIdOrUserIdThrowsException(): void
+    public function testMissingIdThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $req = $this->makeRequest(['user_id' => '123']); // id missing
+        $req = $this->makeRequest([], [], [], 'POST', '/', ['id' => '123']); // id missing
         $this->service->execute($req);
     }
 
@@ -68,7 +68,7 @@ class UpdateTaskServiceUnitTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $req = $this->makeRequest(['id' => '1', 'user_id' => '123']); // title missing
+        $req = $this->makeRequest(['id' => '1'], [], [], 'POST', '/', ['id' => '123']); // title missing
         $this->service->execute($req);
     }
 
@@ -95,11 +95,10 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task',
             'description' => '',
             'is_done' => 2 // invalid -> defaults to 0
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $result = $this->service->execute($req);
 
@@ -117,9 +116,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => 'abc', // invalid ID
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -136,9 +134,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -155,9 +152,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -179,9 +175,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -203,9 +198,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -228,11 +222,10 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Updated Task',
             'description' => 'Desc',
             'is_done' => 1
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $result = $this->service->execute($req);
 

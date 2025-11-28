@@ -52,18 +52,7 @@ class GetTasksServiceUnitTest extends TestCase
 
     use ApiTestHelperTrait;
 
-    /**
-     * Test that missing 'user_id' in request triggers InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testMissingUserIdThrowsException(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
 
-        $req = $this->makeRequest(); // Missing user_id field
-        $this->service->execute($req);
-    }
 
     /**
      * Test that a database query failure triggers RuntimeException.
@@ -80,7 +69,7 @@ class GetTasksServiceUnitTest extends TestCase
 
         $this->expectException(RuntimeException::class);
 
-        $req = $this->makeRequest(['user_id' => '123']);
+        $req = $this->makeRequest([], [], [], 'GET', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -98,7 +87,7 @@ class GetTasksServiceUnitTest extends TestCase
 
         $this->expectException(Error::class);
 
-        $req = $this->makeRequest(['user_id' => '123']);
+        $req = $this->makeRequest([], [], [], 'GET', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -124,8 +113,8 @@ class GetTasksServiceUnitTest extends TestCase
         $this->taskQueries->method('getTotalTasks')
             ->willReturn(QueryResult::ok(20));
 
-        // Build request with user_id
-        $req = $this->makeRequest(['user_id' => '123']);
+        // Build request with auth
+        $req = $this->makeRequest([], [], [], 'GET', '/', ['id' => '123']);
 
         // Execute service
         $result = $this->service->execute($req);

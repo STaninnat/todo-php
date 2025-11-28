@@ -67,45 +67,37 @@ class UpdateTaskServiceTypeErrTest extends TestCase
         return [
             // ---- id ----
             'id as string not numeric' => [
-                ['id' => 'abc', 'title' => 'ok', 'user_id' => 'u1', 'is_done' => '1'],
+                ['id' => 'abc', 'title' => 'ok', 'is_done' => '1'],
                 InvalidArgumentException::class,
             ],
             'id as object' => [
-                ['id' => new \stdClass(), 'title' => 'ok', 'user_id' => 'u1', 'is_done' => '1'],
+                ['id' => new \stdClass(), 'title' => 'ok', 'is_done' => '1'],
                 InvalidArgumentException::class,
             ],
 
             // ---- title ----
             'title as empty string' => [
-                ['id' => '1', 'title' => '', 'user_id' => 'u1', 'is_done' => '1'],
+                ['id' => '1', 'title' => '', 'is_done' => '1'],
                 InvalidArgumentException::class,
             ],
             'title as object' => [
-                ['id' => '1', 'title' => new \stdClass(), 'user_id' => 'u1', 'is_done' => '1'],
+                ['id' => '1', 'title' => new \stdClass(), 'is_done' => '1'],
                 InvalidArgumentException::class,
             ],
 
-            // ---- user_id ----
-            'user_id missing' => [
-                ['id' => '1', 'title' => 'ok', 'is_done' => '1'],
-                InvalidArgumentException::class,
-            ],
-            'user_id as object' => [
-                ['id' => '1', 'title' => 'ok', 'user_id' => new \stdClass(), 'is_done' => '1'],
-                InvalidArgumentException::class,
-            ],
+
 
             // ---- is_done ----
             'is_done null' => [
-                ['id' => '1', 'title' => 'ok', 'user_id' => 'u1', 'is_done' => null],
+                ['id' => '1', 'title' => 'ok', 'is_done' => null],
                 InvalidArgumentException::class,
             ],
             'is_done string not numeric' => [
-                ['id' => '1', 'title' => 'ok', 'user_id' => 'u1', 'is_done' => 'maybe'],
+                ['id' => '1', 'title' => 'ok', 'is_done' => 'maybe'],
                 Error::class,
             ],
             'is_done as object' => [
-                ['id' => '1', 'title' => 'ok', 'user_id' => 'u1', 'is_done' => new \stdClass()],
+                ['id' => '1', 'title' => 'ok', 'is_done' => new \stdClass()],
                 Error::class,
             ],
         ];
@@ -126,6 +118,7 @@ class UpdateTaskServiceTypeErrTest extends TestCase
 
         // Construct request object with provided invalid body
         $req = new Request('POST', '/tasks/update', [], null, $body);
+        $req->auth = ['id' => '1'];
 
         // Assert that executing service triggers expected exception
         $this->expectException($expectedException);

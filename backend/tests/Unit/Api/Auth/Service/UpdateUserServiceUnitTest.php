@@ -60,14 +60,11 @@ class UpdateUserServiceUnitTest extends TestCase
     public static function invalidInputProvider(): array
     {
         return [
-            'missing user_id'  => [[]],
-            'empty user_id'    => [['user_id' => '']],
-            'whitespace id'    => [['user_id' => '   ']],
-            'missing username' => [['user_id' => '1']],
-            'empty username'   => [['user_id' => '1', 'username' => '']],
-            'missing email'    => [['user_id' => '1', 'username' => 'john']],
-            'empty email'      => [['user_id' => '1', 'username' => 'john', 'email' => '']],
-            'invalid email'    => [['user_id' => '1', 'username' => 'john', 'email' => 'not-an-email']],
+            'missing username' => [['username' => '']],
+            'empty username' => [['username' => '']],
+            'missing email' => [['username' => 'john']],
+            'empty email' => [['username' => 'john', 'email' => '']],
+            'invalid email' => [['username' => 'john', 'email' => 'not-an-email']],
         ];
     }
 
@@ -83,7 +80,7 @@ class UpdateUserServiceUnitTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $req = $this->makeRequest($input);
+        $req = $this->makeRequest($input, [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
@@ -99,7 +96,7 @@ class UpdateUserServiceUnitTest extends TestCase
                 QueryResult::fail(['SQLSTATE[HY000]', 'Some error']),
                 'Failed to check user existence: SQLSTATE[HY000] | Some error'
             ],
-            'without error'   => [
+            'without error' => [
                 QueryResult::fail(null),
                 'Failed to check user existence: Unknown database error.'
             ],
@@ -122,7 +119,7 @@ class UpdateUserServiceUnitTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage($expectedMessage);
 
-        $req = $this->makeRequest(['user_id' => '1', 'username' => 'john', 'email' => 'john@example.com']);
+        $req = $this->makeRequest(['username' => 'john', 'email' => 'john@example.com'], [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
@@ -139,7 +136,7 @@ class UpdateUserServiceUnitTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Username or email already exists.');
 
-        $req = $this->makeRequest(['user_id' => '1', 'username' => 'john', 'email' => 'john@example.com']);
+        $req = $this->makeRequest(['username' => 'john', 'email' => 'john@example.com'], [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
@@ -180,7 +177,7 @@ class UpdateUserServiceUnitTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage($expectedMessage);
 
-        $req = $this->makeRequest(['user_id' => '1', 'username' => 'john', 'email' => 'john@example.com']);
+        $req = $this->makeRequest(['username' => 'john', 'email' => 'john@example.com'], [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
@@ -200,7 +197,7 @@ class UpdateUserServiceUnitTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to update user: No data or changes found.');
 
-        $req = $this->makeRequest(['user_id' => '1', 'username' => 'john', 'email' => 'john@example.com']);
+        $req = $this->makeRequest(['username' => 'john', 'email' => 'john@example.com'], [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
@@ -217,7 +214,7 @@ class UpdateUserServiceUnitTest extends TestCase
         $this->userQueries->method('checkUserExists')->willReturn(QueryResult::ok(false, 1));
         $this->userQueries->method('updateUser')->willReturn($result);
 
-        $req = $this->makeRequest(['user_id' => '1', 'username' => 'john', 'email' => 'john@example.com']);
+        $req = $this->makeRequest(['username' => 'john', 'email' => 'john@example.com'], [], [], 'POST', '/', ['id' => '1']);
         $output = $this->service->execute($req);
 
         $this->assertSame($userData, $output); // Assert returned data matches expected

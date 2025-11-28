@@ -51,15 +51,15 @@ class MarkDoneTaskServiceUnitTest extends TestCase
     }
 
     /**
-     * Test that missing task ID or user ID triggers exception.
+     * Test that missing task ID throws exception.
      * 
      * @return void
      */
-    public function testMissingIdOrUserIdThrowsException(): void
+    public function testMissingIdThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $req = $this->makeRequest(['user_id' => '123']); // Missing 'id'
+        $req = $this->makeRequest([], [], [], 'POST', '/', ['id' => '123']); // Missing 'id'
         $this->service->execute($req);
     }
 
@@ -74,9 +74,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'is_done' => 2 // Invalid status, should be 0 or 1
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -91,9 +90,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => 'abc', // Non-numeric
-            'user_id' => '123',
             'is_done' => 1
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -111,9 +109,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'is_done' => 1
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -131,9 +128,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'is_done' => 1
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -156,9 +152,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'is_done' => 1
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -179,9 +174,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'is_done' => 1
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -205,9 +199,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'is_done' => 1
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $result = $this->service->execute($req);
 
@@ -236,9 +229,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
         // --- case "0"
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'is_done' => "0"
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
         $result = $this->service->execute($req);
 
         $this->assertSame($task, $result['task']);
@@ -246,9 +238,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
         // --- case "1"
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'is_done' => "1"
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
         $result = $this->service->execute($req);
 
         $this->assertSame($task, $result['task']);
@@ -265,9 +256,8 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'is_done' => "abc" // Invalid string
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -282,8 +272,7 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123' // Missing 'is_done'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']); // Missing 'is_done'
         $this->service->execute($req);
     }
 }

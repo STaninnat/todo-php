@@ -7,7 +7,6 @@ namespace App\Api\Tasks\Service;
 use App\Api\Request;
 use App\DB\TaskQueries;
 use App\Utils\RequestValidator;
-use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -50,9 +49,8 @@ class DeleteTaskService
      * @param Request $req Request object containing task identifiers
      *
      * @return array{
-     *     id: int,
-     *     totalPages: int
-     * } Returns deleted task ID and updated total page count
+     *     id: int
+     * } Returns deleted task ID
      *
      * @throws InvalidArgumentException If required fields are missing or invalid
      * @throws RuntimeException If the task deletion operation fails
@@ -60,20 +58,16 @@ class DeleteTaskService
     public function execute(Request $req): array
     {
         $id = RequestValidator::getInt($req, 'id', 'Task ID must be a numeric string.');
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
 
         // Attempt to delete the task
         $result = $this->taskQueries->deleteTask($id, $userId);
         RequestValidator::ensureSuccess($result, 'delete task', false);
 
-        // Calculate total pages
-        $paginator = new TaskPaginator($this->taskQueries);
-        $totalPages = $paginator->calculateTotalPages(10);
-
-        // Return deleted task ID and updated pagination info
+        // Return deleted task ID
         return [
             'id' => $id,
-            'totalPages' => $totalPages,
         ];
     }
 }

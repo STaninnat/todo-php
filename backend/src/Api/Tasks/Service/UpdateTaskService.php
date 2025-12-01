@@ -7,7 +7,6 @@ namespace App\Api\Tasks\Service;
 use App\Api\Request;
 use App\DB\TaskQueries;
 use App\Utils\RequestValidator;
-use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -51,9 +50,8 @@ class UpdateTaskService
      * @param Request $req Request object containing task update data
      *
      * @return array{
-     *     task: array<int|string, mixed>,
-     *     totalPages: int
-     * } Returns updated task data and pagination info
+     *     task: array<int|string, mixed>
+     * } Returns updated task data
      *
      * @throws InvalidArgumentException If required fields are missing or invalid
      * @throws RuntimeException If the task could not be found or updated
@@ -67,8 +65,9 @@ class UpdateTaskService
         }
 
         $id = RequestValidator::getInt($req, 'id', 'Task ID must be a numeric string.');
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
-        $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.', true);
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
+        $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.', false);
 
         // Verify that the task exists
         $taskResult = $this->taskQueries->getTaskByID($id, $userId);
@@ -77,16 +76,15 @@ class UpdateTaskService
         }
 
         // Update task information
-        $result = $this->taskQueries->updateTask($id, $title, $description, (bool)$isDone, $userId);
+        $result = $this->taskQueries->updateTask($id, $title, $description, (bool) $isDone, $userId);
         RequestValidator::ensureSuccess($result, 'update task');
 
-        // Calculate total pages for pagination
-        $paginator = new TaskPaginator($this->taskQueries);
-        $totalPages = $paginator->calculateTotalPages(10);
+        $taskData = (array) $result->data;
+        unset($taskData['user_id']);
+        unset($taskData['created_at']);
 
         return [
-            'task' => (array) $result->data,
-            'totalPages' => $totalPages,
+            'task' => $taskData,
         ];
     }
 }

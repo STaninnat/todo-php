@@ -44,7 +44,7 @@ class TaskQueries
 
         $errorStrings = [];
         foreach ($errorInfo as $v) {
-            $errorStrings[] = is_scalar($v) || $v === null ? (string)$v : gettype($v);
+            $errorStrings[] = is_scalar($v) || $v === null ? (string) $v : gettype($v);
         }
 
         return QueryResult::fail($errorStrings);
@@ -74,7 +74,7 @@ class TaskQueries
                 return $this->failFromStmt($stmt);
             }
 
-            $id = (int)$this->pdo->lastInsertId();
+            $id = (int) $this->pdo->lastInsertId();
             return $this->getTaskByID($id, $userId);
         } catch (\PDOException $e) {
             return QueryResult::fail([$e->getMessage()]);
@@ -177,7 +177,7 @@ class TaskQueries
      */
     public function getTasksByUserID(string $userId): QueryResult
     {
-        $query = "SELECT * FROM tasks WHERE user_id = ?";
+        $query = "SELECT * FROM tasks WHERE user_id = ? ORDER BY is_done ASC, updated_at DESC";
 
         try {
             $stmt = $this->pdo->prepare($query);
@@ -282,28 +282,5 @@ class TaskQueries
         }
 
         return QueryResult::ok(null, $stmt->rowCount());
-    }
-
-    /**
-     * Get total number of tasks
-     *
-     * @return QueryResult
-     */
-    public function getTotalTasks(): QueryResult
-    {
-        $query = "SELECT COUNT(*) FROM tasks";
-
-        $stmt = $this->pdo->prepare($query);
-        if ($stmt === false) {
-            return $this->failFromStmt(false);
-        }
-
-        if (!$stmt->execute()) {
-            return $this->failFromStmt($stmt);
-        }
-
-        $count = (int) $stmt->fetchColumn();
-
-        return QueryResult::ok($count, $count);
     }
 }

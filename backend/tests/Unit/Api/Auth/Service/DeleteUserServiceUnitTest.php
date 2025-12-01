@@ -65,67 +65,7 @@ class DeleteUserServiceUnitTest extends TestCase
         );
     }
 
-    /**
-     * Test user ID validation and sanitization during execution.
-     *
-     * Ensures that:
-     * - Empty or invalid user IDs trigger an exception
-     * - Valid IDs are sanitized and passed correctly to deleteUser()
-     * - Cookie is cleared on successful deletion
-     *
-     * @param ?string $rawUserId          Raw user_id input from request
-     * @param ?string $expectedCleanUserId Sanitized user ID expected by deleteUser()
-     * @param bool    $shouldThrow        Whether an exception should be thrown
-     *
-     * @return void
-     */
-    #[DataProvider('userIdProvider')]
-    public function testExecuteUserIdValidation(
-        ?string $rawUserId,
-        ?string $expectedCleanUserId,
-        bool $shouldThrow
-    ): void {
-        if ($shouldThrow) {
-            // Expect invalid user_id to throw an exception
-            $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('User ID is required.');
-        } else {
-            // Expect proper deleteUser() call with cleaned ID
-            $this->userQueries
-                ->expects($this->once())
-                ->method('deleteUser')
-                ->with($expectedCleanUserId)
-                ->willReturn(QueryResult::ok(null, 1));
 
-            // Expect cookie to be cleared upon success
-            $this->cookieManager
-                ->expects($this->once())
-                ->method('clearAccessToken');
-        }
-
-        // Build mock Request using helper trait
-        $req = $this->makeRequest(['user_id' => $rawUserId]);
-        $this->service->execute($req);
-    }
-
-    /**
-     * Provides various raw user_id inputs and expected outcomes.
-     *
-     * Covers edge cases including:
-     * - null, empty string, or whitespace input
-     * - HTML tag stripping and sanitization
-     *
-     * @return array<string, array{0:?string,1:?string,2:bool}>
-     */
-    public static function userIdProvider(): array
-    {
-        return [
-            'null'        => [null, null, true],
-            'empty'       => ['', '', true],
-            'whitespace'  => ['   ', '', true],
-            'html tags'   => ['<b>123</b>', '123', false],
-        ];
-    }
 
     /**
      * Test handling of deleteUser() result outcomes.
@@ -174,7 +114,7 @@ class DeleteUserServiceUnitTest extends TestCase
         }
 
         // Build request and execute deletion
-        $req = $this->makeRequest(['user_id' => $userId]);
+        $req = $this->makeRequest([], [], [], 'POST', '/', ['id' => $userId]);
         $this->service->execute($req);
     }
 

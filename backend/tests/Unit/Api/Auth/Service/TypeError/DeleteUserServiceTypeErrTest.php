@@ -62,9 +62,9 @@ class DeleteUserServiceTypeErrTest extends TestCase
     public static function invalidExecuteArgsProvider(): array
     {
         return [
-            'null instead of Request'   => [null],
-            'int instead of Request'    => [123],
-            'array instead of Request'  => [[]],
+            'null instead of Request' => [null],
+            'int instead of Request' => [123],
+            'array instead of Request' => [[]],
             'string instead of Request' => ['not-a-request'],
         ];
     }
@@ -86,47 +86,5 @@ class DeleteUserServiceTypeErrTest extends TestCase
         $this->service->execute($invalidArg);
     }
 
-    /**
-     * Provides Request factories with invalid user_id parameters.
-     *
-     * @return array<string,array{0:callable}>
-     */
-    public static function invalidUserIdProvider(): array
-    {
-        return [
-            'user_id missing' => [
-                fn() => new Request() // No user_id param
-            ],
-            'user_id null' => [
-                function () {
-                    $req = new Request();
-                    $req->params['user_id'] = null;
-                    return $req;
-                }
-            ],
-            'user_id empty string' => [
-                function () {
-                    $req = new Request();
-                    $req->params['user_id'] = '';
-                    return $req;
-                }
-            ],
-        ];
-    }
 
-    /**
-     * Test that execute() throws InvalidArgumentException for invalid user_id.
-     *
-     * @param callable $requestFactory Factory returning a Request with invalid user_id
-     *
-     * @return void
-     */
-    #[DataProvider('invalidUserIdProvider')]
-    public function testExecuteThrowsInvalidArgumentExceptionWhenUserIdInvalid(callable $requestFactory): void
-    {
-        $req = $requestFactory();
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->service->execute($req);
-    }
 }

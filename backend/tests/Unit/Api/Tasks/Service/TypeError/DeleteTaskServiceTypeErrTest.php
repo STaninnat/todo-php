@@ -53,11 +53,11 @@ class DeleteTaskServiceTypeErrTest extends TestCase
     public static function provideInvalidConstructorArgs(): array
     {
         return [
-            'null'      => [null],
-            'int'       => [123],
-            'string'    => ['not-a-task-queries'],
-            'array'     => [[]],
-            'stdClass'  => [new \stdClass()],
+            'null' => [null],
+            'int' => [123],
+            'string' => ['not-a-task-queries'],
+            'array' => [[]],
+            'stdClass' => [new \stdClass()],
         ];
     }
 
@@ -87,11 +87,11 @@ class DeleteTaskServiceTypeErrTest extends TestCase
     public static function provideInvalidExecuteArgs(): array
     {
         return [
-            'null'      => [null],
-            'int'       => [123],
-            'string'    => ['request'],
-            'array'     => [[]],
-            'stdClass'  => [new \stdClass()],
+            'null' => [null],
+            'int' => [123],
+            'string' => ['request'],
+            'array' => [[]],
+            'stdClass' => [new \stdClass()],
         ];
     }
 
@@ -113,17 +113,12 @@ class DeleteTaskServiceTypeErrTest extends TestCase
         // Encode body to JSON as raw input
         $raw = json_encode($body);
         $req = new Request('POST', '/tasks/delete', [], $raw);
+        $req->auth = ['id' => '1'];
 
         if (isset($body['id']) && !is_numeric($body['id'])) {
             $this->expectException(InvalidArgumentException::class);
         } elseif (!isset($body['id']) || empty($body['id'])) {
             $this->expectException(InvalidArgumentException::class);
-        } elseif (!isset($body['user_id']) || !is_string($body['user_id'])) {
-            if (is_int($body['user_id'] ?? null)) {
-                $this->expectException(RuntimeException::class);
-            } else {
-                $this->expectException(InvalidArgumentException::class);
-            }
         }
 
         $service->execute($req);
@@ -144,19 +139,13 @@ class DeleteTaskServiceTypeErrTest extends TestCase
     {
         return [
             // ---- id invalid ----
-            'id is string-non-numeric' => [['id' => 'not-a-number', 'user_id' => 'u1'], InvalidArgumentException::class],
-            'id is array'              => [['id' => ['bad'], 'user_id' => 'u1'], InvalidArgumentException::class],
-            'id is object'             => [['id' => new \stdClass(), 'user_id' => 'u1'], InvalidArgumentException::class],
-
-            // ---- user_id invalid (TypeError from strip_tags) ----
-            'user_id is int'           => [['id' => 1, 'user_id' => 123], TypeError::class],
-            'user_id is array'         => [['id' => 1, 'user_id' => ['bad']], TypeError::class],
-            'user_id is object'        => [['id' => 1, 'user_id' => new \stdClass()], TypeError::class],
+            'id is string-non-numeric' => [['id' => 'not-a-number'], InvalidArgumentException::class],
+            'id is array' => [['id' => ['bad']], InvalidArgumentException::class],
+            'id is object' => [['id' => new \stdClass()], InvalidArgumentException::class],
 
             // ---- missing fields ----
-            'missing id'               => [['user_id' => 'u1'], InvalidArgumentException::class],
-            'missing user_id'          => [['id' => 1], InvalidArgumentException::class],
-            'empty body'               => [[], InvalidArgumentException::class],
+            'missing id' => [[], InvalidArgumentException::class],
+            'empty body' => [[], InvalidArgumentException::class],
         ];
     }
 }

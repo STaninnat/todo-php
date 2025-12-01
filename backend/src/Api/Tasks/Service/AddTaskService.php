@@ -7,7 +7,6 @@ namespace App\Api\Tasks\Service;
 use App\Api\Request;
 use App\DB\TaskQueries;
 use App\Utils\RequestValidator;
-use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -50,9 +49,8 @@ class AddTaskService
      * @param Request $req Incoming request containing task data
      *
      * @return array{
-     *     task: array<int|string, mixed>,
-     *     totalPages: int
-     * } Returns the added task data and total page count
+     *     task: array<int|string, mixed>
+     * } Returns the added task data
      *
      * @throws InvalidArgumentException If required fields are missing or invalid
      * @throws RuntimeException If the task insertion fails in the database
@@ -65,20 +63,20 @@ class AddTaskService
             $description = trim(strip_tags($req->body['description']));
         }
 
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
 
         // Add task to database
         $result = $this->taskQueries->addTask($title, $description, $userId);
         RequestValidator::ensureSuccess($result, 'add task');
 
-        // Calculate total pages
-        $paginator = new TaskPaginator($this->taskQueries);
-        $totalPages = $paginator->calculateTotalPages(10);
+        // Return created task data
+        $taskData = (array) $result->data;
+        unset($taskData['user_id']);
+        unset($taskData['created_at']);
 
-        // Return created task data and pagination info
         return [
-            'task' => (array) $result->data,
-            'totalPages' => $totalPages,
+            'task' => $taskData,
         ];
     }
 }

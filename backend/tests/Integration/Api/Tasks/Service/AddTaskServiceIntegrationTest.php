@@ -103,7 +103,7 @@ final class AddTaskServiceIntegrationTest extends TestCase
      * 
      * @return Request
      */
-    private function makeRequest(array $body): Request
+    private function makeRequest(array $body, ?string $userId = null): Request
     {
         $json = json_encode($body);
         if ($json === false) {
@@ -111,7 +111,11 @@ final class AddTaskServiceIntegrationTest extends TestCase
         }
 
         // Return simulated API Request
-        return new Request('POST', '/tasks', [], $json);
+        $req = new Request('POST', '/tasks', [], $json);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -132,22 +136,20 @@ final class AddTaskServiceIntegrationTest extends TestCase
         $req = $this->makeRequest([
             'title' => 'Integration Task',
             'description' => 'This is a sample task for integration test.',
-            'user_id' => 'user_123',
-        ]);
+        ], 'user_123');
 
         // Execute service
         $result = $service->execute($req);
 
         // Verify output structure
         $this->assertArrayHasKey('task', $result);
-        $this->assertArrayHasKey('totalPages', $result);
-        $this->assertSame(1, $result['totalPages']);
+        $this->assertArrayNotHasKey('totalPages', $result);
 
         // Validate inserted data consistency
         $task = $result['task'];
         $this->assertSame('Integration Task', $task['title']);
         $this->assertSame('This is a sample task for integration test.', $task['description']);
-        $this->assertSame('user_123', $task['user_id']);
+        $this->assertArrayNotHasKey('user_id', $task);
 
         // Check actual DB persistence
         $stmt = $this->pdo->query('SELECT COUNT(*) FROM tasks');
@@ -172,8 +174,7 @@ final class AddTaskServiceIntegrationTest extends TestCase
 
         $req = $this->makeRequest([
             'description' => 'Missing title field',
-            'user_id' => 'user_123',
-        ]);
+        ], 'user_123');
 
         // Expect validation failure due to missing title
         $this->expectException(InvalidArgumentException::class);
@@ -181,26 +182,7 @@ final class AddTaskServiceIntegrationTest extends TestCase
         $service->execute($req);
     }
 
-    /**
-     * Test missing user_id validation.
-     *
-     * Expects InvalidArgumentException with message "User ID is required."
-     *
-     * @return void
-     */
-    public function testAddTaskWithoutUserIdThrowsException(): void
-    {
-        $service = new AddTaskService($this->queries);
 
-        $req = $this->makeRequest([
-            'title' => 'Task without user_id',
-        ]);
-
-        // Expect validation failure due to missing user_id
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required.');
-        $service->execute($req);
-    }
 
     /**
      * Test validation of incorrect input types.
@@ -213,11 +195,10 @@ final class AddTaskServiceIntegrationTest extends TestCase
     {
         $service = new AddTaskService($this->queries);
 
-        // invalid type: title=array, user_id=int
+        // invalid type: title=array
         $req = $this->makeRequest([
             'title' => ['wrong'],
-            'user_id' => 123,
-        ]);
+        ], '123');
 
         // Expect validation failure
         $this->expectException(InvalidArgumentException::class);
@@ -241,8 +222,7 @@ final class AddTaskServiceIntegrationTest extends TestCase
         $longTitle = str_repeat('x', 300);
         $req = $this->makeRequest([
             'title' => $longTitle,
-            'user_id' => 'user_999',
-        ]);
+        ], 'user_999');
 
         // Expect DB failure wrapped in RuntimeException
         $this->expectException(RuntimeException::class);
@@ -258,22 +238,5 @@ final class AddTaskServiceIntegrationTest extends TestCase
      *
      * @return void
      */
-    public function testPaginationIncreasesWithMultipleTasks(): void
-    {
-        $service = new AddTaskService($this->queries);
 
-        // Insert 25 tasks (perPage = 10 => expect totalPages = 3)
-        for ($i = 1; $i <= 25; $i++) {
-            $req = $this->makeRequest([
-                'title' => "Task {$i}",
-                'user_id' => 'user_abc',
-            ]);
-
-            // Inline note: the last iteration's result will reflect the final totalPages
-            $result = $service->execute($req);
-        }
-
-        // Verify computed pagination
-        $this->assertSame(3, $result['totalPages']);
-    }
 }

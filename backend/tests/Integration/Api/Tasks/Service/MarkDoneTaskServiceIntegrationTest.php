@@ -107,14 +107,18 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
      * 
      * @return Request
      */
-    private function makeRequest(array $body): Request
+    private function makeRequest(array $body, ?string $userId = null): Request
     {
         $json = json_encode($body);
         if ($json === false) {
             throw new RuntimeException('Failed to encode request body to JSON.');
         }
 
-        return new Request('PATCH', '/tasks/1/done', [], $json);
+        $req = new Request('PATCH', '/tasks/1/done', [], $json);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -133,9 +137,8 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => 1,
-            'user_id' => 'user_123',
             'is_done' => true,
-        ]);
+        ], 'user_123');
 
         $result = $service->execute($req);
 
@@ -144,6 +147,7 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('task', $result);
         $this->assertSame(1, $result['task']['id']);
         $this->assertSame(1, (int) $result['task']['is_done']);
+        $this->assertArrayNotHasKey('user_id', $result['task']);
     }
 
     /**
@@ -163,9 +167,8 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => 1,
-            'user_id' => 'user_123',
             'is_done' => false,
-        ]);
+        ], 'user_123');
 
         $result = $service->execute($req);
 
@@ -187,9 +190,8 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => 999,
-            'user_id' => 'user_123',
             'is_done' => true,
-        ]);
+        ], 'user_123');
 
         // Expect failure due to non-existent ID
         $this->expectException(RuntimeException::class);
@@ -204,20 +206,7 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
      *
      * @return void
      */
-    public function testMarkTaskFailsIfMissingUserId(): void
-    {
-        $service = new MarkDoneTaskService($this->queries);
 
-        $req = $this->makeRequest([
-            'id' => 1,
-            'is_done' => true,
-        ]);
-
-        // Expect validation failure due to missing user_id
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required.');
-        $service->execute($req);
-    }
 
     /**
      * Test validation failure for invalid is_done type.
@@ -232,9 +221,8 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => 1,
-            'user_id' => 'user_123',
             'is_done' => 'not_a_bool',
-        ]);
+        ], 'user_123');
 
         // Expect validation failure due to invalid type
         $this->expectException(InvalidArgumentException::class);
@@ -259,9 +247,8 @@ final class MarkDoneTaskServiceIntegrationTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => 1,
-            'user_id' => 'user_123',
             'is_done' => true,
-        ]);
+        ], 'user_123');
 
         // Expect DB failure handled by service layer
         $this->expectException(RuntimeException::class);

@@ -3,10 +3,14 @@ set -e
 
 COMMAND=$1
 PROFILE=$2
-shift 2 || true
+if [ -n "$PROFILE" ]; then
+  shift 2
+else
+  shift 1
+fi
 
 if [ -z "$COMMAND" ]; then
-  echo "Usage: ./scripts/phinx.sh [migrate|rollback|create] [test]"
+  echo "Usage: ./scripts/phinx.sh [migrate|rollback|create|seed:create|seed:run] [test] [extra phinx args]"
   exit 1
 fi
 
@@ -39,9 +43,15 @@ case "$COMMAND" in
   create)
     run_phinx create "$@"
     ;;
+  seed:create)
+    run_phinx seed:create "$@"
+    ;;
+  seed:run)
+    run_phinx seed:run "$@"
+    ;;
   *)
     echo "Unknown command: $COMMAND"
-    echo "Usage: ./scripts/phinx.sh [migrate|rollback|create] [test] [extra phinx args]"
+    echo "Usage: ./scripts/phinx.sh [migrate|rollback|create|seed:create|seed:run] [test] [extra phinx args]"
     exit 1
     ;;
 esac

@@ -71,19 +71,7 @@ class AddTaskServiceUnitTest extends TestCase
         $this->service->execute($req);
     }
 
-    /**
-     * Ensure exception is thrown if "user_id" is missing.
-     *
-     * @return void
-     */
-    public function testThrowsIfUserIdMissing(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
 
-        // Missing 'user_id'
-        $req = $this->makeRequest(['title' => 'My Task', 'description' => 'desc']);
-        $this->service->execute($req);
-    }
 
     /**
      * Ensure RuntimeException is thrown when addTask() fails at DB layer.
@@ -104,8 +92,7 @@ class AddTaskServiceUnitTest extends TestCase
         $req = $this->makeRequest([
             'title' => 'My Task',
             'description' => 'desc',
-            'user_id' => '1',
-        ]);
+        ], [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
@@ -129,48 +116,21 @@ class AddTaskServiceUnitTest extends TestCase
         $req = $this->makeRequest([
             'title' => 'My Task',
             'description' => 'desc',
-            'user_id' => '1',
-        ]);
+        ], [], [], 'POST', '/', ['id' => '1']);
         $this->service->execute($req);
     }
 
+
+
     /**
-     * Ensure Error is thrown when addTask() returns OK result
-     * but no data is included (empty array).
+     * Ensure successful execution returns correct task data.
      *
      * @return void
      */
-    public function testThrowsIfNoDataReturned(): void
-    {
-        $result = QueryResult::ok([], 1); // No data returned
-
-        $this->taskQueries
-            ->expects($this->once())
-            ->method('addTask')
-            ->willReturn($result);
-
-        $this->expectException(Error::class);
-
-        $req = $this->makeRequest([
-            'title' => 'My Task',
-            'description' => 'desc',
-            'user_id' => '1',
-        ]);
-        $this->service->execute($req);
-    }
-
-    /**
-     * Ensure successful execution returns correct task data
-     * and total pages count.
-     *
-     * Simulates both addTask() and getTotalTasks() returning
-     * valid data to compute pagination correctly.
-     *
-     * @return void
-     */
-    public function testReturnsTaskAndTotalPagesOnSuccess(): void
+    public function testReturnsTaskOnSuccess(): void
     {
         $taskData = ['id' => 1, 'title' => 'My Task', 'user_id' => 1];
+        $expectedTaskData = ['id' => 1, 'title' => 'My Task'];
         $result = QueryResult::ok($taskData, 1); // DB success
 
         // Simulate task insertion success
@@ -179,24 +139,18 @@ class AddTaskServiceUnitTest extends TestCase
             ->method('addTask')
             ->willReturn($result);
 
-        // Simulate total tasks query returning 25 tasks
-        $this->taskQueries
-            ->expects($this->once())
-            ->method('getTotalTasks')
-            ->willReturn(QueryResult::ok(25));
-
         // Build valid request
         $req = $this->makeRequest([
             'title' => 'My Task',
             'description' => 'desc',
-            'user_id' => '1',
-        ]);
+        ], [], [], 'POST', '/', ['id' => '1']);
 
         // Execute service and validate result
         $output = $this->service->execute($req);
 
         // Assert both task data and computed pagination
-        $this->assertEquals($taskData, $output['task']);
-        $this->assertEquals(3, $output['totalPages']);
+        $this->assertEquals($expectedTaskData, $output['task']);
+        $this->assertArrayNotHasKey('created_at', $output['task']);
+        $this->assertArrayNotHasKey('totalPages', $output);
     }
 }

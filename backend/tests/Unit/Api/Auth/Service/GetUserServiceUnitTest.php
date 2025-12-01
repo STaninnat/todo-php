@@ -54,39 +54,7 @@ class GetUserServiceUnitTest extends TestCase
         $this->service = new GetUserService($this->userQueries);
     }
 
-    /**
-     * Provides invalid `user_id` cases to trigger validation errors.
-     *
-     * @return array<string, array{0: array<string,mixed>}>
-     */
-    public static function userIdProvider(): array
-    {
-        return [
-            'missing user_id'   => [[]],
-            'empty string'      => [['user_id' => '']],
-            'only whitespace'   => [['user_id' => '   ']],
-        ];
-    }
 
-    /**
-     * Test that execute() throws InvalidArgumentException
-     * when `user_id` is missing or invalid.
-     *
-     * @param array<string,mixed> $body Request body containing user_id field.
-     *
-     * @return void
-     */
-    #[DataProvider('userIdProvider')]
-    public function testExecuteThrowsInvalidArgumentException(array $body): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        // Create request using helper trait
-        $req = $this->makeRequest($body);
-
-        // Should throw due to missing or invalid user_id
-        $this->service->execute($req);
-    }
 
     /**
      * Provides scenarios where the database query fails.
@@ -100,7 +68,7 @@ class GetUserServiceUnitTest extends TestCase
                 QueryResult::fail(['SQLSTATE[HY000]', 'Some error']),
                 'Failed to fetch user: SQLSTATE[HY000] | Some error'
             ],
-            'fail without error'   => [
+            'fail without error' => [
                 QueryResult::fail(null),
                 'Failed to fetch user: Unknown database error.'
             ],
@@ -127,8 +95,8 @@ class GetUserServiceUnitTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage($expectedMessage);
 
-        // Execute service with valid request body
-        $req = $this->makeRequest(['user_id' => '123']);
+        // Execute service with valid request body and auth
+        $req = $this->makeRequest([], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -148,7 +116,7 @@ class GetUserServiceUnitTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to fetch user: No data or changes found.');
 
-        $req = $this->makeRequest(['user_id' => '123']);
+        $req = $this->makeRequest([], [], [], 'POST', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -169,8 +137,8 @@ class GetUserServiceUnitTest extends TestCase
             ->method('getUserById')
             ->willReturn(QueryResult::ok($userData, 1));
 
-        // Create valid request
-        $req = $this->makeRequest(['user_id' => '123']);
+        // Create valid request with auth
+        $req = $this->makeRequest([], [], [], 'POST', '/', ['id' => '123']);
 
         // Execute service and get result
         $result = $this->service->execute($req);

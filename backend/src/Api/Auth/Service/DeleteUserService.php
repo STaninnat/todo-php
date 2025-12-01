@@ -61,7 +61,8 @@ class DeleteUserService
      */
     public function execute(Request $req): void
     {
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
 
         // Attempt to delete user from database
         $result = $this->userQueries->deleteUser($userId);

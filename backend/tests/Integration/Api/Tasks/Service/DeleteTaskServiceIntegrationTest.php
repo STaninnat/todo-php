@@ -101,7 +101,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
      *
      * @return Request
      */
-    private function makeRequest(array $body): Request
+    private function makeRequest(array $body, ?string $userId = null): Request
     {
         $json = json_encode($body);
         if ($json === false) {
@@ -109,7 +109,11 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         }
 
         // Simulated DELETE API request
-        return new Request('DELETE', '/tasks', [], $json);
+        $req = new Request('DELETE', '/tasks', [], $json);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -134,14 +138,13 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         $service = new DeleteTaskService($this->queries);
         $req = $this->makeRequest([
             'id' => $taskId,
-            'user_id' => 'user_123',
-        ]);
+        ], 'user_123');
 
         // Execute deletion service
         $result = $service->execute($req);
 
         $this->assertArrayHasKey('id', $result);
-        $this->assertArrayHasKey('totalPages', $result);
+        $this->assertArrayNotHasKey('totalPages', $result);
         $this->assertSame($taskId, $result['id']);
 
         // Verify task removed from database
@@ -164,7 +167,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
     public function testDeleteTaskWithoutIdThrowsException(): void
     {
         $service = new DeleteTaskService($this->queries);
-        $req = $this->makeRequest(['user_id' => 'user_123']);
+        $req = $this->makeRequest([], 'user_123');
 
         // Missing ID -> validation error expected
         $this->expectException(InvalidArgumentException::class);
@@ -180,16 +183,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
      *
      * @return void
      */
-    public function testDeleteTaskWithoutUserIdThrowsException(): void
-    {
-        $service = new DeleteTaskService($this->queries);
-        $req = $this->makeRequest(['id' => 1]);
 
-        // Missing user_id -> validation error expected
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required.');
-        $service->execute($req);
-    }
 
     /**
      * Test deletion of non-existent task.
@@ -203,8 +197,7 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         $service = new DeleteTaskService($this->queries);
         $req = $this->makeRequest([
             'id' => 999,
-            'user_id' => 'ghost_user',
-        ]);
+        ], 'ghost_user');
 
         // Deleting non-existent task should trigger runtime error
         $this->expectException(RuntimeException::class);
@@ -212,46 +205,5 @@ final class DeleteTaskServiceIntegrationTest extends TestCase
         $service->execute($req);
     }
 
-    /**
-     * Test pagination adjustment after task deletion.
-     *
-     * Ensures totalPages decreases correctly after removing one task
-     * from a dataset exceeding the pagination threshold (perPage=10).
-     *
-     * @return void
-     */
-    public function testPaginationDecreasesAfterDeletion(): void
-    {
-        // insert 11 tasks → expect totalPages = 2 (perPage=10)
-        for ($i = 1; $i <= 11; $i++) {
-            $this->pdo->exec("
-                INSERT INTO tasks (title, description, user_id)
-                VALUES ('Task {$i}', 'desc', 'user_abc')
-            ");
-        }
 
-        // Fetch the ID of one task to delete
-        $stmt = $this->pdo->query('SELECT id FROM tasks LIMIT 1');
-        if ($stmt === false) {
-            throw new RuntimeException('Failed to fetch task id.');
-        }
-        $taskId = (int) $stmt->fetchColumn();
-
-        $service = new DeleteTaskService($this->queries);
-        $req = $this->makeRequest(['id' => $taskId, 'user_id' => 'user_abc']);
-
-        // Execute deletion
-        $result = $service->execute($req);
-
-        $this->assertSame(1, $result['totalPages']);
-
-        // Confirm total remaining rows = 10
-        $stmt = $this->pdo->query('SELECT COUNT(*) FROM tasks');
-        if ($stmt === false) {
-            throw new RuntimeException('Failed to count tasks.');
-        }
-
-        $count = (int) $stmt->fetchColumn();
-        $this->assertSame(10, $count);
-    }
 }

@@ -7,7 +7,8 @@
   "require-dev": {
     "phpunit/phpunit": "^12.3",
     "phpstan/phpstan": "^2.1",
-    "robmorgan/phinx": "^0.16.10"
+    "robmorgan/phinx": "^0.16.10",
+    "guzzlehttp/guzzle": "^7.10"
   },
   "scripts": {
     "lint": "find src tests -name '*.php' -print0 | xargs -0 php -l",
@@ -33,7 +34,9 @@
     "clean": "cd .. && scripts/clean.sh",
     "phinx:migrate": "cd .. && scripts/phinx.sh migrate",
     "phinx:rollback": "cd .. && scripts/phinx.sh rollback",
-    "phinx:create": "cd .. && scripts/phinx.sh create"
+    "phinx:create": "cd .. && scripts/phinx.sh create",
+    "phinx:seed:create": "cd .. && scripts/phinx.sh seed:create",
+    "phinx:seed:run": "cd .. && scripts/phinx.sh seed:run"
   },
   "autoload": {
     "psr-4": {

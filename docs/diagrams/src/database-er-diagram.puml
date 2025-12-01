@@ -1,0 +1,44 @@
+@startuml database-er-diagram
+title Database Entity Relationship Diagram
+
+' Hide the circle icons for methods/fields
+hide circle
+
+' Use orthogonal lines for cleaner connectors
+skinparam linetype ortho
+
+' Modern color palette and styling
+skinparam class {
+    BackgroundColor White
+    ArrowColor #2C3E50
+    BorderColor #2C3E50
+    HeaderBackgroundColor #ECF0F1
+}
+
+skinparam roundcorner 10
+skinparam shadowing false
+skinparam handwritten false
+
+entity "users" as users {
+    *id : VARCHAR(64) <<PK>>
+    --
+    *username : VARCHAR(255) <<UNIQUE>>
+    *email : VARCHAR(255) <<UNIQUE>>
+    *password : VARCHAR(255)
+    created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+}
+
+entity "tasks" as tasks {
+    *id : INT <<PK>> <<AUTO_INCREMENT>>
+    --
+    *user_id : VARCHAR(64) <<FK>>
+    title : VARCHAR(255)
+    description : TEXT
+    is_done : TINYINT(1) <<DEFAULT 0>>
+    created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+}
+
+users ||..o{ tasks : "has many"
+@enduml

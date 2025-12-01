@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
+    image: myapp-php-test:latest
     container_name: php_fpm_test
     env_file:
       - .env.test

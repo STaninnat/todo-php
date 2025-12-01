@@ -51,13 +51,13 @@ class UpdateTaskServiceUnitTest extends TestCase
     }
 
     /**
-     * Test that missing id or user_id throws InvalidArgumentException.
+     * Test that missing id throws InvalidArgumentException.
      */
-    public function testMissingIdOrUserIdThrowsException(): void
+    public function testMissingIdThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $req = $this->makeRequest(['user_id' => '123']); // id missing
+        $req = $this->makeRequest([], [], [], 'POST', '/', ['id' => '123']); // id missing
         $this->service->execute($req);
     }
 
@@ -68,7 +68,7 @@ class UpdateTaskServiceUnitTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $req = $this->makeRequest(['id' => '1', 'user_id' => '123']); // title missing
+        $req = $this->makeRequest(['id' => '1'], [], [], 'POST', '/', ['id' => '123']); // title missing
         $this->service->execute($req);
     }
 
@@ -77,35 +77,21 @@ class UpdateTaskServiceUnitTest extends TestCase
      *
      * Also checks that totalPages calculation works correctly.
      */
-    public function testInvalidStatusValueDefaultsToZero(): void
+    /**
+     * Test that invalid status value throws InvalidArgumentException.
+     */
+    public function testInvalidStatusValueThrowsException(): void
     {
-        $task = ['id' => 1, 'title' => 'Task', 'description' => '', 'is_done' => 0];
-
-        // Stub getTaskByID to return existing task
-        $this->taskQueries->method('getTaskByID')
-            ->willReturn(QueryResult::ok($task, 1));
-
-        // Stub updateTask to simulate successful update
-        $this->taskQueries->method('updateTask')
-            ->willReturn(QueryResult::ok($task, 1));
-
-        // Stub getTotalTasks for pagination
-        $this->taskQueries->method('getTotalTasks')
-            ->willReturn(QueryResult::ok(12));
+        $this->expectException(InvalidArgumentException::class);
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task',
             'description' => '',
-            'is_done' => 2 // invalid -> defaults to 0
-        ]);
+            'is_done' => 2 // invalid -> throws exception
+        ], [], [], 'POST', '/', ['id' => '123']);
 
-        $result = $this->service->execute($req);
-
-        // Verify task returned and totalPages calculated correctly
-        $this->assertSame($task, $result['task']);
-        $this->assertSame(2, $result['totalPages']);
+        $this->service->execute($req);
     }
 
     /**
@@ -117,9 +103,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => 'abc', // invalid ID
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -136,9 +121,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -155,9 +139,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -179,9 +162,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -203,9 +185,8 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Task'
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $this->service->execute($req);
     }
@@ -215,7 +196,7 @@ class UpdateTaskServiceUnitTest extends TestCase
      */
     public function testUpdateTaskSuccessReturnsExpectedArray(): void
     {
-        $task = ['id' => 1, 'title' => 'Updated Task', 'description' => 'Desc', 'is_done' => 1];
+        $task = ['id' => 1, 'title' => 'Updated Task', 'description' => 'Desc', 'is_done' => 1, 'user_id' => 123, 'created_at' => '2023-01-01'];
 
         $this->taskQueries->method('getTaskByID')
             ->willReturn(QueryResult::ok($task, 1));
@@ -223,21 +204,24 @@ class UpdateTaskServiceUnitTest extends TestCase
         $this->taskQueries->method('updateTask')
             ->willReturn(QueryResult::ok($task, 1));
 
-        $this->taskQueries->method('getTotalTasks')
-            ->willReturn(QueryResult::ok(25));
+        $this->taskQueries->method('updateTask')
+            ->willReturn(QueryResult::ok($task, 1));
 
         $req = $this->makeRequest([
             'id' => '1',
-            'user_id' => '123',
             'title' => 'Updated Task',
             'description' => 'Desc',
             'is_done' => 1
-        ]);
+        ], [], [], 'POST', '/', ['id' => '123']);
 
         $result = $this->service->execute($req);
 
+        $expectedTask = $task;
+        unset($expectedTask['user_id']);
+
         // Verify returned task data and totalPages calculation
-        $this->assertSame($task, $result['task']);
-        $this->assertSame(3, $result['totalPages']);
+        $this->assertEquals($expectedTask, $result['task']);
+        $this->assertArrayNotHasKey('created_at', $result['task']);
+        $this->assertArrayNotHasKey('totalPages', $result);
     }
 }

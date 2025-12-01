@@ -120,9 +120,13 @@ class DeleteUserServiceIntegrationTest extends TestCase
      * 
      * @return Request
      */
-    private function makeRequest(array $body): Request
+    private function makeRequest(array $body, ?string $userId = null): Request
     {
-        return new Request('POST', '/delete-user', null, null, $body);
+        $req = new Request('POST', '/delete-user', null, null, $body);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -141,7 +145,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
             ->execute([$id, 'john', 'john@example.com', password_hash('pass', PASSWORD_DEFAULT)]);
 
-        $req = $this->makeRequest(['user_id' => $id]);
+        $req = $this->makeRequest([], $id);
 
         $this->service->execute($req);
 
@@ -155,22 +159,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
         $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
     }
 
-    /**
-     * Test validation when user_id is missing.
-     *
-     * Expects InvalidArgumentException with specific message.
-     *
-     * @return void
-     */
-    public function testMissingUserIdThrowsInvalidArgumentException(): void
-    {
-        $req = $this->makeRequest([]);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('User ID is required');
-
-        $this->service->execute($req);
-    }
 
     /**
      * Test DB failure handling.
@@ -191,7 +180,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
         };
 
         $service = new DeleteUserService($failingQueries, $this->cookieManager);
-        $req = $this->makeRequest(['user_id' => 'any']);
+        $req = $this->makeRequest([], 'any');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/delete user/i');
@@ -217,7 +206,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
         $this->pdo->prepare("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)")
             ->execute([$id, 'alice', 'alice@example.com', password_hash('pass', PASSWORD_DEFAULT)]);
 
-        $req = $this->makeRequest(['user_id' => $id]);
+        $req = $this->makeRequest([], $id);
         $this->service->execute($req);
 
         // Inline: verify DB deletion consistency
@@ -247,7 +236,7 @@ class DeleteUserServiceIntegrationTest extends TestCase
         };
 
         $service = new DeleteUserService($failingQueries, $this->cookieManager);
-        $req = $this->makeRequest(['user_id' => 'u1']);
+        $req = $this->makeRequest([], 'u1');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/delete user/i');

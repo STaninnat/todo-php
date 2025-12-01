@@ -7,7 +7,6 @@ namespace App\Api\Tasks\Service;
 use App\Api\Request;
 use App\DB\TaskQueries;
 use App\Utils\RequestValidator;
-use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -52,9 +51,8 @@ class MarkDoneTaskService
      * @param Request $req Incoming request containing task ID and status
      *
      * @return array{
-     *     task: array<int|string, mixed>,
-     *     totalPages: int
-     * } Returns updated task data and total page count
+     *     task: array<int|string, mixed>
+     * } Returns updated task data
      *
      * @throws InvalidArgumentException If parameters are missing or invalid
      * @throws RuntimeException If the task does not exist or update fails
@@ -62,7 +60,8 @@ class MarkDoneTaskService
     public function execute(Request $req): array
     {
         $id = RequestValidator::getInt($req, 'id', 'Task ID must be a numeric string.');
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
         $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.');
 
         // Verify that the task exists
@@ -75,13 +74,12 @@ class MarkDoneTaskService
         $result = $this->taskQueries->markDone($id, (bool) $isDone, $userId);
         RequestValidator::ensureSuccess($result, 'mark task as done');
 
-        // Calculate total pages
-        $paginator = new TaskPaginator($this->taskQueries);
-        $totalPages = $paginator->calculateTotalPages(10);
+        $taskData = (array) $result->data;
+        unset($taskData['user_id']);
+        unset($taskData['created_at']);
 
         return [
-            'task' => (array) $result->data,
-            'totalPages' => $totalPages,
+            'task' => $taskData,
         ];
     }
 }

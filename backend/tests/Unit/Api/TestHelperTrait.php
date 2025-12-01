@@ -32,6 +32,7 @@ trait TestHelperTrait
      * @param array<string, mixed>  $params  Optional route parameters.
      * @param string                $method  HTTP method (default: 'POST').
      * @param string                $path    Request path (default: '/').
+     * @param array<string, mixed>|null $auth    Optional authentication payload.
      *
      * @return Request A fully initialized Request instance.
      */
@@ -40,7 +41,8 @@ trait TestHelperTrait
         array $query = [],
         array $params = [],
         string $method = 'POST',
-        string $path = '/'
+        string $path = '/',
+        ?array $auth = null
     ): Request {
         // Encode body to JSON if provided
         $rawInput = !empty($body) ? json_encode($body) : null;
@@ -59,6 +61,11 @@ trait TestHelperTrait
         // Attach route parameters if any are provided
         if (!empty($params)) {
             $req->params = $params;
+        }
+
+        // Attach auth payload if provided
+        if ($auth !== null) {
+            $req->auth = $auth;
         }
 
         // Return the constructed Request for test use

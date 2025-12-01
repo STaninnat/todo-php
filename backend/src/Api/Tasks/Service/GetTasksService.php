@@ -7,7 +7,6 @@ namespace App\Api\Tasks\Service;
 use App\Api\Request;
 use App\DB\TaskQueries;
 use App\Utils\RequestValidator;
-use App\Utils\TaskPaginator;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -49,28 +48,31 @@ class GetTasksService
      * @param Request $req Request object containing query parameters.
      *
      * @return array{
-     *     task: array<int|string, mixed>,
-     *     totalPages: int
-     * } Array containing task data and total pages.
+     *     task: array<int, array<string, mixed>>
+     * } Array containing task data.
      *
      * @throws InvalidArgumentException If 'user_id' is missing or invalid.
      * @throws RuntimeException If tasks cannot be retrieved from the database.
      */
     public function execute(Request $req): array
     {
-        $userId = RequestValidator::getString($req, 'user_id', 'User ID is required.');
+        // Retrieve user ID from authenticated session
+        $userId = RequestValidator::getAuthUserId($req);
 
         // Fetch tasks via TaskQueries
         $result = $this->taskQueries->getTasksByUserID($userId);
         RequestValidator::ensureSuccess($result, 'retrieve tasks', false, true);
 
-        // Calculate total pages for pagination
-        $paginator = new TaskPaginator($this->taskQueries);
-        $totalPages = $paginator->calculateTotalPages(10);
+        /** @var array<int, array<string, mixed>> $tasks */
+        $tasks = (array) $result->data;
+        foreach ($tasks as &$task) {
+            unset($task['user_id']);
+            unset($task['created_at']);
+        }
+        unset($task);
 
         return [
-            'task' => (array) $result->data,
-            'totalPages' => $totalPages,
+            'task' => $tasks,
         ];
     }
 }

@@ -58,9 +58,9 @@ class GetUserServiceTypeErrTest extends TestCase
     public static function invalidExecuteArgsProvider(): array
     {
         return [
-            'null instead of Request'   => [null],
-            'int instead of Request'    => [123],
-            'array instead of Request'  => [[]],
+            'null instead of Request' => [null],
+            'int instead of Request' => [123],
+            'array instead of Request' => [[]],
             'string instead of Request' => ['not-a-request'],
         ];
     }
@@ -81,54 +81,7 @@ class GetUserServiceTypeErrTest extends TestCase
         $this->service->execute($invalidArg);
     }
 
-    /**
-     * Provides invalid Request instances with missing or invalid user_id.
-     *
-     * Each case returns a callable that constructs an invalid Request.
-     *
-     * @return array<string, array{0:callable}>
-     */
-    public static function invalidUserIdProvider(): array
-    {
-        return [
-            // Case where user_id is missing
-            'user_id missing' => [
-                fn() => new Request()
-            ],
-            // Case where user_id exists but is null
-            'user_id null' => [
-                function () {
-                    $req = new Request();
-                    $req->params['user_id'] = null;
-                    return $req;
-                }
-            ],
-            // Case where user_id is empty string
-            'user_id empty string' => [
-                function () {
-                    $req = new Request();
-                    $req->params['user_id'] = '';
-                    return $req;
-                }
-            ],
-        ];
-    }
 
-    /**
-     * Test that execute() throws InvalidArgumentException
-     * when user_id is missing or invalid.
-     *
-     * @param callable $requestFactory Factory that returns a malformed Request.
-     *
-     * @return void
-     */
-    #[DataProvider('invalidUserIdProvider')]
-    public function testExecuteThrowsInvalidArgumentExceptionWhenUserIdInvalid(callable $requestFactory): void
-    {
-        $req = $requestFactory();
-        $this->expectException(InvalidArgumentException::class);
-        $this->service->execute($req);
-    }
 
     /**
      * Test that execute() throws RuntimeException when QueryResult success flag is false.
@@ -141,7 +94,7 @@ class GetUserServiceTypeErrTest extends TestCase
     public function testExecuteThrowsRuntimeExceptionWhenEnsureSuccessFails(): void
     {
         $req = new Request();
-        $req->params['user_id'] = '123';
+        $req->auth = ['id' => '123'];
 
         // Simulate a result that looks OK but marked as failed
         $result = QueryResult::ok(['username' => 'u', 'email' => 'e'], 1);
@@ -167,7 +120,7 @@ class GetUserServiceTypeErrTest extends TestCase
     public function testExecuteThrowsRuntimeExceptionWhenUserNotFound(): void
     {
         $req = new Request();
-        $req->params['user_id'] = '123';
+        $req->auth = ['id' => '123'];
 
         // Simulate a valid query but no rows found
         $result = QueryResult::ok(null, 0);
@@ -191,7 +144,7 @@ class GetUserServiceTypeErrTest extends TestCase
     public function testExecuteReturnsUserArrayOnSuccess(): void
     {
         $req = new Request();
-        $req->params['user_id'] = '123';
+        $req->auth = ['id' => '123'];
 
         // Simulate successful query result
         $result = QueryResult::ok(

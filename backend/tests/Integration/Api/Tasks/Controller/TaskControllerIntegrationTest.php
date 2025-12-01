@@ -127,7 +127,7 @@ final class TaskControllerIntegrationTest extends TestCase
      * 
      * @return Request
      */
-    private function makeRequestFromBody(array $body, string $method = 'POST'): Request
+    private function makeRequestFromBody(array $body, string $method = 'POST', ?string $userId = null): Request
     {
         $json = json_encode($body);
         if ($json === false) {
@@ -135,7 +135,11 @@ final class TaskControllerIntegrationTest extends TestCase
         }
 
         // Create Request with encoded JSON payload
-        return new Request($method, '/', [], $json);
+        $req = new Request($method, '/', [], $json);
+        if ($userId !== null) {
+            $req->auth = ['id' => $userId];
+        }
+        return $req;
     }
 
     /**
@@ -150,8 +154,7 @@ final class TaskControllerIntegrationTest extends TestCase
         $req = $this->makeRequestFromBody([
             'title' => 'Integration Add',
             'description' => 'Desc add',
-            'user_id' => $this->userId,
-        ]);
+        ], 'POST', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -186,8 +189,7 @@ final class TaskControllerIntegrationTest extends TestCase
     {
         $req = $this->makeRequestFromBody([
             'description' => 'no title',
-            'user_id' => $this->userId,
-        ]);
+        ], 'POST', $this->userId);
 
         // Expect validation failure due to missing title
         $this->expectException(InvalidArgumentException::class);
@@ -206,8 +208,7 @@ final class TaskControllerIntegrationTest extends TestCase
         $req = $this->makeRequestFromBody([
             'title' => $longTitle,
             'description' => 'Too long',
-            'user_id' => $this->userId,
-        ]);
+        ], 'POST', $this->userId);
 
         $this->expectException(RuntimeException::class);
         $this->controller->addTask($req, true);
@@ -228,7 +229,7 @@ final class TaskControllerIntegrationTest extends TestCase
             ('Other', 'D3', 'other_user');
         ");
 
-        $req = $this->makeRequestFromBody(['user_id' => $this->userId], 'GET');
+        $req = $this->makeRequestFromBody([], 'GET', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -245,8 +246,13 @@ final class TaskControllerIntegrationTest extends TestCase
 
         // Ensure all tasks belong to current user
         foreach ($res['data']['task'] as $t) {
-            $this->assertSame($this->userId, $t['user_id']);
+            $this->assertArrayNotHasKey('user_id', $t);
         }
+
+        $titles = array_column($res['data']['task'], 'title');
+        $this->assertContains('T1', $titles);
+        $this->assertContains('T2', $titles);
+        $this->assertNotContains('Other', $titles);
     }
 
     /**
@@ -263,35 +269,7 @@ final class TaskControllerIntegrationTest extends TestCase
             ('T2', 'D2', 'another_user');
         ");
 
-        $req = $this->makeRequestFromBody(['user_id' => $this->userId], 'GET');
-
-        /** @var array{
-         *   success: bool,
-         *   data: array{task: list<array{user_id: string}>}
-         * } $res
-         */
-        $res = $this->controller->getTasks($req, true);
-
-        // Expect only tasks belonging to current user
-        $this->assertCount(1, $res['data']['task']);
-        $this->assertSame($this->userId, $res['data']['task'][0]['user_id']);
-    }
-
-    /**
-     * Test that retrieved tasks are ordered chronologically by creation date.
-     *
-     * @return void
-     */
-    public function testTasksReturnedInChronologicalOrder(): void
-    {
-        $this->pdo->exec("
-            INSERT INTO tasks (title, description, user_id, created_at)
-            VALUES
-            ('First', 'D1', '{$this->userId}', '2024-01-01 00:00:00'),
-            ('Second', 'D2', '{$this->userId}', '2024-01-02 00:00:00');
-        ");
-
-        $req = $this->makeRequestFromBody(['user_id' => $this->userId], 'GET');
+        $req = $this->makeRequestFromBody([], 'GET', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -300,11 +278,37 @@ final class TaskControllerIntegrationTest extends TestCase
          */
         $res = $this->controller->getTasks($req, true);
 
-        // Ensure chronological order (ascending)
+        // Expect only tasks belonging to current user
+        $this->assertCount(1, $res['data']['task']);
+        $this->assertArrayNotHasKey('user_id', $res['data']['task'][0]);
+        $this->assertSame('T1', $res['data']['task'][0]['title']);
+    }
+
+    /**
+     * Test that retrieved tasks are ordered by updated_at (descending) and is_done (ascending).
+     *
+     * @return void
+     */
+    public function testTasksReturnedInCorrectOrder(): void
+    {
+        $this->queries->addTask('First', 'D1', $this->userId);
+        sleep(1);
+        $this->queries->addTask('Second', 'D2', $this->userId);
+
+        $req = $this->makeRequestFromBody([], 'GET', $this->userId);
+
+        /** @var array{
+         *   success: bool,
+         *   data: array{task: list<array{title: string}>}
+         * } $res
+         */
+        $res = $this->controller->getTasks($req, true);
+
+        // Ensure order (Second inserted last, so updated_at is later -> appears first)
         $this->assertTrue($res['success']);
         $this->assertCount(2, $res['data']['task']);
-        $this->assertSame('First', $res['data']['task'][0]['title']);
-        $this->assertSame('Second', $res['data']['task'][1]['title']);
+        $this->assertSame('Second', $res['data']['task'][0]['title']);
+        $this->assertSame('First', $res['data']['task'][1]['title']);
     }
 
     /**
@@ -324,9 +328,8 @@ final class TaskControllerIntegrationTest extends TestCase
             'id' => $id,
             'title' => 'New title',
             'description' => 'New desc',
-            'user_id' => $this->userId,
             'is_done' => true,
-        ]);
+        ], 'POST', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -355,9 +358,8 @@ final class TaskControllerIntegrationTest extends TestCase
             'id' => 99999,
             'title' => 'Does not exist',
             'description' => 'x',
-            'user_id' => $this->userId,
             'is_done' => false,
-        ]);
+        ], 'POST', $this->userId);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('No task found.');
@@ -379,9 +381,8 @@ final class TaskControllerIntegrationTest extends TestCase
 
         $req = $this->makeRequestFromBody([
             'id' => $id,
-            'user_id' => $this->userId,
             'is_done' => true,
-        ]);
+        ], 'POST', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -405,9 +406,8 @@ final class TaskControllerIntegrationTest extends TestCase
     {
         $req = $this->makeRequestFromBody([
             'id' => 54321,
-            'user_id' => $this->userId,
             'is_done' => true,
-        ]);
+        ], 'POST', $this->userId);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('No task found.');
@@ -429,8 +429,7 @@ final class TaskControllerIntegrationTest extends TestCase
 
         $req = $this->makeRequestFromBody([
             'id' => $id,
-            'user_id' => $this->userId,
-        ]);
+        ], 'POST', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -460,8 +459,7 @@ final class TaskControllerIntegrationTest extends TestCase
     {
         $req = $this->makeRequestFromBody([
             'id' => 77777,
-            'user_id' => $this->userId,
-        ]);
+        ], 'POST', $this->userId);
 
         $this->expectException(RuntimeException::class);
         $this->controller->deleteTask($req, true);
@@ -482,8 +480,7 @@ final class TaskControllerIntegrationTest extends TestCase
         $addReq = $this->makeRequestFromBody([
             'title' => 'Lifecycle',
             'description' => 'Test full flow',
-            'user_id' => $this->userId,
-        ]);
+        ], 'POST', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -499,9 +496,8 @@ final class TaskControllerIntegrationTest extends TestCase
             'id' => $taskId,
             'title' => 'Lifecycle updated',
             'description' => 'Updated desc',
-            'user_id' => $this->userId,
             'is_done' => false,
-        ]);
+        ], 'POST', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -515,9 +511,8 @@ final class TaskControllerIntegrationTest extends TestCase
         // Mark done
         $doneReq = $this->makeRequestFromBody([
             'id' => $taskId,
-            'user_id' => $this->userId,
             'is_done' => true,
-        ]);
+        ], 'POST', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -529,7 +524,7 @@ final class TaskControllerIntegrationTest extends TestCase
         $this->assertSame(1, (int) $doneRes['data']['task']['is_done']);
 
         // Get
-        $getReq = $this->makeRequestFromBody(['user_id' => $this->userId], 'GET');
+        $getReq = $this->makeRequestFromBody([], 'GET', $this->userId);
 
         /** @var array{
          *   success: bool,
@@ -544,8 +539,7 @@ final class TaskControllerIntegrationTest extends TestCase
         // Delete
         $deleteReq = $this->makeRequestFromBody([
             'id' => $taskId,
-            'user_id' => $this->userId,
-        ]);
+        ], 'POST', $this->userId);
 
         /** @var array{success: bool} $deleteRes */
         $deleteRes = $this->controller->deleteTask($deleteReq, true);

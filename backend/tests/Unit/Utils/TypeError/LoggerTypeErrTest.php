@@ -23,27 +23,6 @@ use TypeError;
 class LoggerTypeErrTest extends TestCase
 {
     /**
-     * Ensure passing a string to setMaxDays() triggers TypeError.
-     *
-     * @return void
-     */
-    public function testSetMaxDaysWithStringThrowsTypeError(): void
-    {
-        // Arrange: create Logger instance with valid dependencies
-        $logger = new Logger(
-            '/tmp/logs',
-            new NativeFileSystem(),
-            new SystemClock()
-        );
-
-        // Assert: expect a TypeError when passing invalid type
-        $this->expectException(TypeError::class);
-
-        // Act: call method with wrong type (string instead of int)
-        $logger->setMaxDays("not-a-number");
-    }
-
-    /**
      * Ensure passing an int to setDebug() triggers TypeError.
      *
      * @return void
@@ -52,7 +31,6 @@ class LoggerTypeErrTest extends TestCase
     {
         // Arrange: create Logger instance
         $logger = new Logger(
-            '/tmp/logs',
             new NativeFileSystem(),
             new SystemClock()
         );
@@ -75,6 +53,6 @@ class LoggerTypeErrTest extends TestCase
         $this->expectException(TypeError::class);
 
         // Act: pass string instead of FileSystemInterface
-        new Logger('/tmp/logs', "not-an-fs");
+        new Logger("not-an-fs");
     }
 }

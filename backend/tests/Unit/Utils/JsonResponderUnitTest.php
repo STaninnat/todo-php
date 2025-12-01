@@ -115,21 +115,7 @@ class JsonResponderUnitTest extends TestCase
         $this->assertSame(['baz' => 123], $array['data']);
     }
 
-    /**
-     * Test adding totalPages to the response.
-     * 
-     * Common for paginated API responses.
-     * 
-     * @return void
-     */
-    public function testWithTotalPages(): void
-    {
-        // Add total pages (for paginated responses)
-        $responder = JsonResponder::success('Paged')->withTotalPages(10);
-        $array = $responder->toArray();
 
-        $this->assertSame(10, $array['totalPages']);
-    }
 
     /**
      * Test forcing the type of the response using withType().

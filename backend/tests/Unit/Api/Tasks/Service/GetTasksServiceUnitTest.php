@@ -52,18 +52,7 @@ class GetTasksServiceUnitTest extends TestCase
 
     use ApiTestHelperTrait;
 
-    /**
-     * Test that missing 'user_id' in request triggers InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testMissingUserIdThrowsException(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
 
-        $req = $this->makeRequest(); // Missing user_id field
-        $this->service->execute($req);
-    }
 
     /**
      * Test that a database query failure triggers RuntimeException.
@@ -80,25 +69,7 @@ class GetTasksServiceUnitTest extends TestCase
 
         $this->expectException(RuntimeException::class);
 
-        $req = $this->makeRequest(['user_id' => '123']);
-        $this->service->execute($req);
-    }
-
-    /**
-     * Test that an empty successful query still triggers RuntimeException.
-     *
-     * Simulates QueryResult::ok([]) — no tasks found.
-     *
-     * @return void
-     */
-    public function testGetTasksReturnsNoDataThrowsRuntimeException(): void
-    {
-        $this->taskQueries->method('getTasksByUserID')
-            ->willReturn(QueryResult::ok([]));
-
-        $this->expectException(Error::class);
-
-        $req = $this->makeRequest(['user_id' => '123']);
+        $req = $this->makeRequest([], [], [], 'GET', '/', ['id' => '123']);
         $this->service->execute($req);
     }
 
@@ -113,26 +84,37 @@ class GetTasksServiceUnitTest extends TestCase
     {
         // Sample mock task data
         $tasks = [
-            ['id' => 1, 'title' => 'Test Task'],
-            ['id' => 2, 'title' => 'Another Task'],
+            ['id' => 1, 'title' => 'Test Task', 'user_id' => 1, 'created_at' => '2023-01-01'],
+            ['id' => 2, 'title' => 'Another Task', 'user_id' => 1, 'created_at' => '2023-01-01'],
         ];
 
         // Simulate successful queries
         $this->taskQueries->method('getTasksByUserID')
             ->willReturn(QueryResult::ok($tasks, count($tasks)));
 
-        $this->taskQueries->method('getTotalTasks')
-            ->willReturn(QueryResult::ok(20));
+        // Simulate successful queries
+        $this->taskQueries->method('getTasksByUserID')
+            ->willReturn(QueryResult::ok($tasks, count($tasks)));
 
-        // Build request with user_id
-        $req = $this->makeRequest(['user_id' => '123']);
+        // Build request with auth
+        $req = $this->makeRequest([], [], [], 'GET', '/', ['id' => '123']);
 
         // Execute service
         $result = $this->service->execute($req);
 
         // Assertions for structure and values
-        $this->assertSame($tasks, $result['task']);
+        $expectedTasks = array_map(function ($t) {
+            unset($t['user_id']);
+            unset($t['created_at']);
+            return $t;
+        }, $tasks);
+
+        $this->assertEquals($expectedTasks, $result['task']);
         $this->assertCount(2, $result['task']);
-        $this->assertSame(2, $result['totalPages']); // ceil(20 / 10)
+        $this->assertArrayNotHasKey('totalPages', $result);
+
+        foreach ($result['task'] as $t) {
+            $this->assertArrayNotHasKey('created_at', $t);
+        }
     }
 }

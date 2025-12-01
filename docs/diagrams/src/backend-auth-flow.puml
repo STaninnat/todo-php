@@ -1,0 +1,117 @@
+@startuml backend-auth-flow
+title User Authentication Flows
+
+actor Client
+participant "Router" as Router
+participant "UserController" as Ctrl
+participant "AuthService" as Service
+participant "UserQueries" as DB
+participant "JwtService" as JWT
+participant "CookieManager" as Cookie
+
+== User Sign-Up Flow ==
+
+Client -> Router: POST /users/signup\n(username, email, password)
+activate Router
+Router -> Ctrl: signup(req)
+activate Ctrl
+Ctrl -> Service: SignupService->execute(req)
+activate Service
+
+Service -> Service: Validate Input
+Service -> DB: checkUserExists(username, email)
+activate DB
+DB --> Service: boolean
+deactivate DB
+
+alt User Exists
+    Service --> Ctrl: Throw InvalidArgumentException
+    Ctrl --> Router: Throw Exception
+    Router --> Client: 400 Bad Request
+else New User
+    Service -> Service: password_hash(password)
+    Service -> DB: createUser(id, username, email, hash)
+    activate DB
+    DB --> Service: User Data
+    deactivate DB
+
+    Service -> JWT: create(['id' => user.id])
+    activate JWT
+    JWT --> Service: JWT Token
+    deactivate JWT
+
+    Service -> Cookie: setAccessToken(token, expiry)
+    activate Cookie
+    Cookie --> Service: void
+    deactivate Cookie
+
+    Service --> Ctrl: void
+    Ctrl --> Router: JsonResponder::quickSuccess()
+    Router --> Client: 200 OK (Set-Cookie: access_token)
+end
+deactivate Service
+deactivate Ctrl
+deactivate Router
+
+== User Sign-In Flow ==
+
+Client -> Router: POST /users/signin\n(username, password)
+activate Router
+Router -> Ctrl: signin(req)
+activate Ctrl
+Ctrl -> Service: SigninService->execute(req)
+activate Service
+
+Service -> Service: Validate Input
+Service -> DB: getUserByName(username)
+activate DB
+DB --> Service: User Data (Hash)
+deactivate DB
+
+Service -> Service: password_verify(password, hash)
+
+alt Invalid Credentials
+    Service --> Ctrl: Throw InvalidArgumentException
+    Ctrl --> Router: Throw Exception
+    Router --> Client: 400 Bad Request
+else Valid Credentials
+    Service -> JWT: create(['id' => user.id])
+    activate JWT
+    JWT --> Service: JWT Token
+    deactivate JWT
+
+    Service -> Cookie: setAccessToken(token, expiry)
+    activate Cookie
+    Cookie --> Service: void
+    deactivate Cookie
+
+    Service --> Ctrl: void
+    Ctrl --> Router: JsonResponder::quickSuccess()
+    Router --> Client: 200 OK (Set-Cookie: access_token)
+end
+deactivate Service
+deactivate Ctrl
+deactivate Router
+
+== User Sign-Out Flow ==
+
+Client -> Router: POST /users/signout
+activate Router
+Router -> Ctrl: signout(req)
+activate Ctrl
+Ctrl -> Service: SignoutService->execute()
+activate Service
+
+Service -> Cookie: clearAccessToken()
+activate Cookie
+Cookie --> Service: void
+deactivate Cookie
+
+Service --> Ctrl: void
+deactivate Service
+Ctrl --> Router: JsonResponder::quickSuccess()
+deactivate Ctrl
+Router --> Client: 200 OK (Set-Cookie: access_token=deleted)
+deactivate Router
+
+@enduml

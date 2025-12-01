@@ -1,0 +1,81 @@
+@startuml backend-request-diagram
+title Backend Request Flow
+
+actor Client
+participant "index.php" as Index
+participant "RouterApp" as App
+participant "Router" as Router
+participant "Request" as Req
+participant "Middlewares" as MW
+participant "Controller" as Ctrl
+participant "Service" as Svc
+database "Database" as DB
+
+Client -> Index: HTTP Request
+activate Index
+
+Index -> App: new RouterApp(router, logger, db)
+activate App
+App -> App: registerMiddlewares()
+App -> App: registerRoutes()
+deactivate App
+
+Index -> Router: addMiddleware(DebugMiddleware)
+
+Index -> App: dispatch()
+activate App
+
+App -> Router: dispatch()
+activate Router
+
+Router -> Req: new Request()
+activate Req
+Req --> Router: request object
+deactivate Req
+
+Router -> Router: Match Route
+
+group Global Middlewares
+    Router -> MW: DebugMiddleware(req)
+    activate MW
+    MW --> Router
+    deactivate MW
+
+    Router -> MW: AuthMiddleware->refreshJwt(req)
+    activate MW
+    MW --> Router
+    deactivate MW
+end
+
+group Route Middlewares (if applicable)
+    Router -> MW: AuthMiddleware->requireAuth(req)
+    activate MW
+    MW --> Router
+    deactivate MW
+end
+
+Router -> Ctrl: handle(req)
+activate Ctrl
+
+Ctrl -> Svc: execute business logic
+activate Svc
+Svc -> DB: query
+activate DB
+DB --> Svc: result
+deactivate DB
+Svc --> Ctrl: data
+deactivate Svc
+
+Ctrl --> Router: response (data or JsonResponder)
+deactivate Ctrl
+
+Router --> App: response array
+deactivate Router
+
+App --> Index: response array
+deactivate App
+
+Index -> Client: JSON Response
+deactivate Index
+
+@enduml

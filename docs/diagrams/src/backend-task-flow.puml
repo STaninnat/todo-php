@@ -1,0 +1,59 @@
+@startuml backend-task-flow
+title Task Operations Flow (Add/Update/Delete)
+
+actor Client
+participant "Router" as Router
+participant "TaskController" as Ctrl
+participant "TaskService" as Service
+participant "TaskQueries" as DB
+
+note right of Client
+  Authenticated Request
+  (Cookie: access_token)
+end note
+
+Client -> Router: POST /tasks/add\n(title, description)
+activate Router
+
+Router -> Router: AuthMiddleware\n(Verify JWT & Set User in Req)
+
+Router -> Ctrl: addTask(req)
+activate Ctrl
+
+Ctrl -> Service: execute(req)
+activate Service
+
+Service -> Service: Validate Input
+
+Service -> DB: addTask(title, desc, userId)
+activate DB
+DB --> Service: New Task Data
+deactivate DB
+
+Service --> Ctrl: Task Data
+deactivate Service
+
+Ctrl --> Router: JsonResponder::success()
+deactivate Ctrl
+
+Router --> Client: 200 OK (Task JSON)
+deactivate Router
+
+== Other Operations (Similar Flow) ==
+
+Client -> Router: DELETE /tasks/delete\n(id)
+activate Router
+Router -> Ctrl: deleteTask(req)
+activate Ctrl
+Ctrl -> Service: execute(req)
+activate Service
+Service -> DB: deleteTask(id, userId)
+activate DB
+DB --> Service: Success
+deactivate DB
+Service --> Ctrl: Success
+deactivate Service
+Ctrl --> Router: 200 OK
+deactivate Router
+
+@enduml

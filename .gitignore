@@ -11,4 +11,5 @@ backend/vendor/
 backend/phpunit.xml
 backend/phpunit.xml.dist
 backend/.phpunit.result.cache
+backend/.phpstan.cache
 backend/tests/bootstrap.php

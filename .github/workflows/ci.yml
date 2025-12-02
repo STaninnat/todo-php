@@ -29,8 +29,8 @@ jobs:
       - name: Cache PHPstan
         uses: actions/cache@v4
         with:
-          path: ~/.cache/phpstan
-          key: phpstan-${{ runner.os }}-${{ hashFiles('backend/phpstan.neon') }}
+          path: backend/.phpstan.cache
+          key: phpstan-${{ runner.os }}-${{ hashFiles('backend/phpstan.neon', 'backend/composer.lock') }}
           restore-keys: phpstan-${{ runner.os }}-
 
       - name: Install dependencies
@@ -62,6 +62,24 @@ jobs:
 
       - name: Install dependencies
         run: cd backend && composer install --no-interaction --prefer-dist
+
+      - name: Install System Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+      - name: Create .env.test
+        run: |
+          echo "DB_HOST=${{ secrets.TEST_DB_HOST }}" >> backend/.env.test
+          echo "DB_PORT=${{ secrets.TEST_DB_PORT }}" >> backend/.env.test
+          echo "DB_NAME=${{ secrets.TEST_DB_NAME }}" >> backend/.env.test
+          echo "DB_USER=${{ secrets.TEST_DB_USER }}" >> backend/.env.test
+          echo "DB_PASS=${{ secrets.TEST_DB_PASS }}" >> backend/.env.test
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.TEST_MYSQL_ROOT_PASSWORD }}" >> backend/.env.test
+          echo "MYSQL_DATABASE=${{ secrets.TEST_MYSQL_DATABASE }}" >> backend/.env.test
+          echo "MYSQL_USER=${{ secrets.TEST_MYSQL_USER }}" >> backend/.env.test
+          echo "MYSQL_PASSWORD=${{ secrets.TEST_MYSQL_PASSWORD }}" >> backend/.env.test
+          echo "APP_ENV=testing" >> backend/.env.test
+          echo "APP_DEBUG=false" >> backend/.env.test
+          echo "JWT_SECRET=${{ secrets.TEST_JWT_SECRET }}" >> backend/.env.test
 
       - name: Run Tests (unit + integration + end to end)
         run: cd backend && composer test

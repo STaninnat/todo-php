@@ -60,6 +60,13 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
+      - name: Cache PHPUnit
+        uses: actions/cache@v4
+        with:
+          path: backend/.phpunit.cache
+          key: phpunit-${{ runner.os }}-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: phpunit-${{ runner.os }}-
+
       - name: Install dependencies
         run: cd backend && composer install --no-interaction --prefer-dist
 

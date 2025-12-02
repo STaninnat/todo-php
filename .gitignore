@@ -5,11 +5,11 @@ note*
 *.log
 .vscode/
 Logs/
-.phpunit.cache/
 
 backend/vendor/
 backend/phpunit.xml
 backend/phpunit.xml.dist
 backend/.phpunit.result.cache
+backend/.phpunit.cache
 backend/.phpstan.cache
 backend/tests/bootstrap.php

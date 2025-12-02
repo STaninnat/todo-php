@@ -4,6 +4,12 @@ set -e
 MODE="full"      # full = unit + integration
 FAST=false
 
+# Check for required tools
+if ! command -v xmllint &> /dev/null; then
+  echo "Error: xmllint is not installed. Please install libxml2-utils (Debian/Ubuntu) or libxml2 (Alpine)."
+  exit 1
+fi
+
 # Parse arguments
 for arg in "$@"; do
   case $arg in
@@ -86,6 +92,11 @@ run_integration() {
   echo "Running integration tests..."
   STATUS=0
 
+  if [ ! -f ".env.test" ] && [ ! -f "../.env.test" ]; then
+      echo "Error: .env.test file not found in current or parent directory."
+      exit 1
+  fi
+
   # Temp folder on host to store XML
   TEMP_DIR=$(mktemp -d)
   TEMP_XML="$TEMP_DIR/integration.xml"
@@ -139,6 +150,11 @@ run_integration() {
 run_e2e() {
   echo "Running E2E tests..."
   STATUS=0
+
+  if [ ! -f ".env.test" ] && [ ! -f "../.env.test" ]; then
+      echo "Error: .env.test file not found in current or parent directory."
+      exit 1
+  fi
 
   # Temp folder on host to store XML
   TEMP_DIR=$(mktemp -d)

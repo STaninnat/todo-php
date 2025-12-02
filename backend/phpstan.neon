@@ -2,6 +2,7 @@ includes:
     - vendor/phpstan/phpstan/conf/bleedingEdge.neon
 
 parameters:
+    tmpDir: .phpstan.cache
     level: max
     paths:
         - src

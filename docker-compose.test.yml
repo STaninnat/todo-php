@@ -17,6 +17,9 @@ services:
       - ./backend/phpunit.integration.xml.dist:/app/phpunit.integration.xml.dist
       - ./backend/phpunit.unit.xml.dist:/app/phpunit.unit.xml.dist
       - ./backend/phpunit.xml.dist:/app/phpunit.xml.dist
+      - ./backend/phpunit.e2e.xml:/app/phpunit.e2e.xml
+      - ./backend/phinx.php:/app/phinx.php
+      - ./backend/db:/app/db
     environment:
       APP_ENV: ${APP_ENV:-testing}
       APP_DEBUG: ${APP_DEBUG:-true}

@@ -66,7 +66,8 @@ class Router
     {
         $method = strtoupper($method);
         $path = rtrim($path, '/'); // normalize path
-        if ($path === '') $path = '/';
+        if ($path === '')
+            $path = '/';
 
         $this->routes[$method][$path] = [
             'handler' => $handler,
@@ -107,7 +108,8 @@ class Router
         // Normalize HTTP method and path
         $method = $request->method;
         $path = rtrim($request->path, '/');
-        if ($path === '') $path = '/';
+        if ($path === '')
+            $path = '/';
 
         $responderClass = $this->responderClass;
 
@@ -124,7 +126,7 @@ class Router
             $this->runMiddlewares($route['middlewares'], $request);
 
             // Execute route handler
-            $result = $this->callHandler($route['handler'], $request);
+            $result = $this->callHandler($route['handler'], $request, $forTest);
 
             // Handler returns JsonResponder
             if ($result instanceof JsonResponder) {
@@ -191,13 +193,15 @@ class Router
      *
      * - Supports both function and [object, method] handler styles
      * - Calls the handler with {@see Request} if required
+     * - Passes $forTest if the handler accepts a second argument
      *
      * @param callable $handler Route handler
      * @param Request  $request Request instance
+     * @param bool     $forTest Whether we are in test mode
      *
      * @return mixed Handler return value (array, JsonResponder, or primitive)
      */
-    private function callHandler(callable $handler, Request $request)
+    private function callHandler(callable $handler, Request $request, bool $forTest = false)
     {
         // Use reflection to inspect handler parameters
         if ($handler instanceof Closure) {
@@ -212,9 +216,16 @@ class Router
             throw new InvalidArgumentException('Handler must be Closure or [object, method]');
         }
 
-        // If handler expects parameters, inject Request
-        return $ref->getNumberOfParameters() > 0
-            ? call_user_func($handler, $request)
-            : call_user_func($handler);
+        $params = $ref->getParameters();
+        $args = [];
+
+        if (count($params) > 0) {
+            $args[] = $request;
+        }
+        if (count($params) > 1) {
+            $args[] = $forTest;
+        }
+
+        return call_user_func_array($handler, $args);
     }
 }

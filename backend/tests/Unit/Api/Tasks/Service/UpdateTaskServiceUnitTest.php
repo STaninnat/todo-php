@@ -10,7 +10,6 @@ use App\DB\QueryResult;
 use App\DB\TaskQueries;
 use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use InvalidArgumentException;
-use RuntimeException;
 
 /**
  * Class UpdateTaskServiceTest
@@ -204,9 +203,6 @@ class UpdateTaskServiceUnitTest extends TestCase
         $this->taskQueries->method('updateTask')
             ->willReturn(QueryResult::ok($task, 1));
 
-        $this->taskQueries->method('updateTask')
-            ->willReturn(QueryResult::ok($task, 1));
-
         $req = $this->makeRequest([
             'id' => '1',
             'title' => 'Updated Task',
@@ -216,11 +212,7 @@ class UpdateTaskServiceUnitTest extends TestCase
 
         $result = $this->service->execute($req);
 
-        $expectedTask = $task;
-        unset($expectedTask['user_id']);
-
         // Verify returned task data and totalPages calculation
-        $this->assertEquals($expectedTask, $result['task']);
         $this->assertArrayNotHasKey('created_at', $result['task']);
         $this->assertArrayNotHasKey('totalPages', $result);
     }

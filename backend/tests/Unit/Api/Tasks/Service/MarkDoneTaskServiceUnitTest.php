@@ -194,9 +194,6 @@ class MarkDoneTaskServiceUnitTest extends TestCase
         $this->taskQueries->method('markDone')
             ->willReturn(QueryResult::ok($task, 1));
 
-        $this->taskQueries->method('markDone')
-            ->willReturn(QueryResult::ok($task, 1));
-
         $req = $this->makeRequest([
             'id' => '1',
             'is_done' => 1
@@ -206,9 +203,9 @@ class MarkDoneTaskServiceUnitTest extends TestCase
 
         $expectedTask = $task;
         unset($expectedTask['user_id']);
+        unset($expectedTask['created_at']);
 
         $this->assertEquals($expectedTask, $result['task']);
-        $this->assertArrayNotHasKey('created_at', $result['task']);
         $this->assertArrayNotHasKey('totalPages', $result);
     }
 
@@ -227,8 +224,9 @@ class MarkDoneTaskServiceUnitTest extends TestCase
         $this->taskQueries->method('markDone')
             ->willReturn(QueryResult::ok($task, 1));
 
-        $this->taskQueries->method('markDone')
-            ->willReturn(QueryResult::ok($task, 1));
+        $expectedTask = $task;
+        unset($expectedTask['user_id']);
+        unset($expectedTask['created_at']);
 
         // --- case "0"
         $req = $this->makeRequest([
@@ -237,7 +235,7 @@ class MarkDoneTaskServiceUnitTest extends TestCase
         ], [], [], 'POST', '/', ['id' => '123']);
         $result = $this->service->execute($req);
 
-        $this->assertSame($task, $result['task']);
+        $this->assertSame($expectedTask, $result['task']);
 
         // --- case "1"
         $req = $this->makeRequest([
@@ -246,7 +244,7 @@ class MarkDoneTaskServiceUnitTest extends TestCase
         ], [], [], 'POST', '/', ['id' => '123']);
         $result = $this->service->execute($req);
 
-        $this->assertSame($task, $result['task']);
+        $this->assertSame($expectedTask, $result['task']);
     }
 
     /**

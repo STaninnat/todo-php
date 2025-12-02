@@ -90,7 +90,7 @@ class UserFlowTest extends TestCase
         $password = 'Secret123!';
         $name = 'E2E User';
 
-        // 2. Sign Up
+        // 1. Sign Up
         $reqSignup = new Request(
             'POST',
             '/v1/users/signup',
@@ -105,7 +105,7 @@ class UserFlowTest extends TestCase
         $resSignup = $this->app->dispatch($reqSignup, true);
         $this->assertTrue($resSignup['success'] ?? false, 'Signup failed');
 
-        // 3. Sign In
+        // 2. Sign In
         $reqSignin = new Request(
             'POST',
             '/v1/users/signin',
@@ -140,7 +140,7 @@ class UserFlowTest extends TestCase
 
         $reqCreate = new Request(
             'POST',
-            '/v1/tasks/add', // Note: RouterApp registers /tasks/add, not /tasks for POST? Check RouterApp.php
+            '/v1/tasks/add',
             [],
             (string) json_encode([
                 'title' => 'E2E Task',

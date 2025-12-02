@@ -63,5 +63,5 @@ jobs:
       - name: Install dependencies
         run: cd backend && composer install --no-interaction --prefer-dist
 
-      - name: Run Tests (unit + integration + docker up/down)
+      - name: Run Tests (unit + integration + end to end)
         run: cd backend && composer test

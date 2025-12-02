@@ -59,7 +59,9 @@ class RouterApp
      * @param string          $apiPrefix      Base API prefix (default: "/v1")
      * @param UserController|null $userController Optional custom UserController
      * @param TaskController|null $taskController Optional custom TaskController
+     * @param TaskController|null $taskController Optional custom TaskController
      * @param AuthMiddleware|null $authMiddleware Optional custom AuthMiddleware
+     * @param CookieManager|null  $cookieManager  Optional custom CookieManager
      */
     public function __construct(
         Router $router,
@@ -68,7 +70,8 @@ class RouterApp
         string $apiPrefix = '/v1',
         ?UserController $userController = null,
         ?TaskController $taskController = null,
-        ?AuthMiddleware $authMiddleware = null
+        ?AuthMiddleware $authMiddleware = null,
+        ?CookieManager $cookieManager = null
     ) {
         $this->router = $router;
         $this->logger = $logger;
@@ -78,7 +81,7 @@ class RouterApp
         $pdo = $database->getConnection();
         $userQueries = new UserQueries($pdo);
         $taskQueries = new TaskQueries($pdo);
-        $cookieManager = new CookieManager();
+        $cookieManager = $cookieManager ?? new CookieManager();
         $jwt = new JwtService();
 
         // Middleware
@@ -142,7 +145,7 @@ class RouterApp
     private function registerRoutes(): void
     {
         $authMiddlewareFn = [
-            function (Request  $req) {
+            function (Request $req) {
                 try {
                     $this->authMiddleware->requireAuth($req);
                     $this->logger->info("Auth passed for {$req->method} {$req->path}");
@@ -195,7 +198,7 @@ class RouterApp
             $fullPath = $this->apiPrefix . $path;
 
             // Register route handler with middleware
-            $this->router->register($method, $fullPath, function (Request $req) use ($controller, $handler, $fullPath) {
+            $this->router->register($method, $fullPath, function (Request $req, bool $forTest = false) use ($controller, $handler, $fullPath) {
                 try {
                     // Check JSON parse errors from Request
                     if ($req->getJsonError() !== null) {
@@ -205,7 +208,7 @@ class RouterApp
                     $this->logger->info("Route called: $fullPath -> " . get_class($controller) . "::$handler");
 
                     // Get request data and invoke controller method
-                    $data = $controller->$handler($req);
+                    $data = $controller->$handler($req, $forTest);
                     $this->logger->info("Response prepared for $fullPath");
 
                     return $data;

@@ -70,7 +70,15 @@ To set up the development environment and start the necessary Docker containers,
 composer up
 ```
 
-This script orchestrates the creation and configuration of the application's containerized environment.
+> **Note:** This script orchestrates the creation and configuration of the application's containerized environment.
+
+### 2. Database Migrations
+
+After starting the environment, you must run the database migrations to set up the schema:
+
+```bash
+composer phinx:migrate
+```
 
 To stop the Docker containers when you're done:
 
@@ -78,7 +86,7 @@ To stop the Docker containers when you're done:
 composer down
 ```
 
-### 2. Running the Test Suite
+### 3. Running the Test Suite
 
 To verify the integrity of the codebase and ensure that all implemented features are functioning correctly, run the test suite from the `backend` directory:
 
@@ -87,23 +95,25 @@ cd backend
 composer test
 ```
 
-This command performs the following operations:
-
-- Executes **unit tests** against the application logic.
-- Executes **integration tests** by automatically starting the test Docker containers, running the tests, and then stopping the containers.
-
-**Note:** The integration tests handle the Docker environment lifecycle automatically, so you don't need to manually run `composer up:test` beforehand.
+> **Note:** This command performs the following operations:
+>
+> - Executes **unit tests** against the application logic.
+> - Executes **integration tests** by automatically starting the test Docker containers, running the tests, and then stopping the containers.
+>
+> The integration tests handle the Docker environment lifecycle automatically, so you don't need to manually run `composer up:test` beforehand.
 
 You can also run specific test types:
 
 ```bash
 cd backend
+composer test                   # Run all tests (unit + integration + e2e)
 composer test:unit              # Run only unit tests
 composer test:integration       # Run only integration tests
 composer test:integration:fast  # Run integration tests using existing containers
+composer test:e2e               # Run end-to-end tests (full stack with real DB)
 ```
 
-### 3. Code Quality Verification
+### 4. Code Quality Verification
 
 To maintain high code quality standards, run the static analysis and linting tools from the `backend` directory:
 
@@ -120,9 +130,10 @@ The codebase is organized as follows:
 
 - `backend/`: This directory contains all backend-related code and configuration:
   - `backend/src/`: Core application source code, including API controllers, business logic, and database interaction layers.
-  - `backend/tests/`: Comprehensive test suite, ensuring coverage for both unit logic and integration flows.
+  - `backend/tests/`: Comprehensive test suite, ensuring coverage for unit, integration, and E2E flows.
+  - `backend/db/`: Database migrations (Phinx) and seeds.
   - `backend/vendor/`: Composer dependencies.
-  - Backend configuration files: `composer.json`, `phpstan.neon`, `phpunit.*.xml*`.
+  - Backend configuration files: `composer.json`, `phpstan.neon`, `phpunit.*.xml*`, `phinx.php`.
 - `frontend/`: This directory is prepared for future frontend development:
   - `frontend/public/`: Frontend assets (currently empty, ready for future use).
 - `scripts/`: Utility shell scripts used to automate Docker management, testing procedures, and maintenance tasks.

@@ -31,6 +31,7 @@
     "test:unit": "cd .. && scripts/test.sh unit",
     "test:integration": "cd .. && scripts/test.sh integration",
     "test:integration:fast": "cd .. && scripts/test.sh integration --fast",
+    "test:e2e": "cd .. && scripts/test.sh e2e",
     "clean": "cd .. && scripts/clean.sh",
     "phinx:migrate": "cd .. && scripts/phinx.sh migrate",
     "phinx:rollback": "cd .. && scripts/phinx.sh rollback",

@@ -1,8 +1,14 @@
 name: CI
 
 on:
+  push:
+    branches: ["main", "master"]
   pull_request:
     branches: ["main", "master"]
+
+defaults:
+  run:
+    working-directory: ./backend
 
 jobs:
   lint:
@@ -22,22 +28,22 @@ jobs:
       - name: Cache Composer
         uses: actions/cache@v4
         with:
-          path: backend/vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Cache PHPstan
         uses: actions/cache@v4
         with:
-          path: backend/.phpstan.cache
-          key: phpstan-${{ runner.os }}-${{ hashFiles('backend/phpstan.neon', 'backend/composer.lock') }}
+          path: .phpstan.cache
+          key: phpstan-${{ runner.os }}-${{ hashFiles('phpstan.neon', 'composer.lock') }}
           restore-keys: phpstan-${{ runner.os }}-
 
       - name: Install dependencies
-        run: cd backend && composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist
 
       - name: Run Linter and PHPStan
-        run: cd backend && composer check:hard
+        run: composer check:hard
 
   tests:
     name: Tests
@@ -56,19 +62,19 @@ jobs:
       - name: Cache Composer
         uses: actions/cache@v4
         with:
-          path: backend/vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Cache PHPUnit
         uses: actions/cache@v4
         with:
-          path: backend/.phpunit.cache
-          key: phpunit-${{ runner.os }}-${{ hashFiles('backend/composer.lock') }}
+          path: .phpunit.cache
+          key: phpunit-${{ runner.os }}-${{ hashFiles('composer.lock') }}
           restore-keys: phpunit-${{ runner.os }}-
 
       - name: Install dependencies
-        run: cd backend && composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist
 
       - name: Install System Dependencies
         run: sudo apt-get update && sudo apt-get install -y libxml2-utils
@@ -89,4 +95,4 @@ jobs:
           echo "JWT_SECRET=${{ secrets.TEST_JWT_SECRET }}" >> .env.test
 
       - name: Run Tests (unit + integration + end to end)
-        run: cd backend && composer test
+        run: composer test

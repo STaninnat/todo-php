@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { App } from './App';
 
-test('renders Bun + React header', () => {
+test('renders Todo App header', () => {
   render(<App />);
-  const headerElement = screen.getByText(/Bun \+ React/i);
+  const headerElement = screen.getByText(/Todo App/i);
   expect(headerElement).toBeInTheDocument();
 });

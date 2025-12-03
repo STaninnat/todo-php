@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+defaults:
+  run:
+    working-directory: ./backend
+
+jobs:
+  lint:
+    name: Lint (PHPStan & Coding Style)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Cache PHPstan
+        uses: actions/cache@v4
+        with:
+          path: .phpstan.cache
+          key: phpstan-${{ runner.os }}-${{ hashFiles('phpstan.neon', 'composer.lock') }}
+          restore-keys: phpstan-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run Linter and PHPStan
+        run: composer check:hard
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Cache PHPUnit
+        uses: actions/cache@v4
+        with:
+          path: .phpunit.cache
+          key: phpunit-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: phpunit-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install System Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+      - name: Create .env.test
+        run: |
+          echo "DB_HOST=${{ secrets.TEST_DB_HOST }}" >> ../.env.test
+          echo "DB_PORT=${{ secrets.TEST_DB_PORT }}" >> ../.env.test
+          echo "DB_NAME=${{ secrets.TEST_DB_NAME }}" >> ../.env.test
+          echo "DB_USER=${{ secrets.TEST_DB_USER }}" >> ../.env.test
+          echo "DB_PASS=${{ secrets.TEST_DB_PASS }}" >> ../.env.test
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.TEST_MYSQL_ROOT_PASSWORD }}" >> ../.env.test
+          echo "MYSQL_DATABASE=${{ secrets.TEST_MYSQL_DATABASE }}" >> ../.env.test
+          echo "MYSQL_USER=${{ secrets.TEST_MYSQL_USER }}" >> ../.env.test
+          echo "MYSQL_PASSWORD=${{ secrets.TEST_MYSQL_PASSWORD }}" >> ../.env.test
+          echo "APP_ENV=testing" >> ../.env.test
+          echo "APP_DEBUG=false" >> ../.env.test
+          echo "JWT_SECRET=${{ secrets.TEST_JWT_SECRET }}" >> ../.env.test
+
+      - name: Run Tests (unit + integration + end to end)
+        run: composer test

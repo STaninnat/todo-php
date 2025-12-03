@@ -1,15 +1,46 @@
-note*
-*.txt
-.env*
-*.cache
-*.log
+# =========================
+# General / OS / IDE
+# =========================
+.DS_Store
 .vscode/
-Logs/
+.idea/
+*.log
+logs/
+*.txt
+note*
+.env*
 
+# =========================
+# Dependencies
+# =========================
+node_modules/
 backend/vendor/
+
+# =========================
+# Frontend (Bun/React)
+# =========================
+# Build output
+dist/
+out/
+*.tgz
+
+# Testing & Coverage
+coverage/
+*.lcov
+report.*.json
+
+# Caches & Metadata
+.eslintcache
+.cache/
+*.tsbuildinfo
+
+# =========================
+# Backend (PHP)
+# =========================
 backend/phpunit.xml
 backend/phpunit.xml.dist
 backend/.phpunit.result.cache
 backend/.phpunit.cache
 backend/.phpstan.cache
 backend/tests/bootstrap.php
+Logs/

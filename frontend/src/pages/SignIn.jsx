@@ -1,6 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import './Auth.css';
 
 export default function SignIn() {
     const [formData, setFormData] = useState({

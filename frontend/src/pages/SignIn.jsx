@@ -2,12 +2,14 @@ import React from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Auth.css';
+import { validateEmail } from '../utils/validation';
 
 export default function SignIn() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
+    const [error, setError] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -15,10 +17,18 @@ export default function SignIn() {
             ...prev,
             [name]: value,
         }));
+        setError('');
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (!validateEmail(formData.email)) {
+            setError('Please enter a valid email address.');
+            return;
+        }
+
+        setError('');
 
         console.log('Form submitted:', formData);
 
@@ -51,6 +61,8 @@ export default function SignIn() {
                         required
                     />
                 </div>
+                {error && <div className="auth-error">{error}</div>}
+
                 <button type="submit">Sign In</button>
             </form>
             <p>

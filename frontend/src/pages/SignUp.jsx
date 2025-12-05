@@ -2,6 +2,7 @@ import React from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Auth.css';
+import { validateEmail, validatePassword, validateConfirmPassword } from '../utils/validation';
 
 export default function SignUp() {
     // Initialize state
@@ -11,6 +12,7 @@ export default function SignUp() {
         password: '',
         confirmPassword: '',
     });
+    const [error, setError] = useState('');
 
     // Handle input changes
     const handleChange = (e) => {
@@ -19,17 +21,29 @@ export default function SignUp() {
             ...prev,
             [name]: value,
         }));
+        setError('');
     };
 
     // Handle form submission (just logging for now)
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (formData.password !== formData.confirmPassword) {
-            alert('Passwords do not match!');
+        if  (!validateEmail(formData.email)) {
+            setError('Please enter a valid email address.');
             return;
         }
 
+        if (!validatePassword(formData.password)) {
+            setError('Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character.');
+            return;
+        }
+
+        if (!validateConfirmPassword(formData.password, formData.confirmPassword)) {
+            setError('Passwords do not match.');
+            return;
+        }
+
+        setError('');
         console.log('Form submitted:', formData);
 
         // TODO: Send data to backend API
@@ -83,6 +97,8 @@ export default function SignUp() {
                         required
                     />
                 </div>
+                {error && <div className="auth-error">{error}</div>}
+
                 <button type="submit">Sign Up</button>
             </form>
             <p>

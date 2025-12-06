@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import TodoItem from '../components/TodoItem';
 import { TodoForm } from '../components/TodoForm';
+import TodoList from '../components/TodoList';
 import './TodoPage.css';
 
 export default function TodoPage() {
-    const [todos, setTodos] = useState([
-        { id: 1, title: 'Learn React', description: 'Understand components', isDone: false },
-        { id: 2, title: 'Build Todo App', description: 'Create proper UI', isDone: true },
-    ]);
+    const [todos, setTodos] = useState([]);
 
     // This is the "Dummy Function"
     const handleAdd = (newTask) => {
@@ -23,17 +20,35 @@ export default function TodoPage() {
         setTodos((prevTodos) => [task, ...prevTodos]);
     };
 
+    const handleToggle = (id) => {
+        setTodos((prev) =>
+            prev.map((todo) => (todo.id === id ? { ...todo, isDone: !todo.isDone } : todo)),
+        );
+    };
+
+    const handleDelete = (id) => {
+        if (window.confirm('Are you sure you want to delete this task?')) {
+            setTodos((prev) => prev.filter((todo) => todo.id !== id));
+        }
+    };
+
+    const handleUpdate = (todo) => {
+        console.log('Opening update popup for:', todo);
+        alert(`Coming soon: Update popup for "${todo.title}"`);
+    };
+
     return (
         <div className="todo-container">
             <h1>My Tasks</h1>
 
             <TodoForm onAdd={handleAdd} />
 
-            <div className="todo-list">
-                {todos.map((todo) => (
-                    <TodoItem key={todo.id} todo={todo} />
-                ))}
-            </div>
+            <TodoList
+                todos={todos}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+            />
         </div>
     );
 }

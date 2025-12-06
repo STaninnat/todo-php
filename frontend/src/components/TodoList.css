@@ -1,0 +1,8 @@
+.todo-list-empty {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+}

@@ -1,0 +1,91 @@
+.todo-form {
+    background-color: var(--bg-card);
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.todo-form:focus-within {
+    box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    border-color: var(--accent-color);
+}
+
+.todo-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.todo-input::placeholder {
+    color: var(--text-secondary);
+}
+
+.form-expanded {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.form-expanded.active {
+    max-height: 200px;
+    opacity: 1;
+    margin-top: 1rem;
+}
+
+.todo-textarea {
+    width: 100%;
+    border: 1px solid var(--border-color);
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: inherit;
+    resize: none;
+    min-height: 80px;
+    margin-bottom: 1rem;
+    outline: none;
+}
+
+.todo-textarea:focus {
+    border-color: var(--accent-color);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.btn-add {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-add:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-cancel {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+}
+
+.btn-cancel:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}

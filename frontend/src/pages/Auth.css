@@ -69,11 +69,21 @@
 }
 
 .auth-container .auth-error {
-    background-color: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
+    background-color: #ffebee;
+    color: #c62828;
     padding: 0.75rem;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    font-size: 0.7rem;
-    border: 1px solid rgba(220, 53, 69, 0.2);
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.auth-container .auth-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
 }

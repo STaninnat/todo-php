@@ -1,10 +1,12 @@
 import React from 'react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './Auth.css';
 import { validateEmail, validatePassword, validateConfirmPassword } from '../utils/validation';
+import { api } from '../services/api';
 
 export default function SignUp() {
+    const navigate = useNavigate();
     // Initialize state
     const [formData, setFormData] = useState({
         username: '',
@@ -24,17 +26,19 @@ export default function SignUp() {
         setError('');
     };
 
-    // Handle form submission (just logging for now)
-    const handleSubmit = (e) => {
+    // Handle form submission
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if  (!validateEmail(formData.email)) {
+        if (!validateEmail(formData.email)) {
             setError('Please enter a valid email address.');
             return;
         }
 
         if (!validatePassword(formData.password)) {
-            setError('Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character.');
+            setError(
+                'Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character.'
+            );
             return;
         }
 
@@ -44,9 +48,25 @@ export default function SignUp() {
         }
 
         setError('');
-        console.log('Form submitted:', formData);
 
-        // TODO: Send data to backend API
+        try {
+            await api.register({
+                username: formData.username,
+                email: formData.email,
+                password: formData.password,
+            });
+            // Auto-login: Redirect directly to Home
+            navigate('/');
+        } catch (err) {
+            // Error Handling Logic:
+            // 4xx (Client Error) -> Show specific message (e.g. "Email taken")
+            // 5xx (Server Error) or Network Error -> Show generic message
+            if (err.status && err.status >= 400 && err.status < 500) {
+                setError(err.message);
+            } else {
+                setError('Something went wrong. Please try again later.');
+            }
+        }
     };
 
     return (

@@ -1,0 +1,47 @@
+.delete-modal-content p {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.delete-modal-content .delete-warning {
+    font-size: 0.85rem;
+    color: #dc3545; /* Bootstrap danger red */
+    margin-bottom: 1.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.modal-actions button {
+    padding: 0.6rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-cancel {
+    background-color: transparent;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-secondary);
+}
+
+.btn-cancel:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.btn-delete-confirm {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-delete-confirm:hover {
+    background-color: #bb2d3b;
+}

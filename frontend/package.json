@@ -13,10 +13,12 @@
     "prepare": "cd .. && git config core.hooksPath frontend/.husky"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.12",
     "lucide-react": "^0.556.0",
     "prop-types": "^15.8.1",
     "react": "^19",
     "react-dom": "^19",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.10.0"
   },
   "devDependencies": {

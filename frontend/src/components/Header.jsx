@@ -1,38 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { api } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
 import { CheckSquare, LogOut, LogIn } from 'lucide-react';
 import './Header.css';
 
 export default function Header() {
-    const [user, setUser] = useState(null);
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Check auth status on mount and when location changes (e.g. after login redirect)
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const userData = await api.me();
-                if (userData && userData.user) {
-                    setUser(userData.user);
-                }
-            } catch (err) {
-                if (process.env.NODE_ENV !== 'production') {
-                    console.error('Failed to check auth status', err);
-                }
-                setUser(null);
-            }
-        };
-        checkAuth();
-    }, [location.pathname]); // Re-check when route changes
-
     const handleLogout = async () => {
         try {
-            await api.logout();
-            setUser(null);
-            navigate('/signin'); // Or stay on home? User said "disappear when machine shut down"
-            window.location.reload(); // Hard reload to clear any local state/cache just in case
+            await logout();
+            navigate('/signin'); 
         } catch (err) {
             if (process.env.NODE_ENV !== 'production') {
                 console.error('Logout failed', err);

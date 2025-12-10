@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import SignUp from './pages/SignUp';
 import SignIn from './pages/SignIn';
 import TodoPage from './pages/TodoPage';
@@ -8,6 +9,7 @@ import Header from './components/Header';
 export function App() {
     return (
         <BrowserRouter>
+            <Toaster position="bottom-right" />
             <Header />
             <Routes>
                 <Route path="/signup" element={<SignUp />} />

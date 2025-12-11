@@ -61,8 +61,8 @@ class GetTasksService
         $userId = RequestValidator::getAuthUserId($req);
 
         // Pagination parameters
-        $page = isset($req->query['page']) ? (int)$req->query['page'] : 1;
-        $limit = isset($req->query['limit']) ? (int)$req->query['limit'] : 10;
+        $page = isset($req->query['page']) && is_numeric($req->query['page']) ? (int)$req->query['page'] : 1;
+        $limit = isset($req->query['limit']) && is_numeric($req->query['limit']) ? (int)$req->query['limit'] : 10;
 
         if ($page < 1) $page = 1;
         if ($limit < 1) $limit = 10;

@@ -305,6 +305,6 @@ class TaskQueries
         }
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ? (int) $row['total'] : 0;
+        return is_array($row) && isset($row['total']) && is_numeric($row['total']) ? (int) $row['total'] : 0;
     }
 }

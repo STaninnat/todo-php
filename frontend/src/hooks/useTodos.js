@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { api } from '../services/api';
@@ -7,57 +7,112 @@ const GUEST_KEY = 'guest_todos';
 
 export function useTodos() {
     const queryClient = useQueryClient();
-    const [isGuest, setIsGuest] = useState(true);
 
+    const [page, setPage] = useState(1);
     // --- Query: Fetch Todos ---
-    const { data: todos = [] } = useQuery({
-        queryKey: ['todos'],
+    const { data: queryData } = useQuery({
+        queryKey: ['todos', page], 
         queryFn: async () => {
              try {
-                const data = await api.get('/tasks');
+                const data = await api.get(`/tasks?page=${page}&limit=10`);
                 if (data && data.task && Array.isArray(data.task)) {
-                    setIsGuest(false);
-                    return data.task.map(t => ({
+                    const mappedTodos = data.task.map(t => ({
                         id: t.id, 
                         title: t.title, 
                         description: t.description, 
                         isDone: !!t.is_done 
                     }));
+                    
+                    return {
+                        todos: mappedTodos,
+                        isGuest: false,
+                        pagination: {
+                            totalPages: data.pagination ? data.pagination.total_pages : 1
+                        }
+                    };
                 }
-                return [];
+                return { todos: [], isGuest: false, pagination: { totalPages: 1 } };
              } catch (err) {
-                 if (err.status === 401) {
-                     setIsGuest(true);
+                 // Fallback to guest mode on:
+                 // - 401 (Unauthorized)
+                 // - 5xx (Backend Error / Proxy Error / Connection Refused from Proxy)
+                 // - Network Error (no status)
+                 const isBackendDown = !err.status || err.status >= 500;
+                 if (err.status === 401 || isBackendDown) {
                      const saved = localStorage.getItem(GUEST_KEY);
-                     return saved ? JSON.parse(saved) : [];
+                     let allTodos = saved ? JSON.parse(saved) : [];
+                     
+                     // Sort to match backend: isDone ASC, then Created/ID DESC
+                     allTodos.sort((a, b) => {
+                         if (a.isDone === b.isDone) {
+                             return b.id - a.id; 
+                         }
+                         return a.isDone ? 1 : -1;
+                     });
+                     
+                     // Client-side pagination
+                     const limit = 10;
+                     const totalItems = allTodos.length;
+                     const totalPages = Math.ceil(totalItems / limit) || 1;
+                     
+                     const startIndex = (page - 1) * limit;
+                     const slicedTodos = allTodos.slice(startIndex, startIndex + limit);
+
+                     return {
+                         todos: slicedTodos,
+                         isGuest: true,
+                         pagination: { totalPages }
+                     };
                  }
                  throw err;
              }
         },
-        initialData: [],
+        // Fallback initial data
+        initialData: { todos: [], isGuest: true, pagination: { totalPages: 1 } },
+        keepPreviousData: true, 
     });
+
+    // Derive state from query data
+    const todos = queryData?.todos || [];
+    const isGuest = queryData?.isGuest ?? true;
+    const totalPages = queryData?.pagination?.totalPages || 1;
+
+    // Auto-navigate to previous page if current page becomes empty
+    useEffect(() => {
+        if (page > totalPages && page > 1) {
+            // eslint-disable-next-line
+            setPage(prev => Math.max(prev - 1, 1));
+        }
+    }, [page, totalPages]);
 
     // Helper to save to LS
     const saveToLS = (newTodos) => {
         localStorage.setItem(GUEST_KEY, JSON.stringify(newTodos));
     };
+    
+    // Helper to get from LS
+    const getFromLS = () => {
+        const saved = localStorage.getItem(GUEST_KEY);
+        return saved ? JSON.parse(saved) : [];
+    }
 
     // --- Mutation: Add Todo ---
     const addMutation = useMutation({
         mutationFn: async (newTask) => {
             if (isGuest) {
-                // Return mock response for guest
-                return { 
+                const current = getFromLS();
+                const todo = { 
                     ...newTask, 
                     id: Date.now(), 
                     isDone: false 
                 };
+                saveToLS([todo, ...current]);
+                return todo;
             } else {
                  const response = await api.post('/tasks/add', {
                      title: newTask.title,
                      description: newTask.description
                  });
-                 // Map backend response to frontend model
                  if (response && response.task) {
                      return {
                          id: response.task.id,
@@ -69,92 +124,35 @@ export function useTodos() {
                  throw new Error("Invalid response from server");
             }
         },
-        onMutate: async (newTask) => {
-            // Cancel outgoing refetches
-            await queryClient.cancelQueries({ queryKey: ['todos'] });
-            
-            // Snapshot previous value
-            const previousTodos = queryClient.getQueryData(['todos']);
-
-            // Optimistic Update
-            const optimisticTodo = { 
-                id: Date.now(), 
-                title: newTask.title, 
-                description: newTask.description, 
-                isDone: false 
-            };
-
-            queryClient.setQueryData(['todos'], old => [optimisticTodo, ...old]);
-
-            return { previousTodos };
-        },
-        onError: (err, variables, context) => {
-            toast.error(err.message || "Failed to add task");
-            if (context?.previousTodos) {
-                queryClient.setQueryData(['todos'], context.previousTodos);
-            }
-        },
         onSuccess: () => {
              toast.success('Task added successfully');
-             // In Guest mode, we must manually update the cache with the "saved" (mocked) todo 
-             // because there is no server to refetch from that would hold this new data permanently 
-             // if we rely solely on invalidation (since invalidation re-runs queryFn which reads LS).
-             // However, for Guest mode, we also need to persist to LS.
-             
-             if (isGuest) {
-                 queryClient.setQueryData(['todos'], old => {
-                     saveToLS(old);
-                     return old;
-                 });
-             } else {
-                 // Cloud mode: Invalidate to get fresh data
-                 queryClient.invalidateQueries({ queryKey: ['todos'] }); 
-             }
+             queryClient.invalidateQueries({ queryKey: ['todos'] });
+        },
+        onError: (err) => {
+            toast.error(err.message || "Failed to add task");
         }
     });
-    
-    // REFACTORING MUTATIONS TO BE SIMPLER FOR GUEST/CLOUD HYBRID
-    // The previous implementation had complex optimistic logic in `onMutate`.
-    // For this specific hybrid app, it might be cleaner to separate the logic inside the mutationFn 
-    // or handle the side-effects (LS vs Server) differently.
-    
-    // Let's try a cleaner approach for `addTodo` that handles both:
-    
-    const addTodo = async (newTask) => {
-        addMutation.mutate(newTask);
-    };
+
+    const addTodo = (newTask) => addMutation.mutate(newTask);
 
     // --- Mutation: Toggle Todo ---
     const toggleMutation = useMutation({
         mutationFn: async (id) => {
             if (isGuest) {
+                 const current = getFromLS();
+                 const updated = current.map(t => t.id === id ? { ...t, isDone: !t.isDone } : t);
+                 saveToLS(updated);
                  return { id };
             }
             await api.put('/tasks/mark_done', { id });
             return { id };
         },
-        onMutate: async (id) => {
-            await queryClient.cancelQueries({ queryKey: ['todos'] });
-            const previousTodos = queryClient.getQueryData(['todos']);
-            
-            queryClient.setQueryData(['todos'], old => 
-                old.map(t => t.id === id ? { ...t, isDone: !t.isDone } : t)
-            );
-            
-            return { previousTodos };
-        },
-        onError: (err, vars, context) => {
-            queryClient.setQueryData(['todos'], context.previousTodos);
-        },
         onSuccess: () => {
-            if (isGuest) {
-                saveToLS(queryClient.getQueryData(['todos']));
-            } else {
-               // queryClient.invalidateQueries({ queryKey: ['todos'] });
-               // For toggle, invalidation might cause a flash if the list order changes or is slow.
-               // Since we optimistically updated, we strictly don't *need* to invalidate immediately if we trust the server.
-               // But usually good practice.
-            }
+            // For toggle, invalidation is safest for consistency
+            queryClient.invalidateQueries({ queryKey: ['todos'] });
+        },
+        onError: (err) => {
+            toast.error(err.message || "Failed to toggle task");
         }
     });
 
@@ -163,29 +161,21 @@ export function useTodos() {
     // --- Mutation: Delete Todo ---
     const deleteMutation = useMutation({
         mutationFn: async (id) => {
-            if (isGuest) return id;
+            if (isGuest) {
+                const current = getFromLS();
+                const updated = current.filter(t => t.id !== id);
+                saveToLS(updated);
+                return id;
+            }
             await api.delete('/tasks/delete', { id });
             return id;
         },
-        onMutate: async (id) => {
-            await queryClient.cancelQueries({ queryKey: ['todos'] });
-            const previousTodos = queryClient.getQueryData(['todos']);
-            
-            queryClient.setQueryData(['todos'], old => old.filter(t => t.id !== id));
-            
-            return { previousTodos };
-        },
-        onError: (err, vars, context) => {
-            toast.error(err.message || "Failed to delete task");
-            queryClient.setQueryData(['todos'], context.previousTodos);
-        },
         onSuccess: () => {
              toast.success('Task deleted');
-             if (isGuest) {
-                 saveToLS(queryClient.getQueryData(['todos']));
-             } else {
-                 queryClient.invalidateQueries({ queryKey: ['todos'] });
-             }
+             queryClient.invalidateQueries({ queryKey: ['todos'] });
+        },
+        onError: (err) => {
+            toast.error(err.message || "Failed to delete task");
         }
     });
 
@@ -194,7 +184,12 @@ export function useTodos() {
     // --- Mutation: Update Todo ---
     const updateMutation = useMutation({
         mutationFn: async (updatedTask) => {
-            if (isGuest) return updatedTask;
+            if (isGuest) {
+                const current = getFromLS();
+                const updated = current.map(t => t.id === updatedTask.id ? { ...t, ...updatedTask } : t);
+                saveToLS(updated);
+                return updatedTask;
+            }
             await api.put('/tasks/update', {
                 id: updatedTask.id,
                 title: updatedTask.title,
@@ -202,27 +197,12 @@ export function useTodos() {
             });
             return updatedTask;
         },
-        onMutate: async (updatedTask) => {
-             await queryClient.cancelQueries({ queryKey: ['todos'] });
-             const previousTodos = queryClient.getQueryData(['todos']);
-             
-             queryClient.setQueryData(['todos'], old => 
-                 old.map(t => t.id === updatedTask.id ? updatedTask : t)
-             );
-             
-             return { previousTodos };
-        },
-        onError: (err, vars, context) => {
-             toast.error(err.message || "Failed to update task");
-             queryClient.setQueryData(['todos'], context.previousTodos);
-        },
         onSuccess: () => {
              toast.success('Task updated');
-             if (isGuest) {
-                 saveToLS(queryClient.getQueryData(['todos']));
-             } else {
-                 queryClient.invalidateQueries({ queryKey: ['todos'] });
-             }
+             queryClient.invalidateQueries({ queryKey: ['todos'] });
+        },
+        onError: (err) => {
+             toast.error(err.message || "Failed to update task");
         }
     });
 
@@ -235,6 +215,9 @@ export function useTodos() {
         addTodo,
         toggleTodo,
         deleteTodo,
-        updateTodo
+        updateTodo,
+        page,
+        setPage,
+        totalPages
     };
 }

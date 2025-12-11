@@ -3,11 +3,12 @@ import { TodoForm } from '../components/TodoForm';
 import TodoList from '../components/TodoList';
 import DeleteTaskModal from '../components/DeleteTaskModal';
 import UpdateTaskModal from '../components/UpdateTaskModal';
+import Pagination from '../components/Pagination';
 import { useTodos } from '../hooks/useTodos';
 import './TodoPage.css';
 
 export default function TodoPage() {
-    const { todos, addTodo, toggleTodo, deleteTodo, updateTodo } = useTodos();
+    const { todos, addTodo, toggleTodo, deleteTodo, updateTodo, page, setPage, totalPages } = useTodos();
 
     // Modal State
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null, taskTitle: '' });
@@ -49,6 +50,12 @@ export default function TodoPage() {
                 onToggle={toggleTodo}
                 onDelete={handleDeleteClick}
                 onUpdate={handleUpdateClick}
+            />
+
+            <Pagination 
+                currentPage={page} 
+                totalPages={totalPages} 
+                onPageChange={setPage} 
             />
 
             {/* Modals */}

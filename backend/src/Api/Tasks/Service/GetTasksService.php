@@ -42,14 +42,15 @@ class GetTasksService
      * Execute the process of retrieving tasks for a user.
      *
      * - Validates required parameter `user_id`.
-     * - Retrieves all tasks belonging to the user.
+     * - Retrieves tasks belonging to the user with pagination.
      * - Calculates pagination information.
      *
      * @param Request $req Request object containing query parameters.
      *
      * @return array{
-     *     task: array<int, array<string, mixed>>
-     * } Array containing task data.
+     *     task: array<int, array<string, mixed>>,
+     *     pagination: array<string, int>
+     * } Array containing task data and pagination metadata.
      *
      * @throws InvalidArgumentException If 'user_id' is missing or invalid.
      * @throws RuntimeException If tasks cannot be retrieved from the database.
@@ -59,9 +60,20 @@ class GetTasksService
         // Retrieve user ID from authenticated session
         $userId = RequestValidator::getAuthUserId($req);
 
+        // Pagination parameters
+        $page = isset($req->query['page']) ? (int)$req->query['page'] : 1;
+        $limit = isset($req->query['limit']) ? (int)$req->query['limit'] : 10;
+
+        if ($page < 1) $page = 1;
+        if ($limit < 1) $limit = 10;
+
         // Fetch tasks via TaskQueries
-        $result = $this->taskQueries->getTasksByUserID($userId);
+        $result = $this->taskQueries->getTasksByPage($page, $limit, $userId);
         RequestValidator::ensureSuccess($result, 'retrieve tasks', false, true);
+
+        // Get total count
+        $totalItems = $this->taskQueries->countTasksByUserId($userId);
+        $totalPages = (int)ceil($totalItems / $limit);
 
         /** @var array<int, array<string, mixed>> $tasks */
         $tasks = (array) $result->data;
@@ -73,6 +85,12 @@ class GetTasksService
 
         return [
             'task' => $tasks,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $limit,
+                'total_items' => $totalItems,
+                'total_pages' => $totalPages
+            ]
         ];
     }
 }

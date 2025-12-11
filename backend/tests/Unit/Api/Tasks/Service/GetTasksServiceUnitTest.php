@@ -64,7 +64,7 @@ class GetTasksServiceUnitTest extends TestCase
     public function testGetTasksFailsThrowsRuntimeException(): void
     {
         // Mock query returning failure result
-        $this->taskQueries->method('getTasksByUserID')
+        $this->taskQueries->method('getTasksByPage')
             ->willReturn(QueryResult::fail(['DB error']));
 
         $this->expectException(RuntimeException::class);
@@ -89,12 +89,12 @@ class GetTasksServiceUnitTest extends TestCase
         ];
 
         // Simulate successful queries
-        $this->taskQueries->method('getTasksByUserID')
+        $this->taskQueries->method('getTasksByPage')
             ->willReturn(QueryResult::ok($tasks, count($tasks)));
 
-        // Simulate successful queries
-        $this->taskQueries->method('getTasksByUserID')
-            ->willReturn(QueryResult::ok($tasks, count($tasks)));
+        $this->taskQueries->method('countTasksByUserId')
+            ->willReturn(count($tasks));
+
 
         // Build request with auth
         $req = $this->makeRequest([], [], [], 'GET', '/', ['id' => '123']);
@@ -111,7 +111,8 @@ class GetTasksServiceUnitTest extends TestCase
 
         $this->assertEquals($expectedTasks, $result['task']);
         $this->assertCount(2, $result['task']);
-        $this->assertArrayNotHasKey('totalPages', $result);
+        $this->assertArrayHasKey('pagination', $result);
+        $this->assertEquals(1, $result['pagination']['current_page']);
 
         foreach ($result['task'] as $t) {
             $this->assertArrayNotHasKey('created_at', $t);

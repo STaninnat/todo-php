@@ -140,32 +140,36 @@ class TaskQueries
      */
     public function getTasksByPage(int $page, int $perPage = 10, ?string $userId = null): QueryResult
     {
-        $offset = ($page - 1) * $perPage;
+        try {
+            $offset = ($page - 1) * $perPage;
 
-        $query = "SELECT * FROM tasks";
-        if ($userId !== null) {
-            $query .= " WHERE user_id = :user_id";
+            $query = "SELECT * FROM tasks";
+            if ($userId !== null) {
+                $query .= " WHERE user_id = :user_id";
+            }
+
+            $query .= " ORDER BY is_done ASC, updated_at DESC LIMIT :limit OFFSET :offset";
+
+            $stmt = $this->pdo->prepare($query);
+            if ($stmt === false) {
+                return $this->failFromStmt(false);
+            }
+
+            if ($userId !== null) {
+                $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+            }
+            $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+            if (!$stmt->execute()) {
+                return $this->failFromStmt($stmt);
+            }
+
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return QueryResult::ok($data, count($data));
+        } catch (\Throwable $e) {
+            return QueryResult::fail([$e->getMessage()]);
         }
-
-        $query .= " ORDER BY is_done ASC, updated_at DESC LIMIT :limit OFFSET :offset";
-
-        $stmt = $this->pdo->prepare($query);
-        if ($stmt === false) {
-            return $this->failFromStmt(false);
-        }
-
-        if ($userId !== null) {
-            $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
-        }
-        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-
-        if (!$stmt->execute()) {
-            return $this->failFromStmt($stmt);
-        }
-
-        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return QueryResult::ok($data, count($data));
     }
 
     /**
@@ -282,5 +286,25 @@ class TaskQueries
         }
 
         return QueryResult::ok(null, $stmt->rowCount());
+    }
+
+    /**
+     * Count total tasks for a user
+     *
+     * @param string $userId
+     * 
+     * @return int
+     */
+    public function countTasksByUserId(string $userId): int
+    {
+        $query = "SELECT COUNT(*) as total FROM tasks WHERE user_id = ?";
+
+        $stmt = $this->pdo->prepare($query);
+        if ($stmt === false || !$stmt->execute([$userId])) {
+            return 0;
+        }
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? (int) $row['total'] : 0;
     }
 }

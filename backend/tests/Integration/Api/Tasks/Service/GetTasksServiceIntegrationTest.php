@@ -138,6 +138,7 @@ final class GetTasksServiceIntegrationTest extends TestCase
 
         // Verify output structure
         $this->assertArrayHasKey('task', $result);
+        $this->assertArrayHasKey('pagination', $result);
         $this->assertArrayNotHasKey('totalPages', $result);
         $this->assertCount(2, $result['task']); // only 2 tasks for user_123
 
@@ -190,6 +191,47 @@ final class GetTasksServiceIntegrationTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('retrieve tasks');
         $service->execute($req);
+    }
+
+    /**
+     * Test retrieval of tasks with pagination.
+     *
+     * Ensures:
+     * - Limit parameter restricts number of returned tasks
+     * - Pagination metadata is correct
+     *
+     * @return void
+     */
+    public function testGetTasksWithPagination(): void
+    {
+        // Preload tasks into the DB
+        $this->pdo->exec("
+            INSERT INTO tasks (title, description, user_id) VALUES
+            ('Task 1', 'Desc 1', 'user_page'),
+            ('Task 2', 'Desc 2', 'user_page'),
+            ('Task 3', 'Desc 3', 'user_page'),
+            ('Task 4', 'Desc 4', 'user_page'),
+            ('Task 5', 'Desc 5', 'user_page');
+        ");
+
+        $service = new GetTasksService($this->queries);
+
+        // Request page 1 with limit 2
+        $req = $this->makeRequest(['page' => 1, 'limit' => 2], 'user_page');
+        $result = $service->execute($req);
+
+        $this->assertCount(2, $result['task']);
+        $this->assertEquals(1, $result['pagination']['current_page']);
+        $this->assertEquals(2, $result['pagination']['per_page']);
+        $this->assertEquals(5, $result['pagination']['total_items']);
+        $this->assertEquals(3, $result['pagination']['total_pages']);
+
+        // Request page 3 (last page, should have 1 item)
+        $req = $this->makeRequest(['page' => 3, 'limit' => 2], 'user_page');
+        $result = $service->execute($req);
+
+        $this->assertCount(1, $result['task']);
+        $this->assertEquals(3, $result['pagination']['current_page']);
     }
 
 }

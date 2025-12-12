@@ -35,7 +35,7 @@ jobs:
       - name: Cache PHPstan
         uses: actions/cache@v4
         with:
-          path: backend/.phpstan.cache
+          path: .phpstan.cache
           key: phpstan-${{ runner.os }}-${{ hashFiles('phpstan.neon', 'composer.lock') }}
           restore-keys: phpstan-${{ runner.os }}-
 
@@ -69,7 +69,7 @@ jobs:
       - name: Cache PHPUnit
         uses: actions/cache@v4
         with:
-          path: backend/.phpunit.cache
+          path: .phpunit.cache
           key: phpunit-${{ runner.os }}-${{ hashFiles('composer.lock') }}
           restore-keys: phpunit-${{ runner.os }}-
 

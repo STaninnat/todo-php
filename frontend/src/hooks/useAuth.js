@@ -2,6 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { api } from '../services/api';
 
+/**
+ * Custom hook for managing authentication state.
+ * uses React Query to persist user session data.
+ * @returns {Object} Auth object
+ * @returns {Object|null} return.user - The current user object or null
+ * @returns {boolean} return.isLoading - Loading state of auth check
+ * @returns {Error|null} return.error - Error object if any
+ * @returns {function} return.login - Function to login (email, password)
+ * @returns {function} return.register - Function to register (username, email, password)
+ * @returns {function} return.logout - Function to logout
+ */
 export function useAuth() {
     const queryClient = useQueryClient();
 

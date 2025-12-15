@@ -4,10 +4,9 @@ import index from './index.html';
 const server = serve({
     routes: {
         // Proxy API requests to backend
-        '/api/*': async (req) => {
+        '/v1/*': async (req) => {
             const url = new URL(req.url);
-            const targetPath = url.pathname.replace(/^\/api/, '');
-            const targetUrl = `http://localhost:8085/v1${targetPath}${url.search}`;
+            const targetUrl = `http://localhost:8085${url.pathname}${url.search}`;
 
             return fetch(targetUrl, {
                 method: req.method,

@@ -7,6 +7,11 @@ import Pagination from '../components/Pagination';
 import { useTodos } from '../hooks/useTodos';
 import './TodoPage.css';
 
+/**
+ * Main Todo Page Component.
+ * Orchestrates task management using `useTodos` hook.
+ * Renders TodoList, TodoForm, and Modals for updating/deleting tasks.
+ */
 export default function TodoPage() {
     const { todos, addTodo, toggleTodo, deleteTodo, updateTodo, page, setPage, totalPages } = useTodos();
 

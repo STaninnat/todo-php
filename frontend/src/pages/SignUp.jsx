@@ -5,6 +5,11 @@ import './Auth.css';
 import { validateEmail, validatePassword, validateConfirmPassword } from '../utils/validation';
 import { api } from '../services/api';
 
+/**
+ * Sign Up Page Component.
+ * Handles existing user registration with validation for email and password complexity.
+ * Redirects to home page upon successful registration (auto-login).
+ */
 export default function SignUp() {
     const navigate = useNavigate();
     // Initialize state

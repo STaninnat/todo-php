@@ -5,6 +5,11 @@ import './Auth.css';
 import { validateEmail } from '../utils/validation';
 import { api } from '../services/api';
 
+/**
+ * Sign In Page Component.
+ * Handles user authentication via email/password.
+ * Redirects to home page upon successful login.
+ */
 export default function SignIn() {
     const navigate = useNavigate();
     const location = useLocation();

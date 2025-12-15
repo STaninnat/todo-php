@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace Tests\Integration\Api\Auth\Service;
 
 use App\Api\Auth\Service\SignoutService;
+use App\Api\Auth\Service\RefreshTokenService;
 use App\Utils\CookieManager;
+use App\Utils\JwtService;
+use App\DB\Database;
 use PHPUnit\Framework\TestCase;
 use Tests\Integration\Api\Helper\TestCookieStorage;
+use PDO;
 
 /**
  * Class SignoutServiceIntegrationTest
@@ -26,6 +30,8 @@ class SignoutServiceIntegrationTest extends TestCase
      * @var CookieManager Cookie manager instance for inspecting clear-cookie behavior.
      */
     private CookieManager $cookieManager;
+    private RefreshTokenService $refreshTokenService;
+    private PDO $pdo;
 
     /**
      * @var SignoutService Service under test.
@@ -51,7 +57,12 @@ class SignoutServiceIntegrationTest extends TestCase
 
         $this->storage = new TestCookieStorage();
         $this->cookieManager = new CookieManager($this->storage);
-        $this->service = new SignoutService($this->cookieManager);
+
+        $db = new Database();
+        $this->pdo = $db->getConnection();
+        $this->refreshTokenService = new RefreshTokenService($db, new JwtService('test-secret'));
+
+        $this->service = new SignoutService($this->cookieManager, $this->refreshTokenService);
 
         // Pre-set cookie to simulate existing session
         $this->storage->set('access_token', 'dummy_token', time() + 3600);
@@ -70,13 +81,51 @@ class SignoutServiceIntegrationTest extends TestCase
     {
         $this->service->execute();
 
-        // Confirm the last cookie cleared is 'access_token'
-        $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
-
         // Confirm token removal in storage
         $this->assertNull($this->storage->get('access_token'));
     }
 
+
+    /**
+     * Test successful clearing of refresh token cookie and revocation in DB.
+     *
+     * @return void
+     */
+    public function testExecuteRevokesAndClearsRefreshToken(): void
+    {
+        // Setup DB tables
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
+        $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+
+        $this->pdo->exec("CREATE TABLE users (id VARCHAR(64) PRIMARY KEY, username VARCHAR(255), email VARCHAR(255), password VARCHAR(255))");
+        $this->pdo->exec("
+            CREATE TABLE refresh_tokens (
+                user_id VARCHAR(64), 
+                token_hash VARCHAR(64), 
+                expires_at INTEGER,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ");
+        $this->pdo->exec("INSERT INTO users VALUES ('u1', 'u', 'e', 'p')");
+
+        // Create a refresh token
+        $token = $this->refreshTokenService->create('u1');
+
+        // Mock current cookie state
+        $this->storage->set('refresh_token', $token, time() + 3600);
+
+        // Execute Signout
+        $this->service->execute();
+
+        // Assert cookie cleared
+        $this->assertNull($this->storage->get('refresh_token'));
+
+        // Assert DB revocation (verify should fail)
+        $this->expectException(\InvalidArgumentException::class);
+        $this->refreshTokenService->verify($token);
+    }
     /**
      * Test behavior when cookie does not exist beforehand.
      *

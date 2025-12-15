@@ -19,29 +19,44 @@ use App\Utils\CookieManager;
  */
 class SignoutService
 {
+    private RefreshTokenService $refreshTokenService;
     private CookieManager $cookieManager;
 
     /**
      * Constructor
      *
-     * @param CookieManager $cookieManager Utility for managing authentication cookies.
+     * @param CookieManager       $cookieManager       Utility for managing authentication cookies.
+     * @param RefreshTokenService $refreshTokenService Service for handling refresh tokens.
      */
-    public function __construct(CookieManager $cookieManager)
+    public function __construct(CookieManager $cookieManager, RefreshTokenService $refreshTokenService)
     {
         $this->cookieManager = $cookieManager;
+        $this->refreshTokenService = $refreshTokenService;
     }
 
     /**
      * Execute the sign-out process.
      *
      * Process:
-     * - Clear the access token from cookies to log the user out.
+     * - Revoke the refresh token if present.
+     * - Clear the access & refresh tokens from cookies.
      *
      * @return void
      */
     public function execute(): void
     {
-        // Remove access token from cookies
+        // 1. Revoke refresh token if exists
+        $refreshToken = $this->cookieManager->getRefreshToken();
+        if ($refreshToken) {
+            try {
+                $this->refreshTokenService->revoke($refreshToken);
+            } catch (\Exception $e) {
+                // Best effort revocation, ignore errors during signout
+            }
+        }
+
+        // 2. Remove tokens from cookies
         $this->cookieManager->clearAccessToken();
+        $this->cookieManager->clearRefreshToken();
     }
 }

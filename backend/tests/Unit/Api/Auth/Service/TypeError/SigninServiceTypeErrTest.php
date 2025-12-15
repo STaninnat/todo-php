@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Api\Auth\Service\TypeError;
 
 use App\Api\Auth\Service\SigninService;
+use App\Api\Auth\Service\RefreshTokenService;
 use App\DB\UserQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
@@ -40,7 +41,8 @@ class SigninServiceTypeErrTest extends TestCase
         new SigninService(
             "notUserQueries",
             $this->createMock(CookieManager::class),
-            $this->createMock(JwtService::class)
+            $this->createMock(JwtService::class),
+            $this->createMock(RefreshTokenService::class)
         );
     }
 
@@ -59,7 +61,8 @@ class SigninServiceTypeErrTest extends TestCase
         new SigninService(
             $this->createMock(UserQueries::class),
             "notCookieManager",
-            $this->createMock(JwtService::class)
+            $this->createMock(JwtService::class),
+            $this->createMock(RefreshTokenService::class)
         );
     }
 
@@ -78,7 +81,8 @@ class SigninServiceTypeErrTest extends TestCase
         new SigninService(
             $this->createMock(UserQueries::class),
             $this->createMock(CookieManager::class),
-            "notJwtService"
+            "notJwtService",
+            $this->createMock(RefreshTokenService::class)
         );
     }
 
@@ -98,7 +102,8 @@ class SigninServiceTypeErrTest extends TestCase
         $service = new SigninService(
             $this->createMock(UserQueries::class),
             $this->createMock(CookieManager::class),
-            $this->createMock(JwtService::class)
+            $this->createMock(JwtService::class),
+            $this->createMock(RefreshTokenService::class)
         );
 
         $this->expectException(TypeError::class);
@@ -119,11 +124,11 @@ class SigninServiceTypeErrTest extends TestCase
     {
         return [
             'string instead of Request' => ["notARequest"],
-            'array instead of Request'  => [["username" => "foo", "password" => "bar"]],
-            'int instead of Request'    => [123],
-            'float instead of Request'  => [45.67],
-            'bool instead of Request'   => [true],
-            'null instead of Request'   => [null],
+            'array instead of Request' => [["username" => "foo", "password" => "bar"]],
+            'int instead of Request' => [123],
+            'float instead of Request' => [45.67],
+            'bool instead of Request' => [true],
+            'null instead of Request' => [null],
         ];
     }
 }

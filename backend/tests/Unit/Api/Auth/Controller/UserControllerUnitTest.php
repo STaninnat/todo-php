@@ -12,6 +12,7 @@ use App\Api\Auth\Service\SigninService;
 use App\Api\Auth\Service\SignoutService;
 use App\Api\Auth\Service\SignupService;
 use App\Api\Auth\Service\UpdateUserService;
+use App\Api\Auth\Service\RefreshService;
 use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use RuntimeException;
 
@@ -51,6 +52,9 @@ class UserControllerUnitTest extends TestCase
     /** @var UpdateUserService&\PHPUnit\Framework\MockObject\MockObject Mock for update user service */
     private $updateUserService;
 
+    /** @var RefreshService&\PHPUnit\Framework\MockObject\MockObject Mock for refresh service */
+    private $refreshService;
+
     /** @var UserController The controller instance under test */
     private UserController $controller;
 
@@ -70,6 +74,7 @@ class UserControllerUnitTest extends TestCase
         $this->signoutService = $this->createMock(SignoutService::class);
         $this->signupService = $this->createMock(SignupService::class);
         $this->updateUserService = $this->createMock(UpdateUserService::class);
+        $this->refreshService = $this->createMock(RefreshService::class);
 
         // Inject mocks into UserController
         $this->controller = new UserController(
@@ -78,7 +83,8 @@ class UserControllerUnitTest extends TestCase
             $this->signinService,
             $this->signoutService,
             $this->signupService,
-            $this->updateUserService
+            $this->updateUserService,
+            $this->refreshService
         );
     }
 
@@ -201,8 +207,26 @@ class UserControllerUnitTest extends TestCase
         $this->assertSame($userData, $decoded['data']);
     }
 
+    /**
+     * Test successful token refresh flow.
+     *
+     * @return void
+     */
+    public function testRefreshSuccess(): void
+    {
+        $this->refreshService->expects($this->once())->method('execute');
+
+        // POST /auth/refresh
+        $req = $this->makeRequest(method: 'POST', path: '/auth/refresh');
+        $decoded = $this->controller->refresh($req, true);
+
+        $this->assertNotNull($decoded);
+        $this->assertTrue($decoded['success']);
+        $this->assertSame('Token refreshed successfully', $decoded['message']);
+    }
+
     // ==========================================================
-    // 💥 Exception tests: ensure proper propagation of failures
+    // Exception tests: ensure proper propagation of failures
     // ==========================================================
 
     /**

@@ -64,6 +64,37 @@ class CookieManager
         $this->storage->delete('access_token');
     }
 
+    /**
+     * Set the 'refresh_token' cookie.
+     *
+     * @param string $token The refresh token
+     * @param int $expires The expiration timestamp
+     */
+    public function setRefreshToken(string $token, int $expires): void
+    {
+        $this->lastSetCookieName = 'refresh_token';
+        $this->storage->set('refresh_token', $token, $expires);
+    }
+
+    /**
+     * Get the 'refresh_token' cookie.
+     *
+     * @return string|null
+     */
+    public function getRefreshToken(): ?string
+    {
+        return $this->storage->get('refresh_token');
+    }
+
+    /**
+     * Clear the 'refresh_token' cookie.
+     */
+    public function clearRefreshToken(): void
+    {
+        $this->lastSetCookieName = 'refresh_token';
+        $this->storage->delete('refresh_token');
+    }
+
     // for test
     public function getLastSetCookieName(): ?string
     {

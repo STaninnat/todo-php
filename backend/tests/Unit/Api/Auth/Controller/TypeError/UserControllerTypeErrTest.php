@@ -12,6 +12,7 @@ use App\Api\Auth\Service\SigninService;
 use App\Api\Auth\Service\SignoutService;
 use App\Api\Auth\Service\SignupService;
 use App\Api\Auth\Service\UpdateUserService;
+use App\Api\Auth\Service\RefreshService;
 
 /**
  * Class UserControllerTypeErrTest
@@ -44,6 +45,7 @@ class UserControllerTypeErrTest extends TestCase
         $signoutService = $this->createMock(SignoutService::class);
         $signupService = $this->createMock(SignupService::class);
         $updateUserService = $this->createMock(UpdateUserService::class);
+        $refreshService = $this->createMock(RefreshService::class);
 
         $this->controller = new UserController(
             $deleteUserService,
@@ -51,7 +53,8 @@ class UserControllerTypeErrTest extends TestCase
             $signinService,
             $signoutService,
             $signupService,
-            $updateUserService
+            $updateUserService,
+            $refreshService
         );
     }
 

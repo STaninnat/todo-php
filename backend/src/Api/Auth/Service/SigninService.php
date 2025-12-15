@@ -40,13 +40,18 @@ class SigninService
      * Constructor
      *
      * Initializes dependencies for user authentication service.
-     *
-     * @param UserQueries   $userQueries   Database query handler for user operations
-     * @param CookieManager $cookieManager Utility for managing authentication cookies
-     * @param JwtService    $jwt           Service for generating and validating JWT tokens
+     /**
+     * @param UserQueries         $userQueries       Service for user database queries.
+     * @param CookieManager       $cookieManager     Service for managing cookies.
+     * @param JwtService          $jwt               Service for JWT operations.
+     * @param RefreshTokenService $refreshTokenService Service for refresh token operations.
      */
-    public function __construct(UserQueries $userQueries, CookieManager $cookieManager, JwtService $jwt)
-    {
+    public function __construct(
+        UserQueries $userQueries,
+        CookieManager $cookieManager,
+        JwtService $jwt,
+        private RefreshTokenService $refreshTokenService
+    ) {
         $this->userQueries = $userQueries;
         $this->cookieManager = $cookieManager;
         $this->jwt = $jwt;
@@ -99,5 +104,9 @@ class SigninService
 
         // Set authentication token as cookie (1-hour expiry)
         $this->cookieManager->setAccessToken($token, time() + 3600);
+
+        // Generate and set Refresh Token (7 days)
+        $refreshToken = $this->refreshTokenService->create($user['id'], 604800);
+        $this->cookieManager->setRefreshToken($refreshToken, time() + 604800);
     }
 }

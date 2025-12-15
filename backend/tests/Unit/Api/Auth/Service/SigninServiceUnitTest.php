@@ -11,6 +11,7 @@ use App\DB\QueryResult;
 use App\DB\UserQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
+use App\Api\Auth\Service\RefreshTokenService;
 use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use InvalidArgumentException;
 use RuntimeException;
@@ -44,6 +45,9 @@ class SigninServiceUnitTest extends TestCase
     /** @var JwtService&\PHPUnit\Framework\MockObject\MockObject Mocked dependency for token generation */
     private JwtService $jwt;
 
+    /** @var RefreshTokenService&\PHPUnit\Framework\MockObject\MockObject */
+    private $refreshTokenService;
+
     /** @var SigninService The service under test */
     private SigninService $service;
 
@@ -64,12 +68,14 @@ class SigninServiceUnitTest extends TestCase
         $this->userQueries = $this->createMock(UserQueries::class);
         $this->cookieManager = $this->createMock(CookieManager::class);
         $this->jwt = $this->createMock(JwtService::class);
+        $this->refreshTokenService = $this->createMock(RefreshTokenService::class);
 
         // Inject mocks into the service
         $this->service = new SigninService(
             $this->userQueries,
             $this->cookieManager,
-            $this->jwt
+            $this->jwt,
+            $this->refreshTokenService
         );
     }
 
@@ -84,9 +90,9 @@ class SigninServiceUnitTest extends TestCase
     {
         return [
             'missing username' => [['password' => 'pass']],
-            'empty username'   => [['username' => '', 'password' => 'pass']],
+            'empty username' => [['username' => '', 'password' => 'pass']],
             'missing password' => [['username' => 'john']],
-            'empty password'   => [['username' => 'john', 'password' => '']],
+            'empty password' => [['username' => 'john', 'password' => '']],
         ];
     }
 
@@ -218,6 +224,19 @@ class SigninServiceUnitTest extends TestCase
         $this->cookieManager->expects($this->once())
             ->method('setAccessToken')
             ->with('mock-token', $this->anything());
+
+        // Expect refresh token to be stored in cookie
+        $this->cookieManager->expects($this->once())
+            ->method('setRefreshToken')
+            ->with('refresh-token', $this->anything());
+
+        $this->refreshTokenService->expects($this->once())
+            ->method('create')
+            ->willReturn('refresh-token');
+
+        $this->cookieManager->expects($this->once())
+            ->method('setRefreshToken')
+            ->with('refresh-token', $this->anything());
 
         // Execute sign-in flow with correct credentials
         $req = $this->makeRequest(['username' => 'john', 'password' => 'pass123']);

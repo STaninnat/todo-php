@@ -67,9 +67,9 @@ class JwtServiceUnitTest extends TestCase
     {
         $secret = 'test-secret';
         $expire = 3600;
-        $now    = time() - 1;
+        $now = time() - 1;
 
-        $svc   = new JwtService($secret, 'HS256', $expire, 600);
+        $svc = new JwtService($secret, 'HS256', $expire, 600);
         $token = $svc->create(['sub' => '123', 'role' => 'user'], $now);
 
         $payload = $svc->decodeStrict($token);
@@ -98,7 +98,7 @@ class JwtServiceUnitTest extends TestCase
         $now = time() - 1;
 
         $issuer = new JwtService('issuer-secret', 'HS256', 3600, 600);
-        $token  = $issuer->create(['sub' => 'abc'], $now);
+        $token = $issuer->create(['sub' => 'abc'], $now);
 
         $verifier = new JwtService('verifier-secret', 'HS256', 3600, 600);
 
@@ -133,8 +133,8 @@ class JwtServiceUnitTest extends TestCase
      */
     public function testVerifyReturnsPayloadForValidToken(): void
     {
-        $svc   = new JwtService('secret', 'HS256', 3600, 600);
-        $now   = time() - 1;
+        $svc = new JwtService('secret', 'HS256', 3600, 600);
+        $now = time() - 1;
         $token = $svc->create(['uid' => 42], $now);
 
         $payload = $svc->verify($token);
@@ -168,11 +168,11 @@ class JwtServiceUnitTest extends TestCase
     public function testShouldRefreshTrueWhenCloseToExpiry(): void
     {
         $threshold = 600;
-        $svc       = new JwtService('secret', 'HS256', 3600, $threshold);
-        $now       = time();
+        $svc = new JwtService('secret', 'HS256', 3600, $threshold);
+        $now = time();
 
         $payloadSoon = ['exp' => $now + 300];  // Within threshold -> should refresh
-        $payloadFar  = ['exp' => $now + 10_000]; // Outside threshold -> no refresh
+        $payloadFar = ['exp' => $now + 10_000]; // Outside threshold -> no refresh
 
         $this->assertTrue($svc->shouldRefresh($payloadSoon, $now));
         $this->assertFalse($svc->shouldRefresh($payloadFar, $now));
@@ -208,24 +208,24 @@ class JwtServiceUnitTest extends TestCase
      */
     public function testRefreshReissuesNewTokenAndPreservesCustomClaims(): void
     {
-        $secret   = 'secret';
-        $expire   = 7200;
-        $nowOld   = time() - 1000;
-        $nowNew   = time() - 1;
+        $secret = 'secret';
+        $expire = 7200;
+        $nowOld = time() - 1000;
+        $nowNew = time() - 1;
 
-        $svc      = new JwtService($secret, 'HS256', $expire, 600);
+        $svc = new JwtService($secret, 'HS256', $expire, 600);
 
         // Create old token
-        $oldToken   = $svc->create(['name' => 'alice', 'role' => 'user'], $nowOld);
+        $oldToken = $svc->create(['name' => 'alice', 'role' => 'user'], $nowOld);
         $oldPayload = $svc->decodeStrict($oldToken);
 
         // Refresh token
-        $newToken   = $svc->refresh($oldPayload, $nowNew);
+        $newToken = $svc->refresh($oldPayload, $nowNew);
         $newPayload = $svc->decodeStrict($newToken);
 
         // Custom claims preserved
         $this->assertSame('alice', $newPayload['name']);
-        $this->assertSame('user',  $newPayload['role']);
+        $this->assertSame('user', $newPayload['role']);
 
         // Standard claims updated
         $this->assertSame($nowNew, $newPayload['iat']);
@@ -234,5 +234,36 @@ class JwtServiceUnitTest extends TestCase
 
         // Ensure new token differs from old token
         $this->assertNotSame($oldToken, $newToken);
+    }
+
+    /**
+     * Test createRefreshToken returns a secure random string of expected length.
+     *
+     * @return void
+     */
+    public function testCreateRefreshTokenReturnsSecureString(): void
+    {
+        $svc = new JwtService('secret');
+        $token1 = $svc->createRefreshToken();
+        $token2 = $svc->createRefreshToken();
+
+        $this->assertNotEmpty($token1);
+        $this->assertEquals(64, strlen($token1)); // bin2hex(random_bytes(32)) -> 64 chars
+        $this->assertNotSame($token1, $token2); // Should be unique
+    }
+
+    /**
+     * Test hashRefreshToken returns consistent SHA256 hash.
+     *
+     * @return void
+     */
+    public function testHashRefreshTokenReturnsSha256(): void
+    {
+        $svc = new JwtService('secret');
+        $token = 'test-refresh-token';
+        $hash = $svc->hashRefreshToken($token);
+
+        $this->assertEquals(64, strlen($hash)); // SHA256 is 64 hex chars
+        $this->assertSame(hash('sha256', $token), $hash);
     }
 }

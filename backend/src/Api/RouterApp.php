@@ -4,16 +4,29 @@ declare(strict_types=1);
 
 namespace App\Api;
 
-use App\Utils\Logger;
-use App\Utils\JsonResponder;
+use App\Api\Auth\Controller\UserController;
+use App\Api\Auth\Service\DeleteUserService;
+use App\Api\Auth\Service\GetUserService;
+use App\Api\Auth\Service\RefreshService;
+use App\Api\Auth\Service\RefreshTokenService;
+use App\Api\Auth\Service\SigninService;
+use App\Api\Auth\Service\SignoutService;
+use App\Api\Auth\Service\SignupService;
+use App\Api\Auth\Service\UpdateUserService;
+use App\Api\Middlewares\AuthMiddleware;
+use App\Api\Tasks\Controller\TaskController;
+use App\Api\Tasks\Service\AddTaskService;
+use App\Api\Tasks\Service\DeleteTaskService;
+use App\Api\Tasks\Service\GetTasksService;
+use App\Api\Tasks\Service\MarkDoneTaskService;
+use App\Api\Tasks\Service\UpdateTaskService;
 use App\DB\Database;
 use App\DB\UserQueries;
 use App\DB\TaskQueries;
-use App\Api\Auth\Controller\UserController;
-use App\Api\Tasks\Controller\TaskController;
-use App\Api\Middlewares\AuthMiddleware;
 use App\Utils\CookieManager;
+use App\Utils\JsonResponder;
 use App\Utils\JwtService;
+use App\Utils\Logger;
 use Throwable;
 
 /**
@@ -87,22 +100,26 @@ class RouterApp
         // Middleware
         $this->authMiddleware = $authMiddleware ?? new AuthMiddleware($cookieManager, $jwt);
 
+        $refreshTokenService = new RefreshTokenService($database, $jwt);
+        $refreshService = new RefreshService($refreshTokenService, $cookieManager, $jwt);
+
         // Controllers
         $this->userController = $userController ?? new UserController(
-            new \App\Api\Auth\Service\DeleteUserService($userQueries, $cookieManager),
-            new \App\Api\Auth\Service\GetUserService($userQueries),
-            new \App\Api\Auth\Service\SigninService($userQueries, $cookieManager, $jwt),
-            new \App\Api\Auth\Service\SignoutService($cookieManager),
-            new \App\Api\Auth\Service\SignupService($userQueries, $cookieManager, $jwt),
-            new \App\Api\Auth\Service\UpdateUserService($userQueries)
+            new DeleteUserService($userQueries, $cookieManager),
+            new GetUserService($userQueries),
+            new SigninService($userQueries, $cookieManager, $jwt, $refreshTokenService),
+            new SignoutService($cookieManager, $refreshTokenService),
+            new SignupService($userQueries, $cookieManager, $jwt),
+            new UpdateUserService($userQueries),
+            $refreshService
         );
 
         $this->taskController = $taskController ?? new TaskController(
-            new \App\Api\Tasks\Service\AddTaskService($taskQueries),
-            new \App\Api\Tasks\Service\DeleteTaskService($taskQueries),
-            new \App\Api\Tasks\Service\UpdateTaskService($taskQueries),
-            new \App\Api\Tasks\Service\MarkDoneTaskService($taskQueries),
-            new \App\Api\Tasks\Service\GetTasksService($taskQueries)
+            new AddTaskService($taskQueries),
+            new DeleteTaskService($taskQueries),
+            new UpdateTaskService($taskQueries),
+            new MarkDoneTaskService($taskQueries),
+            new GetTasksService($taskQueries)
         );
 
         // Register middlewares & routes
@@ -161,6 +178,7 @@ class RouterApp
             ['POST', '/users/signup', 'signup', []],
             ['POST', '/users/signin', 'signin', []],
             ['POST', '/users/signout', 'signout', []],
+            ['POST', '/users/refresh', 'refresh', []],
             ['PUT', '/users/update', 'updateUser', $authMiddlewareFn],
             ['DELETE', '/users/delete', 'deleteUser', $authMiddlewareFn],
             ['GET', '/users/me', 'getUser', $authMiddlewareFn],

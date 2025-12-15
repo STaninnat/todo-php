@@ -6,6 +6,7 @@ namespace Tests\Unit\Api\Auth\Service;
 
 use PHPUnit\Framework\TestCase;
 use App\Api\Auth\Service\SignoutService;
+use App\Api\Auth\Service\RefreshTokenService;
 use App\Utils\CookieManager;
 
 /**
@@ -22,6 +23,9 @@ class SignoutServiceUnitTest extends TestCase
     /** @var CookieManager&\PHPUnit\Framework\MockObject\MockObject */
     private CookieManager $cookieManager;
 
+    /** @var RefreshTokenService&\PHPUnit\Framework\MockObject\MockObject */
+    private RefreshTokenService $refreshTokenService;
+
     private SignoutService $service;
 
     /**
@@ -36,8 +40,11 @@ class SignoutServiceUnitTest extends TestCase
         // Create mock for CookieManager
         $this->cookieManager = $this->createMock(CookieManager::class);
 
+        // Create mock for RefreshTokenService
+        $this->refreshTokenService = $this->createMock(RefreshTokenService::class);
+
         // Instantiate service with mock
-        $this->service = new SignoutService($this->cookieManager);
+        $this->service = new SignoutService($this->cookieManager, $this->refreshTokenService);
     }
 
     /**
@@ -51,7 +58,26 @@ class SignoutServiceUnitTest extends TestCase
         $this->cookieManager->expects($this->once())
             ->method('clearAccessToken');
 
+        // Expect clearRefreshToken() to be called once
+        $this->cookieManager->expects($this->once())
+            ->method('clearRefreshToken');
+
         // Act: call the service
+        $this->service->execute();
+    }
+    /**
+     * Test that execute() revokes refresh token if one exists in cookie.
+     *
+     * @return void
+     */
+    public function testExecuteRevokesRefreshTokenIfPresent(): void
+    {
+        $this->cookieManager->method('getRefreshToken')->willReturn('some_refresh_token');
+
+        $this->refreshTokenService->expects($this->once())
+            ->method('revoke')
+            ->with('some_refresh_token');
+
         $this->service->execute();
     }
 }

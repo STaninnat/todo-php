@@ -72,7 +72,10 @@ class UpdateUserServiceIntegrationTest extends TestCase
         $this->userQueries = new UserQueries($this->pdo);
         $this->service = new UpdateUserService($this->userQueries);
 
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         $this->pdo->exec("
             CREATE TABLE users (
                 id VARCHAR(64) PRIMARY KEY,
@@ -100,7 +103,10 @@ class UpdateUserServiceIntegrationTest extends TestCase
      */
     protected function tearDown(): void
     {
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         parent::tearDown();
     }
 

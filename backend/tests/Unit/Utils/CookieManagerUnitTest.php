@@ -193,4 +193,48 @@ class CookieManagerUnitTest extends TestCase
         // Verify lastSetCookieName updated
         $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
     }
+
+    /**
+     * Test that getRefreshToken returns correct token when set.
+     *
+     * @return void
+     */
+    public function testGetRefreshTokenReturnsValue(): void
+    {
+        $this->storageMock->method('get')->with('refresh_token')->willReturn('ref-abc');
+        $this->assertSame('ref-abc', $this->cookieManager->getRefreshToken());
+    }
+
+    /**
+     * Test that setRefreshToken calls storage set with correct args.
+     *
+     * @return void
+     */
+    public function testSetRefreshTokenCallsStorage(): void
+    {
+        $token = 'ref-xyz';
+        $expires = time() + 5000;
+
+        $this->storageMock->expects($this->once())
+            ->method('set')
+            ->with('refresh_token', $token, $expires);
+
+        $this->cookieManager->setRefreshToken($token, $expires);
+        $this->assertSame('refresh_token', $this->cookieManager->getLastSetCookieName());
+    }
+
+    /**
+     * Test that clearRefreshToken calls storage delete.
+     *
+     * @return void
+     */
+    public function testClearRefreshTokenCallsDelete(): void
+    {
+        $this->storageMock->expects($this->once())
+            ->method('delete')
+            ->with('refresh_token');
+
+        $this->cookieManager->clearRefreshToken();
+        $this->assertSame('refresh_token', $this->cookieManager->getLastSetCookieName());
+    }
 }

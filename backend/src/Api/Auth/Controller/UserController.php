@@ -11,6 +11,7 @@ use App\Api\Auth\Service\SigninService;
 use App\Api\Auth\Service\SignoutService;
 use App\Api\Auth\Service\SignupService;
 use App\Api\Auth\Service\UpdateUserService;
+use App\Api\Auth\Service\RefreshService;
 use App\Utils\JsonResponder;
 
 /**
@@ -44,6 +45,9 @@ class UserController
     /** @var UpdateUserService Service for updating existing user details */
     private UpdateUserService $updateUserService;
 
+    /** @var RefreshService Service for refreshing tokens */
+    private RefreshService $refreshService;
+
     /**
      * Constructor
      *
@@ -56,6 +60,7 @@ class UserController
      * @param SignoutService    $signoutService    Service to handle user sign-out.
      * @param SignupService     $signupService     Service to handle user sign-up.
      * @param UpdateUserService $updateUserService Service to update user data.
+     * @param RefreshService    $refreshService    Service to handle token refresh.
      */
     public function __construct(
         DeleteUserService $deleteUserService,
@@ -63,7 +68,8 @@ class UserController
         SigninService $signinService,
         SignoutService $signoutService,
         SignupService $signupService,
-        UpdateUserService $updateUserService
+        UpdateUserService $updateUserService,
+        RefreshService $refreshService
     ) {
         $this->deleteUserService = $deleteUserService;
         $this->getUserService = $getUserService;
@@ -71,6 +77,7 @@ class UserController
         $this->signoutService = $signoutService;
         $this->signupService = $signupService;
         $this->updateUserService = $updateUserService;
+        $this->refreshService = $refreshService;
     }
 
     /**
@@ -113,6 +120,22 @@ class UserController
         $response = JsonResponder::success('User retrieved successfully')
             ->withPayload($data)
             ->send(!$forTest, $forTest);
+
+        return $forTest ? $response : null;
+    }
+
+    /**
+     * Handle token refresh.
+     *
+     * @param Request $req     HTTP request
+     * @param bool    $forTest If true, returns array instead of sending JSON
+     *
+     * @return array<string, mixed>|null Response array
+     */
+    public function refresh(Request $req, bool $forTest = false): ?array
+    {
+        $this->refreshService->execute();
+        $response = JsonResponder::quickSuccess('Token refreshed successfully', false, $forTest);
 
         return $forTest ? $response : null;
     }

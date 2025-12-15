@@ -12,6 +12,8 @@ use App\Api\Auth\Service\SignoutService;
 use App\Api\Auth\Service\DeleteUserService;
 use App\Api\Auth\Service\GetUserService;
 use App\Api\Auth\Service\UpdateUserService;
+use App\Api\Auth\Service\RefreshService;
+use App\Api\Auth\Service\RefreshTokenService;
 use App\DB\Database;
 use App\DB\UserQueries;
 use App\Utils\CookieManager;
@@ -90,7 +92,10 @@ class UserControllerIntegrationTest extends TestCase
         $this->jwt = new JwtService('test-secret-key');
 
         // Recreate users table to ensure test isolation
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         $this->pdo->exec("
             CREATE TABLE users (
                 id VARCHAR(64) PRIMARY KEY,
@@ -102,16 +107,28 @@ class UserControllerIntegrationTest extends TestCase
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
 
+        $this->pdo->exec("
+            CREATE TABLE refresh_tokens (
+                user_id VARCHAR(64) NOT NULL,
+                token_hash VARCHAR(64) NOT NULL,
+                expires_at INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY idx_token_hash (token_hash),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+
         $storage = new TestCookieStorage();
         $this->cookieManager = new CookieManager($storage);
 
         $this->controller = new UserController(
             new DeleteUserService($this->userQueries, $this->cookieManager),
             new GetUserService($this->userQueries),
-            new SigninService($this->userQueries, $this->cookieManager, $this->jwt),
-            new SignoutService($this->cookieManager),
+            new SigninService($this->userQueries, $this->cookieManager, $this->jwt, new RefreshTokenService(new Database(), $this->jwt)),
+            new SignoutService($this->cookieManager, new RefreshTokenService(new Database(), $this->jwt)),
             new SignupService($this->userQueries, $this->cookieManager, $this->jwt),
-            new UpdateUserService($this->userQueries)
+            new UpdateUserService($this->userQueries),
+            new RefreshService(new RefreshTokenService(new Database(), $this->jwt), $this->cookieManager, $this->jwt)
         );
     }
 
@@ -124,7 +141,10 @@ class UserControllerIntegrationTest extends TestCase
      */
     protected function tearDown(): void
     {
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         parent::tearDown();
     }
 
@@ -673,5 +693,36 @@ class UserControllerIntegrationTest extends TestCase
         $this->assertArrayHasKey('success', $signoutRes);
         $this->assertTrue($signoutRes['success']);
         $this->assertNull($this->cookieManager->getAccessToken());
+    }
+    /**
+     * Test successful token refresh.
+     *
+     * @return void
+     */
+    public function testRefreshUserSuccess(): void
+    {
+        $id = 'r1';
+        $this->pdo->exec("INSERT INTO users (id, username, email, password) VALUES ('$id', 'ruser', 'r@e.com', 'pass')");
+
+        // Manually create a refresh token in DB
+        $refreshTokenService = new RefreshTokenService(new Database(), $this->jwt);
+        $rawToken = $refreshTokenService->create($id);
+
+        // Set refresh token in cookie
+        $this->cookieManager->setRefreshToken($rawToken, time() + 604800);
+
+        // Request refresh
+        $req = $this->makeRequest('POST', '/refresh');
+        $res = $this->controller->refresh($req, true);
+
+        $this->assertIsArray($res);
+        $this->assertTrue($res['success']);
+
+        // Verify new access token is set
+        $newAccessToken = $this->cookieManager->getAccessToken();
+        $this->assertNotEmpty($newAccessToken);
+        $this->assertIsString($newAccessToken);
+        $payload = $this->jwt->decodeStrict($newAccessToken);
+        $this->assertSame($id, $payload['id']);
     }
 }

@@ -163,6 +163,30 @@ class RouterAppIntegrationTest extends TestCase
     }
 
     /**
+     * Validate request dispatching for refresh route.
+     *
+     * - Mocks UserController::refresh()
+     * - Ensures returned array matches expected structure
+     *
+     * @return void
+     */
+    public function testRefreshDispatch(): void
+    {
+        // Setup expectation for UserController
+        /** @phpstan-ignore method.notFound */
+        $this->userController->expects($this->once())
+            ->method('refresh')
+            ->willReturn(['success' => true, 'message' => 'Token refreshed']);
+
+        $request = new Request('POST', '/v1/users/refresh');
+        $response = $this->routerApp->dispatch($request, true);
+
+        $this->assertIsArray($response);
+        $this->assertTrue($response['success']);
+        $this->assertSame('Token refreshed', $response['message']);
+    }
+
+    /**
      * Ensure middlewares execute correctly for protected routes.
      *
      * - Expects AuthMiddleware::requireAuth() to be invoked once

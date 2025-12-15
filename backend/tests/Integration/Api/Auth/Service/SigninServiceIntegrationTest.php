@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Api\Auth\Service;
 
 use App\Api\Auth\Service\SigninService;
+use App\Api\Auth\Service\RefreshTokenService;
 use App\Api\Request;
 use App\DB\Database;
 use App\DB\UserQueries;
@@ -58,6 +59,8 @@ class SigninServiceIntegrationTest extends TestCase
      */
     private SigninService $service;
 
+    private RefreshTokenService $refreshTokenService;
+
     /**
      * Setup test environment.
      *
@@ -99,13 +102,28 @@ class SigninServiceIntegrationTest extends TestCase
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
+        $this->pdo->exec("
+            CREATE TABLE refresh_tokens (
+                user_id VARCHAR(64) NOT NULL,
+                token_hash VARCHAR(64) NOT NULL,
+                expires_at INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY idx_token_hash (token_hash),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+
         $storage = new TestCookieStorage();
         $this->cookieManager = new CookieManager($storage);
+
+        $this->refreshTokenService = new RefreshTokenService(new Database(), $this->jwt);
 
         $this->service = new SigninService(
             $this->userQueries,
             $this->cookieManager,
-            $this->jwt
+            $this->jwt,
+            $this->refreshTokenService
         );
     }
 
@@ -118,7 +136,11 @@ class SigninServiceIntegrationTest extends TestCase
      */
     protected function tearDown(): void
     {
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         parent::tearDown();
     }
 
@@ -169,6 +191,23 @@ class SigninServiceIntegrationTest extends TestCase
         // Decode token to verify identity
         $payload = $this->jwt->decodeStrict($token);
         $this->assertSame($id, $payload['id']);
+
+        // Verify Refresh Token in Cookie
+        $refreshToken = $this->cookieManager->getRefreshToken();
+        $this->assertNotEmpty($refreshToken);
+        $this->assertIsString($refreshToken);
+
+        // Verify Refresh Token in DB
+        $stmt = $this->pdo->prepare("SELECT * FROM refresh_tokens WHERE user_id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $this->assertIsArray($row);
+        $this->assertSame($id, $row['user_id']);
+
+        $tokenHash = $row['token_hash'];
+        assert(is_string($tokenHash));
+        $this->assertTrue(hash_equals($tokenHash, $this->jwt->hashRefreshToken($refreshToken)));
     }
 
     /**
@@ -307,7 +346,10 @@ class SigninServiceIntegrationTest extends TestCase
     public function testDatabaseFailThrowsRuntimeException(): void
     {
         // Drop table to simulate DB failure
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
 
         $req = $this->makeRequest([
             'username' => 'any',

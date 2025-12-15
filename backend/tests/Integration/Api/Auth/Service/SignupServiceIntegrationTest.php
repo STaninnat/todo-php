@@ -85,7 +85,10 @@ class SignupServiceIntegrationTest extends TestCase
         $this->jwt = new JwtService('test-secret-key');
 
         // Reset table for deterministic state between tests
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         $this->pdo->exec("
             CREATE TABLE users (
                 id VARCHAR(64) PRIMARY KEY,
@@ -118,7 +121,10 @@ class SignupServiceIntegrationTest extends TestCase
      */
     protected function tearDown(): void
     {
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         parent::tearDown();
     }
 

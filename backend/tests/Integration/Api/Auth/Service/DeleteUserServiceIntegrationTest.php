@@ -79,7 +79,10 @@ class DeleteUserServiceIntegrationTest extends TestCase
         $this->userQueries = new UserQueries($this->pdo);
 
         // Reset the users table to ensure test isolation
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         $this->pdo->exec("
             CREATE TABLE users (
                 id VARCHAR(64) PRIMARY KEY,
@@ -109,7 +112,10 @@ class DeleteUserServiceIntegrationTest extends TestCase
      */
     protected function tearDown(): void
     {
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         parent::tearDown();
     }
 

@@ -100,7 +100,8 @@ class JwtService
      */
     public function verify(?string $token): ?array
     {
-        if (!$token) return null;
+        if (!$token)
+            return null;
 
         try {
             // Attempt to decode token
@@ -130,7 +131,7 @@ class JwtService
             if (is_int($val)) {
                 $exp = $val;
             } elseif (is_numeric($val)) {
-                $exp = (int)$val;
+                $exp = (int) $val;
             } else {
                 $exp = 0;
             }
@@ -158,5 +159,27 @@ class JwtService
 
         // Re-create JWT with same custom claims
         return $this->create($payload, $now);
+    }
+
+    /**
+     * Create a secure random refresh token
+     *
+     * @return string The generated refresh token
+     * @throws \Exception If random_bytes fails
+     */
+    public function createRefreshToken(): string
+    {
+        return bin2hex(random_bytes(32)); // 64 characters
+    }
+
+    /**
+     * Hash a refresh token for storage
+     *
+     * @param string $token The refresh token to hash
+     * @return string The hashed token (SHA256)
+     */
+    public function hashRefreshToken(string $token): string
+    {
+        return hash('sha256', $token);
     }
 }

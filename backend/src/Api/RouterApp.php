@@ -109,7 +109,7 @@ class RouterApp
             new GetUserService($userQueries),
             new SigninService($userQueries, $cookieManager, $jwt, $refreshTokenService),
             new SignoutService($cookieManager, $refreshTokenService),
-            new SignupService($userQueries, $cookieManager, $jwt),
+            new SignupService($userQueries, $cookieManager, $jwt, $refreshTokenService),
             new UpdateUserService($userQueries),
             $refreshService
         );

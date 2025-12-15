@@ -43,13 +43,18 @@ class SignupService
      * Constructor
      *
      * Initializes dependencies required for user registration.
-     *
-     * @param UserQueries   $userQueries   Database query handler for user operations
-     * @param CookieManager $cookieManager Utility for managing authentication cookies
-     * @param JwtService    $jwt           Service for generating and validating JWT tokens
+     /**
+     * @param UserQueries         $userQueries         Database query handler for user operations
+     * @param CookieManager       $cookieManager       Utility for managing authentication cookies
+     * @param JwtService          $jwt                 Service for generating and validating JWT tokens
+     * @param RefreshTokenService $refreshTokenService Service for handling refresh tokens
      */
-    public function __construct(UserQueries $userQueries, CookieManager $cookieManager, JwtService $jwt)
-    {
+    public function __construct(
+        UserQueries $userQueries,
+        CookieManager $cookieManager,
+        JwtService $jwt,
+        private RefreshTokenService $refreshTokenService
+    ) {
         $this->userQueries = $userQueries;
         $this->cookieManager = $cookieManager;
         $this->jwt = $jwt;
@@ -63,6 +68,7 @@ class SignupService
      * - Hashes password using PHP's secure algorithm
      * - Inserts new user record into the database
      * - Generates and sets an access token cookie
+     * - Generates and sets a refresh token cookie
      *
      * @param Request $req Request object containing input data
      *
@@ -74,7 +80,7 @@ class SignupService
     public function execute(Request $req): void
     {
         $username = RequestValidator::getString($req, 'username', 'Username is required.');
-        $email    = RequestValidator::getEmail($req, 'email', 'Valid email is required.');
+        $email = RequestValidator::getEmail($req, 'email', 'Valid email is required.');
         $password = RequestValidator::getString($req, 'password', 'Password is required.');
 
         // Ensure username or email does not already exist
@@ -103,9 +109,12 @@ class SignupService
             throw new RuntimeException('Invalid user data returned from createUser.');
         }
 
+        // Access Token (1 hour)
         $token = $this->jwt->create(['id' => $user['id']]);
-
-        // Store access token in secure cookie
         $this->cookieManager->setAccessToken($token, time() + 3600);
+
+        // Refresh Token (7 days)
+        $refreshToken = $this->refreshTokenService->create($user['id'], 604800);
+        $this->cookieManager->setRefreshToken($refreshToken, time() + 604800);
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Api\Auth\Service;
 
 use App\Api\Auth\Service\SignupService;
+use App\Api\Auth\Service\RefreshTokenService;
 use App\Api\Request;
 use App\DB\Database;
 use App\DB\UserQueries;
@@ -102,13 +103,28 @@ class SignupServiceIntegrationTest extends TestCase
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
+        $this->pdo->exec("
+            CREATE TABLE refresh_tokens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id VARCHAR(64) NOT NULL,
+                token_hash VARCHAR(64) NOT NULL,
+                expires_at INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_token (token_hash),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+
         $storage = new TestCookieStorage();
         $this->cookieManager = new CookieManager($storage);
+
+        $refreshTokenService = new RefreshTokenService((new Database()), $this->jwt);
 
         $this->service = new SignupService(
             $this->userQueries,
             $this->cookieManager,
-            $this->jwt
+            $this->jwt,
+            $refreshTokenService
         );
     }
 
@@ -171,7 +187,7 @@ class SignupServiceIntegrationTest extends TestCase
         $this->assertTrue(password_verify('securePass123', $user['password']));
 
         // Cookie should be set to reflect login state
-        $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
+        $this->assertContains($this->cookieManager->getLastSetCookieName(), ['access_token', 'refresh_token']);
 
         $token = $this->cookieManager->getAccessToken();
         $this->assertNotEmpty($token);
@@ -276,7 +292,7 @@ class SignupServiceIntegrationTest extends TestCase
 
         $this->service->execute($req);
 
-        $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
+        $this->assertContains($this->cookieManager->getLastSetCookieName(), ['access_token', 'refresh_token']);
 
         $token = $this->cookieManager->getAccessToken();
         $this->assertNotEmpty($token);

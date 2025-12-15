@@ -126,7 +126,7 @@ class UserControllerIntegrationTest extends TestCase
             new GetUserService($this->userQueries),
             new SigninService($this->userQueries, $this->cookieManager, $this->jwt, new RefreshTokenService(new Database(), $this->jwt)),
             new SignoutService($this->cookieManager, new RefreshTokenService(new Database(), $this->jwt)),
-            new SignupService($this->userQueries, $this->cookieManager, $this->jwt),
+            new SignupService($this->userQueries, $this->cookieManager, $this->jwt, new RefreshTokenService(new Database(), $this->jwt)),
             new UpdateUserService($this->userQueries),
             new RefreshService(new RefreshTokenService(new Database(), $this->jwt), $this->cookieManager, $this->jwt)
         );
@@ -224,7 +224,7 @@ class UserControllerIntegrationTest extends TestCase
             'email' => 'x@example.com',
             'password' => 'abc123',
         ]);
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->controller->signup($req1, true);
 
         // Missing email
@@ -232,7 +232,7 @@ class UserControllerIntegrationTest extends TestCase
             'username' => 'userx',
             'password' => 'abc123',
         ]);
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->controller->signup($req2, true);
 
         // Missing password
@@ -240,7 +240,7 @@ class UserControllerIntegrationTest extends TestCase
             'username' => 'userx',
             'email' => 'x@example.com',
         ]);
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->controller->signup($req3, true);
     }
 
@@ -263,7 +263,7 @@ class UserControllerIntegrationTest extends TestCase
             'email' => 'new@example.com',
             'password' => 'abc123',
         ]);
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Username or email already exists.');
         $this->controller->signup($req1, true);
 
@@ -273,7 +273,7 @@ class UserControllerIntegrationTest extends TestCase
             'email' => 'existing@example.com',
             'password' => 'abc123',
         ]);
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Username or email already exists.');
         $this->controller->signup($req2, true);
     }
@@ -294,7 +294,7 @@ class UserControllerIntegrationTest extends TestCase
             'password' => 'abc123',
         ]);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Username too long');
         $this->controller->signup($req, true);
     }
@@ -349,7 +349,7 @@ class UserControllerIntegrationTest extends TestCase
             'password' => 'wrongpass',
         ]);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid username or password.');
         $this->controller->signin($req, true);
     }
@@ -366,7 +366,7 @@ class UserControllerIntegrationTest extends TestCase
             'password' => 'irrelevant',
         ]);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid username or password.');
         $this->controller->signin($req, true);
     }

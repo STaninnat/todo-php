@@ -11,6 +11,7 @@ use App\DB\QueryResult;
 use App\DB\UserQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
+use App\Api\Auth\Service\RefreshTokenService;
 use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use InvalidArgumentException;
 use RuntimeException;
@@ -39,6 +40,9 @@ class SignupServiceUnitTest extends TestCase
     /** @var JwtService&\PHPUnit\Framework\MockObject\MockObject Mock for JWT token service. */
     private JwtService $jwt;
 
+    /** @var RefreshTokenService&\PHPUnit\Framework\MockObject\MockObject Mock for Refresh token service. */
+    private RefreshTokenService $refreshTokenService;
+
     /** @var SignupService Service under test. */
     private SignupService $service;
 
@@ -59,12 +63,14 @@ class SignupServiceUnitTest extends TestCase
         $this->userQueries = $this->createMock(UserQueries::class);
         $this->cookieManager = $this->createMock(CookieManager::class);
         $this->jwt = $this->createMock(JwtService::class);
+        $this->refreshTokenService = $this->createMock(RefreshTokenService::class);
 
         // Inject mocks into the service
         $this->service = new SignupService(
             $this->userQueries,
             $this->cookieManager,
-            $this->jwt
+            $this->jwt,
+            $this->refreshTokenService
         );
     }
 
@@ -78,13 +84,13 @@ class SignupServiceUnitTest extends TestCase
     public static function invalidInputProvider(): array
     {
         return [
-            'missing username'  => [[]],
-            'empty username'    => [['username' => '', 'email' => 'john@example.com', 'password' => 'pass']],
-            'missing email'     => [['username' => 'john', 'password' => 'pass']],
-            'empty email'       => [['username' => 'john', 'email' => '', 'password' => 'pass']],
-            'invalid email'     => [['username' => 'john', 'email' => 'not-an-email', 'password' => 'pass']],
-            'missing password'  => [['username' => 'john', 'email' => 'john@example.com']],
-            'empty password'    => [['username' => 'john', 'email' => 'john@example.com', 'password' => '']],
+            'missing username' => [[]],
+            'empty username' => [['username' => '', 'email' => 'john@example.com', 'password' => 'pass']],
+            'missing email' => [['username' => 'john', 'password' => 'pass']],
+            'empty email' => [['username' => 'john', 'email' => '', 'password' => 'pass']],
+            'invalid email' => [['username' => 'john', 'email' => 'not-an-email', 'password' => 'pass']],
+            'missing password' => [['username' => 'john', 'email' => 'john@example.com']],
+            'empty password' => [['username' => 'john', 'email' => 'john@example.com', 'password' => '']],
         ];
     }
 
@@ -236,6 +242,8 @@ class SignupServiceUnitTest extends TestCase
      * Ensures that on successful user creation, the service:
      * - Creates a JWT token
      * - Stores it via CookieManager
+     * - Creates a Refresh token
+     * - Stores it via CookieManager
      *
      * @return void
      */
@@ -254,10 +262,20 @@ class SignupServiceUnitTest extends TestCase
             ->with(['id' => 'uuid'])
             ->willReturn('mock-token');
 
-        // Expect cookie manager to store token
+        // Expect RefreshTokenService to create refresh token
+        $this->refreshTokenService->expects($this->once())
+            ->method('create')
+            ->with('uuid', 604800)
+            ->willReturn('mock-refresh-token');
+
+        // Expect cookie manager to store both tokens
         $this->cookieManager->expects($this->once())
             ->method('setAccessToken')
             ->with('mock-token', $this->anything());
+
+        $this->cookieManager->expects($this->once())
+            ->method('setRefreshToken')
+            ->with('mock-refresh-token', $this->anything());
 
         // Simulate request execution
         $req = $this->makeRequest(['username' => 'john', 'email' => 'john@example.com', 'password' => 'pass']);

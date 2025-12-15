@@ -3,11 +3,20 @@ import PropTypes from 'prop-types';
 import TodoItem from './TodoItem';
 import './TodoList.css';
 
+/**
+ * Component to render a list of todo items.
+ * Displays an empty state message if the list is empty.
+ * @param {Object} props - Component props
+ * @param {Array} props.todos - List of todo objects
+ * @param {function} props.onToggle - Callback to toggle task status
+ * @param {function} props.onDelete - Callback to delete task
+ * @param {function} props.onUpdate - Callback to update task
+ */
 export default function TodoList({ todos, onToggle, onDelete, onUpdate }) {
     if (todos.length === 0) {
         return (
             <div className="todo-list-empty">
-                <p>No tasks yet. Add one above!</p>
+                <p>No tasks yet!...enjoy this rare moment.</p>
             </div>
         );
     }

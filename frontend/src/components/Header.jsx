@@ -4,6 +4,11 @@ import { useAuth } from '../hooks/useAuth';
 import { CheckSquare, LogOut, LogIn } from 'lucide-react';
 import './Header.css';
 
+/**
+ * Application header component.
+ * Displays navigation links and authentication status.
+ * Hides itself on authentication pages (Sign In/Sign Up).
+ */
 export default function Header() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();

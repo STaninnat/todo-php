@@ -3,6 +3,15 @@ import { X } from 'lucide-react';
 import PropTypes from 'prop-types';
 import './Modal.css';
 
+/**
+ * Generic Modal component.
+ * Handles backdrop click, escape key, and body scroll locking.
+ * @param {Object} props - Component props
+ * @param {boolean} props.isOpen - Whether the modal is visible
+ * @param {function} props.onClose - Function to call on close request
+ * @param {string} props.title - Modal title
+ * @param {React.ReactNode} props.children - Modal content
+ */
 export default function Modal({ isOpen, onClose, title, children }) {
     const modalRef = useRef(null);
 

@@ -3,6 +3,15 @@ import PropTypes from 'prop-types';
 import { Trash2, Edit } from 'lucide-react';
 import './TodoItem.css';
 
+/**
+ * Component representing a single todo task.
+ * Displays task details and action buttons (edit, delete, toggle).
+ * @param {Object} props - Component props
+ * @param {Object} props.todo - The todo object {id, title, description, isDone}
+ * @param {function} props.onToggle - Callback to toggle task status
+ * @param {function} props.onDelete - Callback to delete task
+ * @param {function} props.onUpdate - Callback to initiate update
+ */
 export default function TodoItem({ todo, onToggle, onDelete, onUpdate }) {
     return (
         <div className={`todo-item ${todo.isDone ? 'done' : ''}`}>

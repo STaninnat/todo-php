@@ -2,6 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './TodoForm.css';
 
+/**
+ * Form component for adding new tasks.
+ * Features an expandable interface that reveals description input on focus.
+ * Handles click-outside to collapse.
+ * @param {Object} props - Component props
+ * @param {function} props.onAdd - Callback to add a new task {title, description}
+ */
 export function TodoForm({ onAdd }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [title, setTitle] = useState('');
@@ -31,7 +38,7 @@ export function TodoForm({ onAdd }) {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!title.trim) return;
+        if (!title.trim()) return;
 
         onAdd({ title, description });
 

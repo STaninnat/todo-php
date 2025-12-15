@@ -2,6 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Pagination.css';
 
+/**
+ * Pagination control component.
+ * Renders Previous/Next buttons and current page info.
+ * @param {Object} props - Component props
+ * @param {number} props.currentPage - The current active page (1-based)
+ * @param {number} props.totalPages - Total number of pages
+ * @param {function} props.onPageChange - Callback when a page is selected
+ */
 export default function Pagination({ currentPage, totalPages, onPageChange }) {
     if (totalPages <= 1) return null;
 

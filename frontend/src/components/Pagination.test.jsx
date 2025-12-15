@@ -2,6 +2,12 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import Pagination from './Pagination';
 
+/**
+ * @file Pagination.test.jsx
+ * @description Unit tests for Pagination component.
+ * Verifies navigation button states (disabled/enabled) and page change callbacks.
+ */
+
 describe('Pagination Component', () => {
     test('renders pagination buttons', () => {
         render(<Pagination currentPage={1} totalPages={2} onPageChange={() => {}} />);

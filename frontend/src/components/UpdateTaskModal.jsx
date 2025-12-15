@@ -3,6 +3,15 @@ import PropTypes from 'prop-types';
 import Modal from './Modal';
 import './UpdateTaskModal.css';
 
+/**
+ * Modal component for updating an existing task.
+ * Pre-fills form with task data on open.
+ * @param {Object} props - Component props
+ * @param {boolean} props.isOpen - Whether the modal is visible
+ * @param {function} props.onClose - Function to close the modal
+ * @param {function} props.onUpdate - Callback with updated task data
+ * @param {Object} props.task - The task object to update
+ */
 export default function UpdateTaskModal({ isOpen, onClose, onUpdate, task }) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');

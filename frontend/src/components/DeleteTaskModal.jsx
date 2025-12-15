@@ -3,6 +3,14 @@ import PropTypes from 'prop-types';
 import Modal from './Modal';
 import './DeleteTaskModal.css';
 
+/**
+ * Modal component to confirm task deletion.
+ * @param {Object} props - Component props
+ * @param {boolean} props.isOpen - Whether the modal is visible
+ * @param {function} props.onClose - Function to close the modal
+ * @param {function} props.onConfirm - Function to confirm deletion
+ * @param {string} [props.taskTitle] - Title of the task being deleted
+ */
 export default function DeleteTaskModal({ isOpen, onClose, onConfirm, taskTitle }) {
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Delete Task">

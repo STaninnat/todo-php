@@ -7,7 +7,7 @@
         "dev": "bun --env-file=../.env --hot src/index.jsx",
         "build": "bun build --env-file=../.env ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
         "start": "NODE_ENV=production bun --env-file=../.env src/index.jsx",
-        "lint": "eslint .",
+        "lint": "eslint . --cache",
         "test": "vitest run",
         "test:watch": "vitest",
         "prepare": "cd .. && git config core.hooksPath frontend/.husky"

@@ -38,6 +38,24 @@ async function request(endpoint, options = {}) {
         }
 
         if (!response.ok) {
+            // Handle 401 Unauthorized (Token Expiry)
+            if (response.status === 401 && !options._retry && !endpoint.includes('/signin') && !endpoint.includes('/signup') && !endpoint.includes('/refresh')) {
+                try {
+                    // Attempt to refresh token
+                    await api.refreshToken();
+
+                    // Retry original request
+                    return request(endpoint, { ...options, _retry: true });
+                } catch (refreshError) {
+                    console.error('Token refresh failed:', refreshError);
+                    // Dispatch event to trigger global logout
+                    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+                }
+            } else if (response.status === 401 && !endpoint.includes('/signin')) {
+                // If 401 but not eligible for refresh (e.g. signout or unexpected), verify if we should logout
+                 window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            }
+
             // Throw an error with the server message if available
             const error = new Error(data.message || data.error || `Request failed with status ${response.status}`);
             error.status = response.status;
@@ -64,5 +82,6 @@ export const api = {
     login: (credentials) => request('/users/signin', { method: 'POST', body: credentials }),
     register: (userData) => request('/users/signup', { method: 'POST', body: userData }),
     logout: () => request('/users/signout', { method: 'POST' }),
+    refreshToken: () => request('/users/refresh', { method: 'POST' }), // Helper for refresh
     me: () => request('/users/me', { method: 'GET' }),
 };

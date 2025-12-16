@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '../services/api';
 
@@ -78,6 +79,26 @@ export function useAuth() {
             toast.error(err.message || "Sign out failed");
         }
     });
+
+    // Listen for global auth errors (e.g. from api interceptor)
+    useEffect(() => {
+        const handleAuthError = () => {
+             // Prevent redundant handling if multiple requests fail at once
+             const currentUser = queryClient.getQueryData(['auth', 'user']);
+             if (!currentUser) return;
+
+             queryClient.setQueryData(['auth', 'user'], null);
+             
+             // clear() is appropriate here to ensure no sensitive task data remains
+             queryClient.clear(); 
+             
+             // Use a unique ID to prevent toast spam from concurrent failures
+             toast.error("Session expired. Please log in again.", { id: 'session-expired' });
+        };
+
+        window.addEventListener('auth:unauthorized', handleAuthError);
+        return () => window.removeEventListener('auth:unauthorized', handleAuthError);
+    }, [queryClient]);
 
     return {
         user,

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 /**
  * @file api.test.js
  * @description Unit tests for the API service wrapper.
@@ -108,5 +109,87 @@ describe('API Service', () => {
             expect.stringContaining('/delete'),
             expect.objectContaining({ method: 'DELETE' })
         );
+    });
+    
+    it('should retry request on 401 if refresh succeeds', async () => {
+        // First call returns 401
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Token expired' }),
+        });
+
+        // Second call (refresh) returns 200
+        fetch.mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ success: true }),
+        });
+
+        // Third call (retry original) returns 200 success
+        fetch.mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ success: true, data: 'retried' }),
+        });
+
+        const result = await api.get('/protected-resource');
+        
+        expect(result).toEqual({ success: true, data: 'retried' });
+        expect(fetch).toHaveBeenCalledTimes(3); 
+        // 1. /protected-resource (401)
+        // 2. /users/refresh (200)
+        // 3. /protected-resource (200)
+    });
+
+    it('should throw error if refresh fails on 401', async () => {
+        // First call returns 401
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Token expired' }),
+        });
+
+        // Second call (refresh) returns 401 or error
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Refresh expired' }),
+        });
+
+        await expect(api.get('/protected-resource')).rejects.toThrow('Token expired');
+        
+        expect(fetch).toHaveBeenCalledTimes(2);
+        // 1. /protected-resource (401)
+        // 2. /users/refresh (401) -> Catch block logs error, then outer catch throws original 401 error
+    });
+    
+    it('should not retry if endpoint is signin', async () => {
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Unauthorized' }),
+        });
+
+        await expect(api.login({ username: 'u', password: 'p' })).rejects.toThrow('Unauthorized');
+        expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not retry if endpoint is signup', async () => {
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Unauthorized' }),
+        });
+
+        await expect(api.register({ username: 'u', password: 'p' })).rejects.toThrow('Unauthorized');
+        expect(fetch).toHaveBeenCalledTimes(1);
     });
 });

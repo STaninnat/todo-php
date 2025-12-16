@@ -12,7 +12,15 @@ import PropTypes from 'prop-types';
 import React from 'react';
 
 // Mock dependencies
-vi.mock('../services/api');
+vi.mock('../services/api', () => ({
+    api: {
+        me: vi.fn(),
+        login: vi.fn(),
+        register: vi.fn(),
+        logout: vi.fn(),
+    },
+}));
+
 vi.mock('react-hot-toast', () => ({
     default: {
         success: vi.fn(),

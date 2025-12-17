@@ -11,6 +11,7 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
+      COOKIE_SECURE: "false"
       # DB env vars are inherited from .env
       DB_HOST: ${DB_HOST:-db}
       DB_PORT: ${DB_PORT:-3306}

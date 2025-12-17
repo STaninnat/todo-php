@@ -4,7 +4,7 @@ set -e
 COMMAND=$1
 
 if [ -z "$COMMAND" ]; then
-  echo "Usage: ./scripts/prod.sh [up|down|build|logs]"
+  echo "Usage: ./scripts/prod.sh [up|down|build|rebuild|logs]"
   exit 1
 fi
 
@@ -22,6 +22,9 @@ case $COMMAND in
     ;;
   build)
     docker compose $FILES build
+    ;;
+  rebuild)
+    docker compose $FILES up -d --build
     ;;
   logs)
     docker compose $FILES logs -f

@@ -38,10 +38,12 @@ class NativeCookieStorage implements CookieStorageInterface
 
     public function set(string $name, string $value, int $expires): void
     {
+        $secure = filter_var($_ENV['COOKIE_SECURE'] ?? getenv('COOKIE_SECURE'), FILTER_VALIDATE_BOOLEAN) ?? true;
+
         setcookie($name, $value, [
-            'expires'  => $expires,
-            'path'     => '/',
-            'secure'   => true,
+            'expires' => $expires,
+            'path' => '/',
+            'secure' => $secure,
             'httponly' => true,
             'samesite' => 'Strict',
         ]);
@@ -49,10 +51,12 @@ class NativeCookieStorage implements CookieStorageInterface
 
     public function delete(string $name): void
     {
+        $secure = filter_var($_ENV['COOKIE_SECURE'] ?? getenv('COOKIE_SECURE'), FILTER_VALIDATE_BOOLEAN) ?? true;
+
         setcookie($name, '', [
-            'expires'  => time() - 3600,
-            'path'     => '/',
-            'secure'   => true,
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => $secure,
             'httponly' => true,
             'samesite' => 'Strict',
         ]);

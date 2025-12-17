@@ -1,9 +1,9 @@
 services:
   php-fpm:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile.test
-    image: myapp-php-test:latest
+    image: todo-backend:test
     container_name: php_fpm_test
     env_file:
       - .env.test

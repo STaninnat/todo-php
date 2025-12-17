@@ -6,7 +6,8 @@ const server = serve({
         // Proxy API requests to backend
         '/v1/*': async (req) => {
             const url = new URL(req.url);
-            const targetUrl = `http://localhost:8085${url.pathname}${url.search}`;
+            const apiUrl = process.env.API_URL || 'http://localhost:8085';
+            const targetUrl = `${apiUrl}${url.pathname}${url.search}`;
 
             return fetch(targetUrl, {
                 method: req.method,

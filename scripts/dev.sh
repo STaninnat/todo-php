@@ -5,7 +5,7 @@ COMMAND=$1
 PROFILE=$2
 
 if [ -z "$COMMAND" ]; then
-  echo "Usage: ./scripts/env.sh [build|up|rebuild|down|down:clean] [test]"
+  echo "Usage: ./scripts/dev.sh [build|up|rebuild|down|down:clean] [test]"
   exit 1
 fi
 

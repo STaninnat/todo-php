@@ -10,6 +10,7 @@
 note*
 .env*
 README.md
+cmds.md
 docs/
 *.puml
 *.tmp

@@ -3,8 +3,8 @@ set -e
 
 echo "Cleaning all Docker environments..."
 
-./scripts/env.sh down:clean
-./scripts/env.sh down:clean test
+./scripts/dev.sh down:clean
+./scripts/dev.sh down:clean "$@"
 
 echo "Removing unused Docker data..."
 docker system prune -f --volumes

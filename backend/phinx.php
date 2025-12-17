@@ -45,6 +45,9 @@ return [
             'pass' => $pass,
             'port' => $port,
             'charset' => 'utf8mb4',
+            // Add SSL options if configured
+            'ssl_ca' => getenv('DB_SSL_CA') ?: $_ENV['DB_SSL_CA'] ?? null,
+            'ssl_verify' => false, // Often needed for Aiven self-signed logic in PHP naming verification
         ],
     ],
     'version_order' => 'creation'

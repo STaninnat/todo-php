@@ -10,6 +10,7 @@ logs/
 note*
 .env*
 cmds.md
+ca.pem
 
 # =========================
 # Dependencies

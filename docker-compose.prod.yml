@@ -4,7 +4,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: prod  # Use production stage
+      target: prod # Use production stage
     image: todo-backend:prod
     container_name: backend_prod
     restart: always
@@ -13,14 +13,14 @@ services:
       APP_DEBUG: "false"
       # DB env vars are inherited from .env
       DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME:-tododb}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
       JWT_SECRET: ${JWT_SECRET}
+      DB_SSL_CA: /app/ca.pem
     networks:
       - app_network
-    depends_on:
-      - db
 
   # Frontend Service (Nginx + React Build) -> Replaces 'nginx' dev gateway
   nginx:
@@ -36,26 +36,6 @@ services:
       - php-fpm
     networks:
       - app_network
-
-  # Database Service
-  db:
-    image: mysql:8.0
-    container_name: db_prod
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-tododb}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - db_prod_data:/var/lib/mysql
-    networks:
-      - app_network
-
-  # Note: phpMyAdmin is excluded from production by default for security.
-
-volumes:
-  db_prod_data:
 
 networks:
   app_network:

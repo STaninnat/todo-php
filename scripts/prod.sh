@@ -8,8 +8,8 @@ if [ -z "$COMMAND" ]; then
   exit 1
 fi
 
-# Use docker-compose.yml as base, and prod override
-FILES="-f docker-compose.yml -f docker-compose.prod.yml"
+# Use docker-compose.prod.yml only (Standalone Production Config)
+FILES="-f docker-compose.prod.yml"
 
 echo "Executing: docker compose $FILES $COMMAND ..."
 

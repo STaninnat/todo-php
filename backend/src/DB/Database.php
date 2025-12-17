@@ -66,11 +66,24 @@ class Database
         $dsn = $dsn ?? "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
 
         // Attempt to create PDO connection
+        // Attempt to create PDO connection
         try {
-            $this->pdo = new PDO($dsn, $user, $pass, [
+            $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
+            ];
+
+            // Handle SSL if configured
+            $sslCa = getenv('DB_SSL_CA') ?: $_ENV['DB_SSL_CA'] ?? null;
+            if ($sslCa) {
+                if (!file_exists($sslCa)) {
+                    throw new Exception("SSL CA file not found at: $sslCa");
+                }
+                $options[PDO::MYSQL_ATTR_SSL_CA] = $sslCa;
+                $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false; // Aiven self-signed often needs this false or strict verification
+            }
+
+            $this->pdo = new PDO($dsn, $user, $pass, $options);
         } catch (PDOException $e) {
             throw new Exception("DB connection failed: " . $e->getMessage(), 0, $e);
         }

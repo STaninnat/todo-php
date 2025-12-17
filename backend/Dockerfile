@@ -35,6 +35,7 @@ COPY src ./src
 COPY public ./public
 COPY phinx.php ./phinx.php
 COPY db ./db
+COPY ca.pem /app/ca.pem
 
 # Set permissions
 RUN chown -R www-data:www-data /app

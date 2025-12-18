@@ -40,7 +40,7 @@ class SigninService
      * Constructor
      *
      * Initializes dependencies for user authentication service.
-     /**
+     *
      * @param UserQueries         $userQueries       Service for user database queries.
      * @param CookieManager       $cookieManager     Service for managing cookies.
      * @param JwtService          $jwt               Service for JWT operations.
@@ -72,9 +72,9 @@ class SigninService
      * @throws InvalidArgumentException If credentials are missing or invalid
      * @throws RuntimeException         If a database or token operation fails
      *
-     * @return void
+     * @return array The authenticated user data.
      */
-    public function execute(Request $req): void
+    public function execute(Request $req): array
     {
         $username = RequestValidator::getString($req, 'username', 'Username is required.');
         $password = RequestValidator::getString($req, 'password', 'Password is required.');
@@ -108,5 +108,10 @@ class SigninService
         // Generate and set Refresh Token (7 days)
         $refreshToken = $this->refreshTokenService->create($user['id'], 604800);
         $this->cookieManager->setRefreshToken($refreshToken, time() + 604800);
+
+        // Remove sensitive data
+        unset($user['password']);
+
+        return $user;
     }
 }

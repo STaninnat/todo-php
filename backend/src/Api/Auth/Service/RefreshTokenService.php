@@ -43,6 +43,12 @@ class RefreshTokenService
      */
     public function create(string $userId, int $ttlSeconds = 604800): string
     {
+        // 1. Hygiene: Remove expired tokens first
+        $this->cleanupExpired($userId);
+
+        // 2. Enforce Max Sessions Policy (Limit to 2 active sessions)
+        $this->enforceSessionLimit($userId, 2);
+
         $token = $this->jwt->createRefreshToken();
         $hash = $this->jwt->hashRefreshToken($token);
         $expiresAt = time() + $ttlSeconds;
@@ -58,6 +64,57 @@ class RefreshTokenService
         ]);
 
         return $token;
+    }
+
+    /**
+     * Enforce a maximum number of active sessions.
+     * Keeps the newest (limit - 1) tokens to make room for the new one.
+     *
+     * @param string $userId
+     * @param int $limit Total max sessions allowed (including the new one)
+     */
+    private function enforceSessionLimit(string $userId, int $limit): void
+    {
+        // We need to keep ($limit - 1) existing tokens so that adding 1 results in $limit.
+        $keepCount = $limit - 1;
+
+        if ($keepCount < 0)
+            $keepCount = 0;
+
+        // Fetch all current tokens ordered by newest first
+        $stmt = $this->pdo->prepare("SELECT id FROM refresh_tokens WHERE user_id = :uid ORDER BY id DESC");
+        $stmt->execute([':uid' => $userId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        // If we have fewer than we can keep, do nothing
+        if (count($rows) <= $keepCount) {
+            return;
+        }
+
+        // Identify tokens to remove (everything after the kept ones)
+        $idsToDelete = array_slice($rows, $keepCount);
+
+        if (!empty($idsToDelete)) {
+            // Create placeholders for IN clause (?,?,?)
+            $placeholders = implode(',', array_fill(0, count($idsToDelete), '?'));
+            $sql = "DELETE FROM refresh_tokens WHERE id IN ($placeholders)";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($idsToDelete);
+        }
+    }
+
+    /**
+     * Remove expired tokens for a specific user.
+     *
+     * @param string $userId
+     */
+    private function cleanupExpired(string $userId): void
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM refresh_tokens WHERE user_id = :uid AND expires_at < :now");
+        $stmt->execute([
+            ':uid' => $userId,
+            ':now' => time()
+        ]);
     }
 
     /**

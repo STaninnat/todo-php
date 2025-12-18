@@ -45,7 +45,7 @@ class UserQueries
 
         $errorStrings = [];
         foreach ($errorInfo as $v) {
-            $errorStrings[] = is_scalar($v) || $v === null ? (string)$v : gettype($v);
+            $errorStrings[] = is_scalar($v) || $v === null ? (string) $v : gettype($v);
         }
 
         return QueryResult::fail($errorStrings);

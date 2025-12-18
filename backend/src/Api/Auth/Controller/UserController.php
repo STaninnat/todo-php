@@ -153,9 +153,11 @@ class UserController
      */
     public function signin(Request $req, bool $forTest = false): ?array
     {
-        $this->signinService->execute($req);
+        $user = $this->signinService->execute($req);
 
-        $response = JsonResponder::quickSuccess('User signin successfully', false, $forTest);
+        $response = JsonResponder::success('User signin successfully')
+            ->withPayload(['user' => $user])
+            ->send(!$forTest, $forTest);
 
         return $forTest ? $response : null;
     }
@@ -193,9 +195,11 @@ class UserController
      */
     public function signup(Request $req, bool $forTest = false): ?array
     {
-        $this->signupService->execute($req);
+        $user = $this->signupService->execute($req);
 
-        $response = JsonResponder::quickSuccess('User signup successfully', false, $forTest);
+        $response = JsonResponder::success('User signup successfully')
+            ->withPayload(['user' => $user])
+            ->send(!$forTest, $forTest);
 
         return $forTest ? $response : null;
     }

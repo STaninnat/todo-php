@@ -75,9 +75,9 @@ class SignupService
      * @throws InvalidArgumentException If required fields are missing, invalid, or already exist
      * @throws RuntimeException         If any database operation fails
      *
-     * @return void
+     * @return array The newly created user data.
      */
-    public function execute(Request $req): void
+    public function execute(Request $req): array
     {
         $username = RequestValidator::getString($req, 'username', 'Username is required.');
         $email = RequestValidator::getEmail($req, 'email', 'Valid email is required.');
@@ -116,5 +116,10 @@ class SignupService
         // Refresh Token (7 days)
         $refreshToken = $this->refreshTokenService->create($user['id'], 604800);
         $this->cookieManager->setRefreshToken($refreshToken, time() + 604800);
+
+        // Remove sensitive data
+        unset($user['password']);
+
+        return $user;
     }
 }

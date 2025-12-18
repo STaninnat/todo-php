@@ -11,7 +11,7 @@ use App\DB\QueryResult;
 use App\DB\UserQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use InvalidArgumentException;
 use RuntimeException;

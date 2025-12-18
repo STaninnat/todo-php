@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Tests\Integration\Api\Auth\Service;
 
 use App\Api\Auth\Service\SignupService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use App\Api\Request;
 use App\DB\Database;
 use App\DB\UserQueries;
+use App\DB\RefreshTokenQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
 use Tests\Integration\Api\Helper\TestCookieStorage;
@@ -118,7 +119,7 @@ class SignupServiceIntegrationTest extends TestCase
         $storage = new TestCookieStorage();
         $this->cookieManager = new CookieManager($storage);
 
-        $refreshTokenService = new RefreshTokenService((new Database()), $this->jwt);
+        $refreshTokenService = new RefreshTokenService(new RefreshTokenQueries($this->pdo), $this->jwt);
 
         $this->service = new SignupService(
             $this->userQueries,

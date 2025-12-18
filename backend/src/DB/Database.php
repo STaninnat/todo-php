@@ -41,7 +41,7 @@ class Database
 
         // Get environment variables
         $host = getenv('DB_HOST') ?: $_ENV['DB_HOST'] ?? null;
-        $db   = getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?? null;
+        $db = getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?? null;
         $user = $user ?? getenv('DB_USER') ?: $_ENV['DB_USER'] ?? null;
         $pass = $pass ?? getenv('DB_PASS') ?: $_ENV['DB_PASS'] ?? null;
         $port = getenv('DB_PORT') ?: $_ENV['DB_PORT'] ?? '3306';
@@ -75,7 +75,7 @@ class Database
 
             // Handle SSL if configured
             $sslCa = getenv('DB_SSL_CA') ?: $_ENV['DB_SSL_CA'] ?? null;
-            if ($sslCa) {
+            if (is_string($sslCa) && $sslCa !== '') {
                 if (!file_exists($sslCa)) {
                     throw new Exception("SSL CA file not found at: $sslCa");
                 }

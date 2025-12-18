@@ -2,17 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Tests\Integration\Api\Auth\Service;
+namespace Tests\Integration\Utils;
 
 use PHPUnit\Framework\TestCase;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
+use App\DB\RefreshTokenQueries;
 use App\DB\Database;
 use App\Utils\JwtService;
-use Tests\Integration\Api\Helper\TestCookieStorage;
-use Exception;
 use PDO;
 
-require_once __DIR__ . '/../../../bootstrap_db.php';
+require_once __DIR__ . '/../bootstrap_db.php';
 
 /**
  * Class RefreshTokenServiceIntegrationTest
@@ -21,7 +20,7 @@ require_once __DIR__ . '/../../../bootstrap_db.php';
  *
  * Verifies database operations for creating, verifying, and revoking refresh tokens.
  *
- * @package Tests\Integration\Api\Auth\Service
+ * @package Tests\Integration\Utils
  */
 class RefreshTokenServiceIntegrationTest extends TestCase
 {
@@ -42,14 +41,13 @@ class RefreshTokenServiceIntegrationTest extends TestCase
      */
     protected function setUp(): void
     {
+        parent::setUp();
+
         $dbHost = $_ENV['DB_HOST'] ?? 'db_test';
-        if (!is_string($dbHost)) {
-            $dbHost = 'db_test';
-        }
+        assert(is_string($dbHost));
+
         $dbPort = $_ENV['DB_PORT'] ?? 3306;
-        if (!is_numeric($dbPort)) {
-            $dbPort = 3306;
-        }
+        assert(is_numeric($dbPort));
         $dbPort = (int) $dbPort;
 
         waitForDatabase($dbHost, $dbPort);
@@ -75,6 +73,7 @@ class RefreshTokenServiceIntegrationTest extends TestCase
         // Create Refresh Tokens Table
         $this->pdo->exec("
             CREATE TABLE refresh_tokens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id VARCHAR(64) NOT NULL,
                 token_hash VARCHAR(64) NOT NULL,
                 expires_at INTEGER NOT NULL,
@@ -85,7 +84,8 @@ class RefreshTokenServiceIntegrationTest extends TestCase
         ");
 
         $jwt = new JwtService('test-secret');
-        $this->service = new RefreshTokenService(new Database(), $jwt);
+        $queries = new RefreshTokenQueries($this->pdo);
+        $this->service = new RefreshTokenService($queries, $jwt);
     }
 
     /**
@@ -99,6 +99,7 @@ class RefreshTokenServiceIntegrationTest extends TestCase
         $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
         $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+        parent::tearDown();
     }
 
     /**

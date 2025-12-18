@@ -6,13 +6,13 @@ namespace Tests\Integration\Api\Auth\Service;
 
 use PHPUnit\Framework\TestCase;
 use App\Api\Auth\Service\RefreshService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use App\DB\Database;
+use App\DB\RefreshTokenQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
 use Tests\Integration\Api\Helper\TestCookieStorage;
 use PDO;
-use RuntimeException;
 
 require_once __DIR__ . '/../../../bootstrap_db.php';
 
@@ -84,6 +84,7 @@ class RefreshServiceIntegrationTest extends TestCase
 
         $this->pdo->exec("
             CREATE TABLE refresh_tokens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id VARCHAR(64) NOT NULL,
                 token_hash VARCHAR(64) NOT NULL,
                 expires_at INTEGER NOT NULL,
@@ -94,7 +95,7 @@ class RefreshServiceIntegrationTest extends TestCase
         ");
 
         $this->jwt = new JwtService('test-secret');
-        $this->refreshTokenService = new RefreshTokenService(new Database(), $this->jwt);
+        $this->refreshTokenService = new RefreshTokenService(new RefreshTokenQueries($this->pdo), $this->jwt);
         $this->cookieManager = new CookieManager(new TestCookieStorage());
 
         $this->service = new RefreshService(

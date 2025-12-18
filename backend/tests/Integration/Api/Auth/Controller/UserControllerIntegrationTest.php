@@ -13,7 +13,8 @@ use App\Api\Auth\Service\DeleteUserService;
 use App\Api\Auth\Service\GetUserService;
 use App\Api\Auth\Service\UpdateUserService;
 use App\Api\Auth\Service\RefreshService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
+use App\DB\RefreshTokenQueries;
 use App\DB\Database;
 use App\DB\UserQueries;
 use App\Utils\CookieManager;
@@ -109,6 +110,7 @@ class UserControllerIntegrationTest extends TestCase
 
         $this->pdo->exec("
             CREATE TABLE refresh_tokens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id VARCHAR(64) NOT NULL,
                 token_hash VARCHAR(64) NOT NULL,
                 expires_at INTEGER NOT NULL,
@@ -121,14 +123,17 @@ class UserControllerIntegrationTest extends TestCase
         $storage = new TestCookieStorage();
         $this->cookieManager = new CookieManager($storage);
 
+        $queries = new RefreshTokenQueries($this->pdo);
+        $refreshTokenService = new RefreshTokenService($queries, $this->jwt);
+
         $this->controller = new UserController(
             new DeleteUserService($this->userQueries, $this->cookieManager),
             new GetUserService($this->userQueries),
-            new SigninService($this->userQueries, $this->cookieManager, $this->jwt, new RefreshTokenService(new Database(), $this->jwt)),
-            new SignoutService($this->cookieManager, new RefreshTokenService(new Database(), $this->jwt)),
-            new SignupService($this->userQueries, $this->cookieManager, $this->jwt, new RefreshTokenService(new Database(), $this->jwt)),
+            new SigninService($this->userQueries, $this->cookieManager, $this->jwt, $refreshTokenService),
+            new SignoutService($this->cookieManager, $refreshTokenService),
+            new SignupService($this->userQueries, $this->cookieManager, $this->jwt, $refreshTokenService),
             new UpdateUserService($this->userQueries),
-            new RefreshService(new RefreshTokenService(new Database(), $this->jwt), $this->cookieManager, $this->jwt)
+            new RefreshService($refreshTokenService, $this->cookieManager, $this->jwt)
         );
     }
 
@@ -485,7 +490,7 @@ class UserControllerIntegrationTest extends TestCase
 
         $stmt = $this->pdo->prepare("SELECT username, email FROM users WHERE id = ?");
         $stmt->execute([$id]);
-        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $this->assertIsArray($user);
         $this->assertArrayHasKey('username', $user);
@@ -559,7 +564,7 @@ class UserControllerIntegrationTest extends TestCase
 
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$id]);
-        $this->assertFalse((bool) $stmt->fetch(\PDO::FETCH_ASSOC));
+        $this->assertFalse((bool) $stmt->fetch(PDO::FETCH_ASSOC));
 
         $this->assertNull($this->cookieManager->getAccessToken());
         $this->assertSame('access_token', $this->cookieManager->getLastSetCookieName());
@@ -680,7 +685,7 @@ class UserControllerIntegrationTest extends TestCase
 
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$userId]);
-        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->assertFalse((bool) $user);
 
         $this->assertNull($this->cookieManager->getAccessToken());
@@ -705,7 +710,8 @@ class UserControllerIntegrationTest extends TestCase
         $this->pdo->exec("INSERT INTO users (id, username, email, password) VALUES ('$id', 'ruser', 'r@e.com', 'pass')");
 
         // Manually create a refresh token in DB
-        $refreshTokenService = new RefreshTokenService(new Database(), $this->jwt);
+        $queries = new RefreshTokenQueries($this->pdo);
+        $refreshTokenService = new RefreshTokenService($queries, $this->jwt);
         $rawToken = $refreshTokenService->create($id);
 
         // Set refresh token in cookie

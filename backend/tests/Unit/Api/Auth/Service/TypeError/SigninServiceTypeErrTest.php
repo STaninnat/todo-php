@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Api\Auth\Service\TypeError;
 
 use App\Api\Auth\Service\SigninService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use App\DB\UserQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;

@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Tests\Integration\Api\Auth\Service;
 
 use App\Api\Auth\Service\SignoutService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
 use App\DB\Database;
+use App\DB\RefreshTokenQueries;
 use PHPUnit\Framework\TestCase;
 use Tests\Integration\Api\Helper\TestCookieStorage;
 use PDO;
@@ -60,7 +61,7 @@ class SignoutServiceIntegrationTest extends TestCase
 
         $db = new Database();
         $this->pdo = $db->getConnection();
-        $this->refreshTokenService = new RefreshTokenService($db, new JwtService('test-secret'));
+        $this->refreshTokenService = new RefreshTokenService(new RefreshTokenQueries($this->pdo), new JwtService('test-secret'));
 
         $this->service = new SignoutService($this->cookieManager, $this->refreshTokenService);
 
@@ -102,7 +103,8 @@ class SignoutServiceIntegrationTest extends TestCase
         $this->pdo->exec("CREATE TABLE users (id VARCHAR(64) PRIMARY KEY, username VARCHAR(255), email VARCHAR(255), password VARCHAR(255))");
         $this->pdo->exec("
             CREATE TABLE refresh_tokens (
-                user_id VARCHAR(64), 
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id VARCHAR(64) NOT NULL,
                 token_hash VARCHAR(64), 
                 expires_at INTEGER,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

@@ -2,35 +2,33 @@
 
 declare(strict_types=1);
 
-namespace App\Api\Auth\Service;
+namespace App\Utils;
 
-use App\DB\Database;
-use App\Utils\JwtService;
+use App\DB\RefreshTokenQueries;
 use InvalidArgumentException;
-use PDO;
 
 /**
  * Class RefreshTokenService
  *
  * Handles creation, verification, and revocation of refresh tokens.
  *
- * @package App\Api\Auth\Service
+ * @package App\Utils
  */
 class RefreshTokenService
 {
-    /** @var PDO Database connection for executing queries */
-    private PDO $pdo;
+    /** @var RefreshTokenQueries Database queries for refresh tokens */
+    private RefreshTokenQueries $queries;
 
     /** @var JwtService Service for generating and hashing tokens */
     private JwtService $jwt;
 
     /**
-     * @param Database   $db  Database connection
-     * @param JwtService $jwt JWT Service for hashing/generating
+     * @param RefreshTokenQueries $queries Database queries
+     * @param JwtService          $jwt     JWT Service for hashing/generating
      */
-    public function __construct(Database $db, JwtService $jwt)
+    public function __construct(RefreshTokenQueries $queries, JwtService $jwt)
     {
-        $this->pdo = $db->getConnection();
+        $this->queries = $queries;
         $this->jwt = $jwt;
     }
 
@@ -53,15 +51,7 @@ class RefreshTokenService
         $hash = $this->jwt->hashRefreshToken($token);
         $expiresAt = time() + $ttlSeconds;
 
-        $stmt = $this->pdo->prepare("
-            INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
-            VALUES (:uid, :hash, :exp)
-        ");
-        $stmt->execute([
-            ':uid' => $userId,
-            ':hash' => $hash,
-            ':exp' => $expiresAt
-        ]);
+        $this->queries->create($userId, $hash, $expiresAt);
 
         return $token;
     }
@@ -78,13 +68,12 @@ class RefreshTokenService
         // We need to keep ($limit - 1) existing tokens so that adding 1 results in $limit.
         $keepCount = $limit - 1;
 
-        if ($keepCount < 0)
+        if ($keepCount < 0) {
             $keepCount = 0;
+        }
 
         // Fetch all current tokens ordered by newest first
-        $stmt = $this->pdo->prepare("SELECT id FROM refresh_tokens WHERE user_id = :uid ORDER BY id DESC");
-        $stmt->execute([':uid' => $userId]);
-        $rows = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $rows = $this->queries->getTokensByUserId($userId);
 
         // If we have fewer than we can keep, do nothing
         if (count($rows) <= $keepCount) {
@@ -95,11 +84,7 @@ class RefreshTokenService
         $idsToDelete = array_slice($rows, $keepCount);
 
         if (!empty($idsToDelete)) {
-            // Create placeholders for IN clause (?,?,?)
-            $placeholders = implode(',', array_fill(0, count($idsToDelete), '?'));
-            $sql = "DELETE FROM refresh_tokens WHERE id IN ($placeholders)";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($idsToDelete);
+            $this->queries->deleteTokens($idsToDelete);
         }
     }
 
@@ -110,11 +95,7 @@ class RefreshTokenService
      */
     private function cleanupExpired(string $userId): void
     {
-        $stmt = $this->pdo->prepare("DELETE FROM refresh_tokens WHERE user_id = :uid AND expires_at < :now");
-        $stmt->execute([
-            ':uid' => $userId,
-            ':now' => time()
-        ]);
+        $this->queries->cleanupExpired($userId, time());
     }
 
     /**
@@ -127,16 +108,9 @@ class RefreshTokenService
     public function verify(string $token): string
     {
         $hash = $this->jwt->hashRefreshToken($token);
+        $row = $this->queries->getByHash($hash);
 
-        $stmt = $this->pdo->prepare("
-            SELECT user_id, expires_at 
-            FROM refresh_tokens 
-            WHERE token_hash = :hash
-        ");
-        $stmt->execute([':hash' => $hash]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!is_array($row)) {
+        if ($row === null) {
             throw new InvalidArgumentException("Invalid refresh token.");
         }
 
@@ -161,8 +135,7 @@ class RefreshTokenService
     public function revoke(string $token): void
     {
         $hash = $this->jwt->hashRefreshToken($token);
-        $stmt = $this->pdo->prepare("DELETE FROM refresh_tokens WHERE token_hash = :hash");
-        $stmt->execute([':hash' => $hash]);
+        $this->queries->deleteByHash($hash);
     }
 
     /**
@@ -172,7 +145,6 @@ class RefreshTokenService
      */
     public function revokeAllForUser(string $userId): void
     {
-        $stmt = $this->pdo->prepare("DELETE FROM refresh_tokens WHERE user_id = :uid");
-        $stmt->execute([':uid' => $userId]);
+        $this->queries->deleteAllForUser($userId);
     }
 }

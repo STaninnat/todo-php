@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Api\Auth\Service;
 
 use App\Utils\CookieManager;
+use App\Utils\RefreshTokenService;
 
 /**
  * Class SignoutService

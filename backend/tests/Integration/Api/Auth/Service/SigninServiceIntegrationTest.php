@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Tests\Integration\Api\Auth\Service;
 
 use App\Api\Auth\Service\SigninService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use App\Api\Request;
 use App\DB\Database;
 use App\DB\UserQueries;
+use App\DB\RefreshTokenQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
 use Tests\Integration\Api\Helper\TestCookieStorage;
@@ -105,6 +106,7 @@ class SigninServiceIntegrationTest extends TestCase
         $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
         $this->pdo->exec("
             CREATE TABLE refresh_tokens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id VARCHAR(64) NOT NULL,
                 token_hash VARCHAR(64) NOT NULL,
                 expires_at INTEGER NOT NULL,
@@ -117,7 +119,7 @@ class SigninServiceIntegrationTest extends TestCase
         $storage = new TestCookieStorage();
         $this->cookieManager = new CookieManager($storage);
 
-        $this->refreshTokenService = new RefreshTokenService(new Database(), $this->jwt);
+        $this->refreshTokenService = new RefreshTokenService(new RefreshTokenQueries($this->pdo), $this->jwt);
 
         $this->service = new SigninService(
             $this->userQueries,

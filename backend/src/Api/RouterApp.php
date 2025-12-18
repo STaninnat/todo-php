@@ -8,7 +8,7 @@ use App\Api\Auth\Controller\UserController;
 use App\Api\Auth\Service\DeleteUserService;
 use App\Api\Auth\Service\GetUserService;
 use App\Api\Auth\Service\RefreshService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use App\Api\Auth\Service\SigninService;
 use App\Api\Auth\Service\SignoutService;
 use App\Api\Auth\Service\SignupService;
@@ -23,6 +23,7 @@ use App\Api\Tasks\Service\UpdateTaskService;
 use App\DB\Database;
 use App\DB\UserQueries;
 use App\DB\TaskQueries;
+use App\DB\RefreshTokenQueries;
 use App\Utils\CookieManager;
 use App\Utils\JsonResponder;
 use App\Utils\JwtService;
@@ -100,7 +101,8 @@ class RouterApp
         // Middleware
         $this->authMiddleware = $authMiddleware ?? new AuthMiddleware($cookieManager, $jwt);
 
-        $refreshTokenService = new RefreshTokenService($database, $jwt);
+        $refreshTokenQueries = new RefreshTokenQueries($pdo);
+        $refreshTokenService = new RefreshTokenService($refreshTokenQueries, $jwt);
         $refreshService = new RefreshService($refreshTokenService, $cookieManager, $jwt);
 
         // Controllers

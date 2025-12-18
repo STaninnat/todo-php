@@ -9,6 +9,7 @@ use App\DB\UserQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
 use App\Utils\RequestValidator;
+use App\Utils\RefreshTokenService;
 use RuntimeException;
 use InvalidArgumentException;
 use Ramsey\Uuid\Uuid;
@@ -43,7 +44,7 @@ class SignupService
      * Constructor
      *
      * Initializes dependencies required for user registration.
-     /**
+     *
      * @param UserQueries         $userQueries         Database query handler for user operations
      * @param CookieManager       $cookieManager       Utility for managing authentication cookies
      * @param JwtService          $jwt                 Service for generating and validating JWT tokens
@@ -75,7 +76,7 @@ class SignupService
      * @throws InvalidArgumentException If required fields are missing, invalid, or already exist
      * @throws RuntimeException         If any database operation fails
      *
-     * @return array The newly created user data.
+     * @return array<string, mixed> The newly created user data.
      */
     public function execute(Request $req): array
     {
@@ -120,6 +121,7 @@ class SignupService
         // Remove sensitive data
         unset($user['password']);
 
+        /** @var array<string, mixed> $user */
         return $user;
     }
 }

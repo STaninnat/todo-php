@@ -6,7 +6,7 @@ namespace App\Api\Auth\Service;
 
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
-use App\Utils\JsonResponder;
+use App\Utils\RefreshTokenService;
 use RuntimeException;
 
 /**

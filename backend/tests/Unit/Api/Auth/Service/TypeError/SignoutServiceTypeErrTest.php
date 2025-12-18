@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Api\Auth\Service\TypeError;
 
 use App\Api\Auth\Service\SignoutService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use App\Utils\CookieManager;
 use PHPUnit\Framework\TestCase;
 use TypeError;

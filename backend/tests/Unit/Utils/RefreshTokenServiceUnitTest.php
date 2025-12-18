@@ -2,14 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Auth;
+namespace Tests\Unit\Utils;
 
 use PHPUnit\Framework\TestCase;
-use App\Api\Auth\Service\RefreshTokenService;
-use App\DB\Database;
+use App\Utils\RefreshTokenService;
+use App\DB\RefreshTokenQueries;
 use App\Utils\JwtService;
-use PDO;
-use PDOStatement;
 
 /**
  * Class RefreshTokenServiceUnitTest
@@ -18,12 +16,12 @@ use PDOStatement;
  *
  * Verifies logical flow of creating, verifying, and revoking tokens using DB and JWT mocks.
  *
- * @package Tests\Unit\Auth
+ * @package Tests\Unit\Utils
  */
 class RefreshTokenServiceUnitTest extends TestCase
 {
-    /** @var PDO&\PHPUnit\Framework\MockObject\MockObject Mocked Database connection */
-    private $pdo;
+    /** @var RefreshTokenQueries&\PHPUnit\Framework\MockObject\MockObject Mocked Queries */
+    private $queries;
 
     /** @var JwtService&\PHPUnit\Framework\MockObject\MockObject Mocked JWT service */
     private $jwt;
@@ -38,15 +36,13 @@ class RefreshTokenServiceUnitTest extends TestCase
      */
     protected function setUp(): void
     {
-        // Mock PDO
-        $this->pdo = $this->createMock(PDO::class);
-        $db = $this->createMock(Database::class);
-        $db->method('getConnection')->willReturn($this->pdo);
+        // Mock Queries
+        $this->queries = $this->createMock(RefreshTokenQueries::class);
 
         // Mock JwtService
         $this->jwt = $this->createMock(JwtService::class);
 
-        $this->service = new RefreshTokenService($db, $this->jwt);
+        $this->service = new RefreshTokenService($this->queries, $this->jwt);
     }
 
     /**
@@ -69,18 +65,9 @@ class RefreshTokenServiceUnitTest extends TestCase
             ->with($token)
             ->willReturn($hash);
 
-        $stmt = $this->createMock(PDOStatement::class);
-        $stmt->expects($this->once())
-            ->method('execute')
-            ->with($this->callback(function (array $params) use ($userId, $hash) {
-                return $params[':uid'] === $userId &&
-                    $params[':hash'] === $hash &&
-                    isset($params[':exp']);
-            }));
-
-        $this->pdo->expects($this->once())
-            ->method('prepare')
-            ->willReturn($stmt);
+        $this->queries->expects($this->once())
+            ->method('create')
+            ->with($userId, $hash, $this->anything());
 
         $result = $this->service->create($userId);
 
@@ -103,18 +90,10 @@ class RefreshTokenServiceUnitTest extends TestCase
             ->with($token)
             ->willReturn($hash);
 
-        $stmt = $this->createMock(PDOStatement::class);
-        $stmt->expects($this->once())
-            ->method('execute')
-            ->with([':hash' => $hash]);
-
-        $stmt->expects($this->once())
-            ->method('fetch')
+        $this->queries->expects($this->once())
+            ->method('getByHash')
+            ->with($hash)
             ->willReturn(['user_id' => $userId, 'expires_at' => time() + 3600]);
-
-        $this->pdo->expects($this->once())
-            ->method('prepare')
-            ->willReturn($stmt);
 
         $result = $this->service->verify($token);
 
@@ -135,12 +114,10 @@ class RefreshTokenServiceUnitTest extends TestCase
             ->method('hashRefreshToken')
             ->willReturn($hash);
 
-        $stmt = $this->createMock(PDOStatement::class);
-        $stmt->method('fetch')->willReturn(false); // Not found
-
-        $this->pdo->expects($this->once())
-            ->method('prepare')
-            ->willReturn($stmt);
+        $this->queries->expects($this->once())
+            ->method('getByHash')
+            ->with($hash)
+            ->willReturn(null);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid refresh token');
@@ -163,18 +140,14 @@ class RefreshTokenServiceUnitTest extends TestCase
             ->with($token)
             ->willReturn($hash);
 
-        $stmtSelect = $this->createMock(PDOStatement::class);
-        $stmtSelect->method('fetch')
+        $this->queries->expects($this->once())
+            ->method('getByHash')
+            ->with($hash)
             ->willReturn(['user_id' => 'user123', 'expires_at' => time() - 3600]);
 
-        $stmtDelete = $this->createMock(PDOStatement::class);
-        $stmtDelete->expects($this->once())
-            ->method('execute')
-            ->with([':hash' => $hash]);
-
-        $this->pdo->expects($this->exactly(2))
-            ->method('prepare')
-            ->willReturnOnConsecutiveCalls($stmtSelect, $stmtDelete);
+        $this->queries->expects($this->once())
+            ->method('deleteByHash')
+            ->with($hash);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Refresh token expired');

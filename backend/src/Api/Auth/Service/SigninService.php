@@ -9,6 +9,7 @@ use App\DB\UserQueries;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
 use App\Utils\RequestValidator;
+use App\Utils\RefreshTokenService;
 use RuntimeException;
 use InvalidArgumentException;
 
@@ -72,7 +73,7 @@ class SigninService
      * @throws InvalidArgumentException If credentials are missing or invalid
      * @throws RuntimeException         If a database or token operation fails
      *
-     * @return array The authenticated user data.
+     * @return array<string, mixed> The authenticated user data.
      */
     public function execute(Request $req): array
     {
@@ -112,6 +113,7 @@ class SigninService
         // Remove sensitive data
         unset($user['password']);
 
+        /** @var array<string, mixed> $user */
         return $user;
     }
 }

@@ -6,7 +6,7 @@ namespace Tests\Unit\Auth;
 
 use PHPUnit\Framework\TestCase;
 use App\Api\Auth\Service\RefreshService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
 use RuntimeException;

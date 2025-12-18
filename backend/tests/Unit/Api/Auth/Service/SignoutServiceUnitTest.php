@@ -6,7 +6,7 @@ namespace Tests\Unit\Api\Auth\Service;
 
 use PHPUnit\Framework\TestCase;
 use App\Api\Auth\Service\SignoutService;
-use App\Api\Auth\Service\RefreshTokenService;
+use App\Utils\RefreshTokenService;
 use App\Utils\CookieManager;
 
 /**

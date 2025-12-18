@@ -18,8 +18,23 @@ services:
       DB_NAME: ${DB_NAME:-tododb}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
+      DB_SSL_CA: ${DB_SSL_CA}
+      # New flexible config
+      DB_SOURCE: ${DB_SOURCE:-}
+      LC_DB_HOST: ${LC_DB_HOST:-}
+      LC_DB_PORT: ${LC_DB_PORT:-}
+      LC_DB_NAME: ${LC_DB_NAME:-}
+      LC_DB_USER: ${LC_DB_USER:-}
+      LC_DB_PASS: ${LC_DB_PASS:-}
+      LC_DB_SSL_CA: ${LC_DB_SSL_CA:-}
+      AIVEN_DB_HOST: ${AIVEN_DB_HOST:-}
+      AIVEN_DB_PORT: ${AIVEN_DB_PORT:-}
+      AIVEN_DB_NAME: ${AIVEN_DB_NAME:-}
+      AIVEN_DB_USER: ${AIVEN_DB_USER:-}
+      AIVEN_DB_PASS: ${AIVEN_DB_PASS:-}
+      AIVEN_DB_SSL_CA: ${AIVEN_DB_SSL_CA:-}
+      
       JWT_SECRET: ${JWT_SECRET}
-      DB_SSL_CA: /app/ca.pem
     networks:
       - app_network
 

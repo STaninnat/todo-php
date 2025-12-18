@@ -34,15 +34,32 @@ services:
       # options:
       #   gcp-project: "my-gcp-project-id"
       #   gcp-log-cmd: "true"
-      
+
     environment:
       DB_HOST: ${DB_HOST}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
+      DB_SSL_CA: ${DB_SSL_CA}
+      # New flexible config
+      DB_SOURCE: ${DB_SOURCE:-}
+      LC_DB_HOST: ${LC_DB_HOST:-}
+      LC_DB_PORT: ${LC_DB_PORT:-}
+      LC_DB_NAME: ${LC_DB_NAME:-}
+      LC_DB_USER: ${LC_DB_USER:-}
+      LC_DB_PASS: ${LC_DB_PASS:-}
+      LC_DB_SSL_CA: ${LC_DB_SSL_CA:-}
+      AIVEN_DB_HOST: ${AIVEN_DB_HOST:-}
+      AIVEN_DB_PORT: ${AIVEN_DB_PORT:-}
+      AIVEN_DB_NAME: ${AIVEN_DB_NAME:-}
+      AIVEN_DB_USER: ${AIVEN_DB_USER:-}
+      AIVEN_DB_PASS: ${AIVEN_DB_PASS:-}
+      AIVEN_DB_SSL_CA: ${AIVEN_DB_SSL_CA:-}
+      
       APP_ENV: ${APP_ENV:-development}
       APP_DEBUG: ${APP_DEBUG:-true}
       JWT_SECRET: ${JWT_SECRET}
+      COOKIE_SECURE: "false"
     depends_on:
       - db
     networks:

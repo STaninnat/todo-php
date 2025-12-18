@@ -40,11 +40,34 @@ class Database
         }
 
         // Get environment variables
-        $host = getenv('DB_HOST') ?: $_ENV['DB_HOST'] ?? null;
-        $db = getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?? null;
-        $user = $user ?? getenv('DB_USER') ?: $_ENV['DB_USER'] ?? null;
-        $pass = $pass ?? getenv('DB_PASS') ?: $_ENV['DB_PASS'] ?? null;
-        $port = getenv('DB_PORT') ?: $_ENV['DB_PORT'] ?? '3306';
+        $dbSource = getenv('DB_SOURCE') ?: $_ENV['DB_SOURCE'] ?? null;
+
+        // Define variable mapping based on source
+        $prefix = '';
+        if ($dbSource === 'local') {
+            $prefix = 'LC_';
+        } elseif ($dbSource === 'aiven' || $dbSource === 'cloud') {
+            $prefix = 'AIVEN_';
+        }
+
+        // Helper to get var with fallback to standard
+        $getVar = function (string $name) use ($prefix): ?string {
+            $prefixedName = $prefix . $name;
+            // Try prefixed env var first
+            $val = getenv($prefixedName) ?: $_ENV[$prefixedName] ?? null;
+            if (is_string($val) && $val !== '') {
+                return $val;
+            }
+            // Fallback to standard
+            $val = getenv($name) ?: $_ENV[$name] ?? null;
+            return is_string($val) ? $val : null;
+        };
+
+        $host = $getVar('DB_HOST');
+        $db = $getVar('DB_NAME');
+        $user = $user ?? $getVar('DB_USER');
+        $pass = $pass ?? $getVar('DB_PASS');
+        $port = $getVar('DB_PORT') ?? '3306';
 
         // Ensure required vars exist and are strings
         if (!is_string($host) || $host === '') {
@@ -56,16 +79,18 @@ class Database
         if (!is_string($user) || $user === '') {
             throw new Exception("Missing or invalid DB_USER.");
         }
-        if ($pass !== null && !is_string($pass)) {
-            throw new Exception("DB_PASS must be a string or null.");
+        if (is_string($pass)) {
+            $pass = trim($pass);
+            if ($pass === '') {
+                throw new Exception("DB_PASS must not be empty.");
+            }
         }
-        if (!is_string($port) || $port === '') {
+        if ($port === '') {
             $port = '3306';
         }
 
         $dsn = $dsn ?? "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
 
-        // Attempt to create PDO connection
         // Attempt to create PDO connection
         try {
             $options = [
@@ -74,7 +99,7 @@ class Database
             ];
 
             // Handle SSL if configured
-            $sslCa = getenv('DB_SSL_CA') ?: $_ENV['DB_SSL_CA'] ?? null;
+            $sslCa = $getVar('DB_SSL_CA');
             if (is_string($sslCa) && $sslCa !== '') {
                 if (!file_exists($sslCa)) {
                     throw new Exception("SSL CA file not found at: $sslCa");

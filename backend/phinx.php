@@ -18,11 +18,28 @@ if (file_exists($envFile)) {
 }
 
 // Retrieve database credentials from environment variables
-$host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?? null;
-$name = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?? null;
-$user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?? null;
-$pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?? null;
-$port = $_ENV['DB_PORT'] ?? getenv('DB_PORT') ?? '3306';
+$dbSource = $_ENV['DB_SOURCE'] ?? getenv('DB_SOURCE') ?? null;
+$prefix = '';
+if ($dbSource === 'local') {
+    $prefix = 'LC_';
+} elseif ($dbSource === 'aiven' || $dbSource === 'cloud') {
+    $prefix = 'AIVEN_';
+}
+
+$getVar = function ($name) use ($prefix) {
+    $val = $_ENV[$prefix . $name] ?? getenv($prefix . $name) ?? null;
+    if ($val !== null && $val !== '') {
+        return $val;
+    }
+    return $_ENV[$name] ?? getenv($name) ?? null;
+};
+
+$host = $getVar('DB_HOST');
+$name = $getVar('DB_NAME');
+$user = $getVar('DB_USER');
+$pass = $getVar('DB_PASS');
+$port = $getVar('DB_PORT') ?? '3306';
+$sslCa = $getVar('DB_SSL_CA');
 
 // Validate required configuration
 if (!$host || !$name || !$user) {
@@ -46,7 +63,7 @@ return [
             'port' => $port,
             'charset' => 'utf8mb4',
             // Add SSL options if configured
-            'ssl_ca' => getenv('DB_SSL_CA') ?: $_ENV['DB_SSL_CA'] ?? null,
+            'ssl_ca' => $sslCa ?? null,
             'ssl_verify' => false, // Often needed for Aiven self-signed logic in PHP naming verification
         ],
     ],

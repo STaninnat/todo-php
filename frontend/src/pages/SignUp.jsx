@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './Auth.css';
 import { validateEmail, validatePassword, validateConfirmPassword } from '../utils/validation';
-import { api } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
 
 /**
  * Sign Up Page Component.
@@ -12,6 +12,8 @@ import { api } from '../services/api';
  */
 export default function SignUp() {
     const navigate = useNavigate();
+    const { register } = useAuth();
+
     // Initialize state
     const [formData, setFormData] = useState({
         username: '',
@@ -55,7 +57,7 @@ export default function SignUp() {
         setError('');
 
         try {
-            await api.register({
+            await register({
                 username: formData.username,
                 email: formData.email,
                 password: formData.password,

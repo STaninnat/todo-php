@@ -2,23 +2,23 @@ import React from 'react';
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import './Auth.css';
-import { validateEmail } from '../utils/validation';
-import { api } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
 
 /**
  * Sign In Page Component.
- * Handles user authentication via email/password.
+ * Handles user authentication via username/password.
  * Redirects to home page upon successful login.
  */
 export default function SignIn() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { login } = useAuth();
     
     // Check for flash message from registration
     const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || '');
 
     const [formData, setFormData] = useState({
-        email: '',
+        username: '',
         password: '',
     });
     const [error, setError] = useState('');
@@ -35,8 +35,8 @@ export default function SignIn() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateEmail(formData.email)) {
-            setError('Please enter a valid email address.');
+        if (!formData.username.trim()) {
+            setError('Please enter your username.');
             return;
         }
 
@@ -44,8 +44,8 @@ export default function SignIn() {
         setSuccessMessage(''); // Clear success msg on submit attempt
 
         try {
-            await api.login({
-                email: formData.email,
+            await login({
+                username: formData.username,
                 password: formData.password,
             });
             // Redirect to Home/Todo Page
@@ -53,7 +53,7 @@ export default function SignIn() {
         } catch (err) {
             // Safety Filter: 4xx vs 5xx
             if (err.status && err.status >= 400 && err.status < 500) {
-                setError('Invalid email or password.'); // Generic 400 for login security
+                setError('Invalid username or password.'); // Generic 400 for login security
             } else {
                 setError('Something went wrong. Please try again later.');
             }
@@ -66,12 +66,12 @@ export default function SignIn() {
             {successMessage && <div className="auth-success">{successMessage}</div>}
             <form onSubmit={handleSubmit}>
                 <div>
-                    <label htmlFor="email">Email:</label>
+                    <label htmlFor="username">Username:</label>
                     <input
                         type="text"
-                        id="email"
-                        name="email"
-                        value={formData.email}
+                        id="username"
+                        name="username"
+                        value={formData.username}
                         onChange={handleChange}
                         required
                     />

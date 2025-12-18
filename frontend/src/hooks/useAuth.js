@@ -41,9 +41,13 @@ export function useAuth() {
         mutationFn: api.login,
         onSuccess: (data) => {
             toast.success("Welcome back!");
-            // Update user cache immediately
-            if (data && data.user) {
-                queryClient.setQueryData(['auth', 'user'], data.user);
+            
+            // Extract user from response. Backend returns { data: { user: ... } }
+            // Or if flattened: { user: ... }
+            const userData = data?.user || data?.data?.user;
+
+            if (userData) {
+                queryClient.setQueryData(['auth', 'user'], userData);
             } else {
                 queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
             }
@@ -56,11 +60,17 @@ export function useAuth() {
     // Mutation: Register
     const registerMutation = useMutation({
         mutationFn: api.register,
-        onSuccess: () => {
-             toast.success("Registration successful! Please sign in.");
-             // Usually register autologs in, or requires login. 
-             // Safest to invalidate.
-             queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
+        onSuccess: (data) => {
+             toast.success("Registration successful!");
+             
+             // Check if backend returns user (auto-login)
+             const userData = data?.user || data?.data?.user;
+
+             if (userData) {
+                queryClient.setQueryData(['auth', 'user'], userData);
+             } else {
+                queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
+             }
         },
         onError: (err) => {
             toast.error(err.message || "Registration failed");

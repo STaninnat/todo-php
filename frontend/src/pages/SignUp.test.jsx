@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SignUp from './SignUp';
 import { api } from '../services/api';
@@ -29,11 +30,21 @@ describe('SignUp Page', () => {
         vi.mocked(useNavigate).mockReturnValue(mockNavigate);
     });
 
+    const queryClient = new QueryClient({
+        defaultOptions: {
+            queries: {
+                 retry: false,
+            },
+        },
+    });
+
     it('should render registration form', () => {
         render(
-            <MemoryRouter>
-                <SignUp />
-            </MemoryRouter>
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter>
+                    <SignUp />
+                </MemoryRouter>
+            </QueryClientProvider>
         );
 
         expect(screen.getByLabelText(/Username/i)).toBeInTheDocument();
@@ -45,9 +56,11 @@ describe('SignUp Page', () => {
 
     it('should validate password mismatch', async () => {
         const { container } = render(
-            <MemoryRouter>
-                <SignUp />
-            </MemoryRouter>
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter>
+                    <SignUp />
+                </MemoryRouter>
+            </QueryClientProvider>
         );
 
         fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } });
@@ -65,9 +78,11 @@ describe('SignUp Page', () => {
         api.register.mockResolvedValue({ user: { id: 1 } });
         
         const { container } = render(
-            <MemoryRouter>
-                <SignUp />
-            </MemoryRouter>
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter>
+                    <SignUp />
+                </MemoryRouter>
+            </QueryClientProvider>
         );
 
         fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: 'newuser' } });
@@ -82,7 +97,7 @@ describe('SignUp Page', () => {
             username: 'newuser',
             email: 'new@example.com',
             password: 'Password123!',
-        }));
+        }, expect.anything()));
         
         expect(mockNavigate).toHaveBeenCalledWith('/');
     });

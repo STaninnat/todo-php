@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SignIn from './SignIn';
 import { api } from '../services/api';
@@ -29,33 +30,45 @@ describe('SignIn Page', () => {
         vi.mocked(useNavigate).mockReturnValue(mockNavigate);
     });
 
+    const queryClient = new QueryClient({
+        defaultOptions: {
+            queries: {
+                 retry: false,
+            },
+        },
+    });
+
     it('should render sign in form', () => {
         render(
-            <MemoryRouter>
-                <SignIn />
-            </MemoryRouter>
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter>
+                    <SignIn />
+                </MemoryRouter>
+            </QueryClientProvider>
         );
 
-        expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Username/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Sign In/i })).toBeInTheDocument();
     });
 
-    it('should validate email format locally', async () => {
+    it('should validate required username', async () => {
         const { container } = render(
-            <MemoryRouter>
-                <SignIn />
-            </MemoryRouter>
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter>
+                    <SignIn />
+                </MemoryRouter>
+            </QueryClientProvider>
         );
 
-        const emailInput = screen.getByLabelText(/Email/i);
+        const usernameInput = screen.getByLabelText(/Username/i);
         // We use direct form submission to avoid potential button click issues in test env
         const form = container.querySelector('form');
 
-        fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
+        fireEvent.change(usernameInput, { target: { value: '   ' } }); // Empty or whitespace
         fireEvent.submit(form);
 
-        expect(await screen.findByText('Please enter a valid email address.')).toBeInTheDocument();
+        expect(await screen.findByText('Please enter your username.')).toBeInTheDocument();
         expect(api.login).not.toHaveBeenCalled();
     });
 
@@ -63,21 +76,23 @@ describe('SignIn Page', () => {
         api.login.mockResolvedValue({ user: { id: 1 } });
         
         const { container } = render(
-            <MemoryRouter>
-                <SignIn />
-            </MemoryRouter>
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter>
+                    <SignIn />
+                </MemoryRouter>
+            </QueryClientProvider>
         );
 
-        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } });
+        fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: 'testuser' } });
         fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'Password123!' } });
         
         const form = container.querySelector('form');
         fireEvent.submit(form);
 
         await waitFor(() => expect(api.login).toHaveBeenCalledWith({
-            email: 'test@example.com',
+            username: 'testuser',
             password: 'Password123!',
-        }));
+        }, expect.anything()));
         
         expect(mockNavigate).toHaveBeenCalledWith('/');
     });
@@ -88,17 +103,19 @@ describe('SignIn Page', () => {
         api.login.mockRejectedValue(error);
 
         const { container } = render(
-            <MemoryRouter>
-                <SignIn />
-            </MemoryRouter>
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter>
+                    <SignIn />
+                </MemoryRouter>
+            </QueryClientProvider>
         );
 
-        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } });
+        fireEvent.change(screen.getByLabelText(/Username/i), { target: { value: 'testuser' } });
         fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'WrongPass' } });
         
         const form = container.querySelector('form');
         fireEvent.submit(form);
 
-        expect(await screen.findByText('Invalid email or password.')).toBeInTheDocument();
+        expect(await screen.findByText('Invalid username or password.')).toBeInTheDocument();
     });
 });

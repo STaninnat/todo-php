@@ -6,6 +6,7 @@ namespace Tests\Integration\Api;
 
 use App\Api\Request;
 use App\Api\Router;
+use App\Api\Exceptions\UnauthorizedException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -211,5 +212,25 @@ class RouterIntegrationTest extends TestCase
         $this->assertSame('error', $response['type']);
         $this->assertIsString($response['message']);
         $this->assertStringContainsString('Route not found', $response['message']);
+    }
+
+    /**
+     * Ensure UnauthorizedException produces a 401 error response.
+     *
+     * @return void
+     */
+    public function testHandlerThrowsUnauthorizedException(): void
+    {
+        $this->router->register('GET', '/protected', function () {
+            throw new UnauthorizedException('Access Denied');
+        });
+
+        $request = new Request('GET', '/protected');
+        $response = $this->router->dispatch($request, true);
+
+        $this->assertIsArray($response);
+        $this->assertFalse($response['success']);
+        $this->assertSame('error', $response['type']);
+        $this->assertSame('Access Denied', $response['message']);
     }
 }

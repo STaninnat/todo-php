@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
- * Class DebugMiddlewareTest
+ * Class DebugMiddlewareUnitTest
  *
  * Unit tests for {@see DebugMiddleware}. Ensures that detailed request
  * information is logged in the correct order and that JSON parsing errors
@@ -23,7 +23,7 @@ use PHPUnit\Framework\MockObject\MockObject;
  *
  * @package Tests\Unit\Api\Middlewares
  */
-class DebugMiddlewareTest extends TestCase
+class DebugMiddlewareUnitTest extends TestCase
 {
     /** @var DebugMiddleware Middleware instance under test */
     private DebugMiddleware $middleware;
@@ -97,6 +97,46 @@ class DebugMiddlewareTest extends TestCase
         $this->logger->expects($this->once())
             ->method('warning')
             ->with($this->stringContains('JSON Decode Error'));
+
+        ($this->middleware)($request);
+    }
+
+    /**
+     * Ensure that sensitive fields are sanitized in the logs.
+     *
+     * - Verifies keys like 'password', 'token' are masked
+     * - Checks nested arrays for sensitive keys
+     *
+     * @return void
+     */
+    public function testInvokeLogsSanitizedRequestDetails(): void
+    {
+        $request = new Request(
+            'POST',
+            '/auth',
+            ['token' => 'secret123'],
+            null,
+            ['user' => ['password' => 'pass123', 'name' => 'John']]
+        );
+
+        $matcher = $this->exactly(6);
+        /** @phpstan-ignore method.notFound */
+        $this->logger->expects($matcher)
+            ->method('info')
+            ->willReturnCallback(function (string $message) use ($matcher) {
+                $expected = [
+                    '=== Debug Middleware ===',
+                    'Request Method: POST',
+                    'Request Path: /auth',
+                    'Query Params: {"token":"***"}',
+                    'Body Params: {"user":{"password":"***","name":"John"}}',
+                    '========================'
+                ];
+
+                /** @phpstan-ignore method.internalClass */
+                $invocation = $matcher->numberOfInvocations();
+                $this->assertSame($expected[$invocation - 1], $message);
+            });
 
         ($this->middleware)($request);
     }

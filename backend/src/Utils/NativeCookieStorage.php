@@ -45,7 +45,7 @@ class NativeCookieStorage implements CookieStorageInterface
             'path' => '/',
             'secure' => $secure,
             'httponly' => true,
-            'samesite' => 'Strict',
+            'samesite' => 'Lax',
         ]);
     }
 
@@ -58,7 +58,7 @@ class NativeCookieStorage implements CookieStorageInterface
             'path' => '/',
             'secure' => $secure,
             'httponly' => true,
-            'samesite' => 'Strict',
+            'samesite' => 'Lax',
         ]);
         unset($_COOKIE[$name]);
     }

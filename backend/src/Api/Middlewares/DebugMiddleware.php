@@ -54,8 +54,8 @@ class DebugMiddleware
         $this->logger->info("=== Debug Middleware ===");
         $this->logger->info("Request Method: {$request->method}");
         $this->logger->info("Request Path: {$request->path}");
-        $this->logger->info("Query Params: " . json_encode($request->query));
-        $this->logger->info("Body Params: " . json_encode($request->body));
+        $this->logger->info("Query Params: " . json_encode($this->sanitize($request->query)));
+        $this->logger->info("Body Params: " . json_encode($this->sanitize($request->body)));
 
         // Route parameters (if any)
         if (!empty($request->params)) {
@@ -69,5 +69,27 @@ class DebugMiddleware
         }
 
         $this->logger->info("========================");
+    }
+
+    /**
+     * Recursively masks sensitive fields in an array.
+     *
+     * @param array<mixed> $data Input data
+     *
+     * @return array<mixed> Sanitized data
+     */
+    private function sanitize(array $data): array
+    {
+        $sensitiveKeys = ['password', 'token', 'secret', 'authorization', 'cookie', 'session'];
+
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = $this->sanitize($value);
+            } elseif (is_string($key) && in_array(strtolower($key), $sensitiveKeys, true)) {
+                $data[$key] = '***';
+            }
+        }
+
+        return $data;
     }
 }

@@ -10,7 +10,7 @@ use App\Api\Middlewares\AuthMiddleware;
 use App\Api\Request;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
-use RuntimeException;
+use App\Api\Exceptions\UnauthorizedException;
 
 /**
  * Class AuthMiddlewareTest
@@ -196,7 +196,7 @@ class AuthMiddlewareUnitTest extends TestCase
     {
         $this->request->auth = null;
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(UnauthorizedException::class);
         $this->expectExceptionMessage('Unauthorized. You must be logged in.');
 
         $this->middleware->requireAuth($this->request);

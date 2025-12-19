@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Integration\Api\Middlewares;
 
 use App\Api\Request;
+use App\Api\Exceptions\UnauthorizedException;
 use App\Api\Middlewares\AuthMiddleware;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 /**
  * Class AuthMiddlewareIntegrationTest
@@ -161,7 +161,7 @@ final class AuthMiddlewareIntegrationTest extends TestCase
         $req = new Request();
         $req->auth = null;
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(UnauthorizedException::class);
         $this->expectExceptionMessage('Unauthorized');
 
         // Should throw if auth not set

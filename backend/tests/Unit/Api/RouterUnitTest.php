@@ -6,6 +6,7 @@ namespace Tests\Unit\Api;
 
 use App\Api\Router;
 use App\Api\Request;
+use App\Api\Exceptions\UnauthorizedException;
 use App\Utils\JsonResponder;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -196,5 +197,25 @@ class RouterUnitTest extends TestCase
         // Ensure internal errors are handled gracefully
         $this->assertFalse($response['success']);
         $this->assertStringContainsString('Internal Server Error', $response['message']);
+    }
+
+    /**
+     * Test that UnauthorizedException is caught and converted
+     * into a 401 error response.
+     *
+     * @return void
+     */
+    public function testHandlerThrowsUnauthorizedException(): void
+    {
+        $router = new Router();
+        $router->register('GET', '/secure', fn() => throw new UnauthorizedException('Login required'));
+
+        $req = new Request(method: 'GET', path: '/secure');
+        $response = $router->dispatch($req, true);
+
+        $this->assertIsArray($response);
+        $this->assertFalse($response['success']);
+        $this->assertEquals('error', $response['type']);
+        $this->assertEquals('Login required', $response['message']);
     }
 }

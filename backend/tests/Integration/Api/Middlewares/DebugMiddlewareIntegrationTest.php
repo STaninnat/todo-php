@@ -103,4 +103,45 @@ class DebugMiddlewareIntegrationTest extends TestCase
 
         ($this->middleware)($request);
     }
+
+    /**
+     * Test that DebugMiddleware correctly masks sensitive data in logs.
+     *
+     * Ensures:
+     * - Keys like password/token are masked with ***
+     * - Structure remains intact
+     *
+     * @return void
+     */
+    public function testLoggingSanitizesSensitiveData(): void
+    {
+        $request = new Request(
+            'POST',
+            '/login',
+            [],
+            null,
+            ['username' => 'admin', 'password' => 'secret']
+        );
+
+        $matcher = $this->exactly(6);
+        /** @phpstan-ignore method.notFound */
+        $this->logger->expects($matcher)
+            ->method('info')
+            ->willReturnCallback(function (string $message) use ($matcher) {
+                $expected = [
+                    '=== Debug Middleware ===',
+                    'Request Method: POST',
+                    'Request Path: /login',
+                    'Query Params: []',
+                    'Body Params: {"username":"admin","password":"***"}',
+                    '========================'
+                ];
+
+                /** @phpstan-ignore method.internalClass */
+                $invocation = $matcher->numberOfInvocations();
+                $this->assertSame($expected[$invocation - 1], $message);
+            });
+
+        ($this->middleware)($request);
+    }
 }

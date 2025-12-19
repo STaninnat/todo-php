@@ -2,6 +2,7 @@
 
 namespace App\Api;
 
+use App\Api\Exceptions\UnauthorizedException;
 use App\Utils\JsonResponder;
 use Closure;
 use Exception;
@@ -147,6 +148,15 @@ class Router
             // Handle invalid route or parameter errors
             /** @var JsonResponder $responder */
             $responder = $responderClass::error($e->getMessage());
+
+            /** @var array<string, mixed> $response */
+            $response = (array) $responder->send(false, $forTest);
+
+            return $forTest ? $response : null;
+        } catch (UnauthorizedException $e) {
+            // Handle unauthorized access specifically
+            /** @var JsonResponder $responder */
+            $responder = $responderClass::error($e->getMessage(), 'error', 401);
 
             /** @var array<string, mixed> $response */
             $response = (array) $responder->send(false, $forTest);

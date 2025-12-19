@@ -7,6 +7,7 @@ namespace App\Api\Middlewares;
 use App\Api\Request;
 use App\Utils\CookieManager;
 use App\Utils\JwtService;
+use App\Api\Exceptions\UnauthorizedException;
 use RuntimeException;
 
 /**
@@ -90,7 +91,7 @@ class AuthMiddleware
     {
         // If no authentication payload is found, reject the request
         if (!$req->auth) {
-            throw new RuntimeException('Unauthorized. You must be logged in.');
+            throw new UnauthorizedException('Unauthorized. You must be logged in.');
         }
     }
 }

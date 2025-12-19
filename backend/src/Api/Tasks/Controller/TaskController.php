@@ -160,7 +160,7 @@ class TaskController
         $data = $this->getTasksService->execute($req);
 
         $response = JsonResponder::success('Task retrieved successfully')
-            ->withPayload(['task' => $data['task']])
+            ->withPayload(['task' => $data['task'], 'pagination' => $data['pagination']])
             ->send(!$forTest, $forTest);
 
         return $forTest ? $response : null;

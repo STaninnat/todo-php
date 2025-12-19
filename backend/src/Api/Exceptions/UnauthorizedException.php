@@ -16,5 +16,6 @@ use RuntimeException;
  */
 class UnauthorizedException extends RuntimeException
 {
+    /** @var int */
     protected $code = 401;
 }

@@ -32,7 +32,7 @@ export default function Header() {
 
     return (
         <header className="header">
-            <Link to="/" className="header-logo">
+            <Link to={user ? `/${user.username}` : '/'} className="header-logo">
                 <CheckSquare size={24} strokeWidth={2.5} />
                 Todo App
             </Link>

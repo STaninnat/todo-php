@@ -75,7 +75,7 @@ describe('SignUp Page', () => {
     });
 
     it('should call api.register and redirect on success', async () => {
-        api.register.mockResolvedValue({ user: { id: 1 } });
+        api.register.mockResolvedValue({ user: { id: 1, username: 'newuser' } });
         
         const { container } = render(
             <QueryClientProvider client={queryClient}>
@@ -99,6 +99,6 @@ describe('SignUp Page', () => {
             password: 'Password123!',
         }, expect.anything()));
         
-        expect(mockNavigate).toHaveBeenCalledWith('/');
+        expect(mockNavigate).toHaveBeenCalledWith('/newuser');
     });
 });

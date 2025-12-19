@@ -73,7 +73,7 @@ describe('SignIn Page', () => {
     });
 
     it('should call api.login and redirect on success', async () => {
-        api.login.mockResolvedValue({ user: { id: 1 } });
+        api.login.mockResolvedValue({ user: { id: 1, username: 'testuser' } });
         
         const { container } = render(
             <QueryClientProvider client={queryClient}>
@@ -94,7 +94,7 @@ describe('SignIn Page', () => {
             password: 'Password123!',
         }, expect.anything()));
         
-        expect(mockNavigate).toHaveBeenCalledWith('/');
+        expect(mockNavigate).toHaveBeenCalledWith('/testuser');
     });
 
     it('should display error message on API failure', async () => {

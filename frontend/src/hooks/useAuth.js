@@ -23,16 +23,20 @@ export function useAuth() {
         queryFn: async () => {
              try {
                  const data = await api.me();
-                 return data.user || null;
+
+                 return data.data || data.user || null;
              } catch (err) {
-                 // 401 just means not logged in, return null
+                 // 401/403 just means not logged in, return null
                  if (err.status === 401 || err.status === 403) {
                      return null;
                  }
-                 throw err;
+                 
+                 // For other errors (500, Network Error), log and fall back to guest mode
+                 toast.error("Backend unavailable. Switching to Guest Mode.", { id: 'backend-error' });
+                 return null;
              }
         },
-        retry: false, // Don't retry on 401s
+        retry: false, // Don't retry on any error to prevent loops
         staleTime: 1000 * 60 * 5, // Consider user data fresh for 5 minutes
     });
 

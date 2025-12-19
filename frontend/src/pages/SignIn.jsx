@@ -44,12 +44,18 @@ export default function SignIn() {
         setSuccessMessage(''); // Clear success msg on submit attempt
 
         try {
-            await login({
+            const data = await login({
                 username: formData.username,
                 password: formData.password,
             });
-            // Redirect to Home/Todo Page
-            navigate('/');
+            
+            // Get username to redirect correctly
+            const user = data?.user || data?.data?.user;
+            if (user?.username) {
+                navigate(`/${user.username}`);
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             // Safety Filter: 4xx vs 5xx
             if (err.status && err.status >= 400 && err.status < 500) {

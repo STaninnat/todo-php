@@ -57,13 +57,18 @@ export default function SignUp() {
         setError('');
 
         try {
-            await register({
+            const data = await register({
                 username: formData.username,
                 email: formData.email,
                 password: formData.password,
             });
             // Auto-login: Redirect directly to Home
-            navigate('/');
+            const user = data?.user || data?.data?.user;
+            if (user?.username) {
+                navigate(`/${user.username}`);
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             // Error Handling Logic:
             // 4xx (Client Error) -> Show specific message (e.g. "Email taken")

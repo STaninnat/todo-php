@@ -36,11 +36,11 @@ services:
       #   gcp-log-cmd: "true"
 
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASS}
-      DB_SSL_CA: ${DB_SSL_CA}
+      DB_HOST: ${DB_HOST:-}
+      DB_NAME: ${DB_NAME:-}
+      DB_USER: ${DB_USER:-}
+      DB_PASS: ${DB_PASS:-}
+      DB_SSL_CA: ${DB_SSL_CA:-}
       # New flexible config
       DB_SOURCE: ${DB_SOURCE:-}
       LC_DB_HOST: ${LC_DB_HOST:-}

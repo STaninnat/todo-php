@@ -18,12 +18,12 @@ describe('Pagination Component', () => {
 
     test('disables Prev button on first page', () => {
         render(<Pagination currentPage={1} totalPages={2} onPageChange={() => {}} />);
-        expect(screen.getByText(/Prev/)).toBeDisabled();
+        expect(screen.getByText(/Prev/).closest('button')).toBeDisabled();
     });
 
     test('disables Next button on last page', () => {
         render(<Pagination currentPage={2} totalPages={2} onPageChange={() => {}} />);
-        expect(screen.getByText(/Next/)).toBeDisabled();
+        expect(screen.getByText(/Next/).closest('button')).toBeDisabled();
     });
 
     test('calls onPageChange when buttons clicked', () => {

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { CheckSquare, LogOut, LogIn } from 'lucide-react';
+import Button from './Button';
 import './Header.css';
 
 /**
@@ -41,10 +42,10 @@ export default function Header() {
                     {user ? (
                         <>
                             <span className="user-welcome">Hi, {user.username}</span>
-                            <button onClick={handleLogout} className="btn-auth btn-logout">
+                            <Button onClick={handleLogout} variant="text" className="btn-logout">
                                 <LogOut size={16} style={{ marginRight: '6px' }} />
                                 Log Out
-                            </button>
+                            </Button>
                         </>
                     ) : (
                         <>

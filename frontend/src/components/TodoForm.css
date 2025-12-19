@@ -62,30 +62,3 @@
     justify-content: flex-end;
     gap: 0.5rem;
 }
-
-.btn-add {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 0.5rem 1.5rem;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.btn-add:hover {
-    background-color: var(--accent-hover);
-}
-
-.btn-cancel {
-    background-color: transparent;
-    color: var(--text-secondary);
-    border: none;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-}
-
-.btn-cancel:hover {
-    color: var(--text-primary);
-    text-decoration: underline;
-}

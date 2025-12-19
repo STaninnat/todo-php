@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import './Auth.css';
 import { validateEmail, validatePassword, validateConfirmPassword } from '../utils/validation';
 import { useAuth } from '../hooks/useAuth';
+import Button from '../components/Button';
 
 /**
  * Sign Up Page Component.
@@ -131,7 +132,7 @@ export default function SignUp() {
                 </div>
                 {error && <div className="auth-error">{error}</div>}
 
-                <button type="submit">Sign Up</button>
+                <Button type="submit" className="btn-auth-submit">Sign Up</Button>
             </form>
             <p>
                 Already have an account? <Link to="/signin">Sign In</Link>

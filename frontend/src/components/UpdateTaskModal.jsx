@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from './Modal';
+import Button from './Button';
 import './UpdateTaskModal.css';
 
 /**
@@ -62,12 +63,12 @@ export default function UpdateTaskModal({ isOpen, onClose, onUpdate, task }) {
                 </div>
                 
                 <div className="modal-actions">
-                    <button type="button" className="btn-cancel" onClick={onClose}>
+                    <Button variant="secondary" onClick={onClose} className="btn-cancel">
                         Cancel
-                    </button>
-                    <button type="submit" className="btn-save">
+                    </Button>
+                    <Button type="submit" className="btn-save">
                         Save Changes
-                    </button>
+                    </Button>
                 </div>
             </form>
         </Modal>

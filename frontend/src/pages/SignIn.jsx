@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import './Auth.css';
 import { useAuth } from '../hooks/useAuth';
+import Button from '../components/Button';
 
 /**
  * Sign In Page Component.
@@ -95,7 +96,7 @@ export default function SignIn() {
                 </div>
                 {error && <div className="auth-error">{error}</div>}
 
-                <button type="submit">Sign In</button>
+                <Button type="submit" className="btn-auth-submit">Sign In</Button>
             </form>
             <p>
                 New here? <Link to="/signup">Sign Up</Link>

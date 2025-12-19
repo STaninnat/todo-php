@@ -3,8 +3,9 @@ import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import SignUp from '../pages/SignUp';
 import SignIn from '../pages/SignIn';
 import TodoPage from '../pages/TodoPage';
-import Header from './Header';
-import { useAuth } from '../hooks/useAuth';
+import Header from './Header'; // Restored
+import { useAuth } from '../hooks/useAuth'; // Restored
+import LoadingSpinner from './LoadingSpinner';
 
 /**
  * Helper component to ensure the logged-in user matches the URL username parameter.
@@ -36,7 +37,11 @@ export default function AppRoutes() {
     const { user, isLoading } = useAuth();
 
     if (isLoading) {
-        return <div className="loading-screen">Loading...</div>; // Simple loading state
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <LoadingSpinner size="large" />
+            </div>
+        );
     }
 
     return (

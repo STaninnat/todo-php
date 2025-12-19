@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import Button from './Button';
 import './TodoForm.css';
 
 /**
@@ -72,19 +73,22 @@ export function TodoForm({ onAdd, isLoading = false }) {
                     disabled={isLoading}
                 />
                 <div className="form-actions">
-                    <button
+                    <Button
                         type="button"
-                        className="btn-cancel"
+                        variant="text"
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsExpanded(false);
                         }}
                     >
                         Cancel
-                    </button>
-                    <button type="submit" className="btn-add" disabled={isLoading}>
-                        {isLoading ? 'Adding...' : 'Add Task'}
-                    </button>
+                    </Button>
+                    <Button 
+                        type="submit" 
+                        isLoading={isLoading}
+                    >
+                        Add Task
+                    </Button>
                 </div>
             </div>
         </form>

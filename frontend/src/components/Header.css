@@ -78,15 +78,13 @@
 }
 
 .btn-logout {
-    background-color: transparent;
     color: var(--text-secondary);
-    border: 1px solid var(--border-color);
+    border: 1px solid transparent;
 }
 
 .btn-logout:hover {
-    background-color: var(--bg-hover);
-    color: var(--error-color);
-    border-color: var(--error-color);
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545 !important; /* Override standard text hover */
 }
 
 .user-welcome {

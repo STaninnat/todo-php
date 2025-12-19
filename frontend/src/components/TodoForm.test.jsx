@@ -18,13 +18,7 @@ describe('TodoForm Component', () => {
     it('should render collapsed initially', () => {
         render(<TodoForm onAdd={mockAdd} />);
         expect(screen.getByPlaceholderText('What needs to be done?')).toBeInTheDocument();
-        // Description should not be visible or container should not have active class
-        // In the code: <div className={`form-expanded ${isExpanded ? 'active' : ''}`}>
-        // We can check for the class on that div.
-        // Or check if textarea is visible? It's always rendered but maybe hidden via CSS?
-        // Code: className="form-expanded" (and active/inactive). CSS likely handles visibility.
-        // We can check if the container has class 'active' or not.
-        
+       
         // Let's find the container. It contains the textarea.
         const textarea = screen.getByPlaceholderText('Description (optional)');
         const container = textarea.parentElement; // div.form-expanded
@@ -45,7 +39,7 @@ describe('TodoForm Component', () => {
         render(<TodoForm onAdd={mockAdd} />);
         const input = screen.getByPlaceholderText('What needs to be done?');
         const textarea = screen.getByPlaceholderText('Description (optional)');
-        const submitBtn = screen.getByText('Add Task');
+        const submitBtn = screen.getByText('Add Task').closest('button');
 
         // Expand first
         fireEvent.focus(input);
@@ -65,7 +59,7 @@ describe('TodoForm Component', () => {
     it('should not submit if title is empty', () => {
         render(<TodoForm onAdd={mockAdd} />);
         const input = screen.getByPlaceholderText('What needs to be done?');
-        const submitBtn = screen.getByText('Add Task');
+        const submitBtn = screen.getByText('Add Task').closest('button');
 
         fireEvent.focus(input);
         fireEvent.click(submitBtn);
@@ -94,11 +88,13 @@ describe('TodoForm Component', () => {
         fireEvent.focus(input);
         
         const textarea = screen.getByPlaceholderText('Description (optional)');
-        const submitBtn = screen.getByText('Adding...'); // Button text changes
+        const submitBtn = screen.getByText('Add Task').closest('button'); // Get the button element
 
         expect(input).toBeDisabled();
         
         expect(textarea).toBeDisabled();
         expect(submitBtn).toBeDisabled();
+        expect(submitBtn).toHaveClass('btn-loading'); // Check for loading class
+        expect(screen.getByTestId('loading-spinner')).toBeInTheDocument(); // Check for spinner
     });
 });

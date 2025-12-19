@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import Button from './Button';
 import { X } from 'lucide-react';
 import PropTypes from 'prop-types';
 import './Modal.css';
@@ -47,9 +48,9 @@ export default function Modal({ isOpen, onClose, title, children }) {
             <div className="modal-container" ref={modalRef} role="dialog" aria-modal="true">
                 <div className="modal-header">
                     <h3>{title}</h3>
-                    <button className="btn-close" onClick={onClose} aria-label="Close modal">
+                    <Button variant="icon" className="btn-close" onClick={onClose} aria-label="Close modal">
                         <X size={20} />
-                    </button>
+                    </Button>
                 </div>
                 <div className="modal-content">
                     {children}

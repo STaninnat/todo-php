@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Modal from './Modal';
+import Button from './Button';
 import './DeleteTaskModal.css';
 
 /**
@@ -21,12 +22,12 @@ export default function DeleteTaskModal({ isOpen, onClose, onConfirm, taskTitle 
                 <p className="delete-warning">This action cannot be undone.</p>
                 
                 <div className="modal-actions">
-                    <button className="btn-cancel" onClick={onClose}>
+                    <Button variant="secondary" onClick={onClose} className="btn-cancel">
                         Cancel
-                    </button>
-                    <button className="btn-delete-confirm" onClick={onConfirm}>
+                    </Button>
+                    <Button variant="danger" onClick={onConfirm} className="btn-delete-confirm">
                         Delete
-                    </button>
+                    </Button>
                 </div>
             </div>
         </Modal>

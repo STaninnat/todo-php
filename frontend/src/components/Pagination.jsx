@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import Button from './Button';
 import './Pagination.css';
 
 /**
@@ -27,25 +28,25 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
 
     return (
         <div className="pagination">
-            <button 
-                className="pagination-btn" 
+            <Button 
+                variant="secondary"
                 onClick={handlePrev} 
                 disabled={currentPage === 1}
                 aria-label="Previous Page"
             >
                 &larr; Prev
-            </button>
+            </Button>
             <span className="pagination-info">
                 Page {currentPage} of {totalPages}
             </span>
-            <button 
-                className="pagination-btn" 
+            <Button 
+                variant="secondary" 
                 onClick={handleNext} 
                 disabled={currentPage === totalPages}
                 aria-label="Next Page"
             >
                 Next &rarr;
-            </button>
+            </Button>
         </div>
     );
 }

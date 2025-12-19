@@ -35,7 +35,7 @@ describe('AppRoutes Component', () => {
             </MemoryRouter>
         );
 
-        expect(screen.getByText('Loading...')).toBeInTheDocument();
+        expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
     });
 
     describe('Guest User', () => {

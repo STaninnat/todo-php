@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import Button from './Button';
 import { Trash2, Edit } from 'lucide-react';
 import './TodoItem.css';
 
@@ -25,20 +26,22 @@ export default function TodoItem({ todo, onToggle, onDelete, onUpdate }) {
             </div>
 
             <div className="todo-actions">
-                <button 
+                <Button 
                     onClick={() => onUpdate(todo)} 
-                    className="btn-icon btn-edit"
+                    variant="icon"
+                    className="btn-edit"
                     aria-label="Edit task"
                 >
                     <Edit size={18} />
-                </button>
-                <button 
+                </Button>
+                <Button 
                     onClick={() => onDelete(todo.id)} 
-                    className="btn-icon btn-delete"
+                    variant="icon"
+                    className="btn-delete"
                     aria-label="Delete task"
                 >
                     <Trash2 size={18} />
-                </button>
+                </Button>
             </div>
         </div>
     );

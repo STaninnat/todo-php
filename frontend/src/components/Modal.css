@@ -39,24 +39,6 @@
     color: var(--text-primary);
 }
 
-.btn-close {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 4px;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-close:hover {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-}
-
 .modal-content {
     padding: 1.5rem;
 }

@@ -43,7 +43,7 @@ describe('TodoPage', () => {
     it('should call addTodo from form', () => {
         render(<TodoPage />);
         const input = screen.getByPlaceholderText('What needs to be done?');
-        const submitBtn = screen.getByText('Add Task');
+        const submitBtn = screen.getByText('Add Task').closest('button');
 
         fireEvent.focus(input); // Expand form
         fireEvent.change(input, { target: { value: 'New Task' } });
@@ -59,7 +59,7 @@ describe('TodoPage', () => {
         fireEvent.click(deleteBtn);
 
         // Modal should appear
-        const modalDeleteBtn = screen.getByText('Delete', { selector: 'button.btn-delete-confirm' });
+        const modalDeleteBtn = screen.getByText('Delete').closest('button');
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
 
         fireEvent.click(modalDeleteBtn);
@@ -75,7 +75,7 @@ describe('TodoPage', () => {
 
         // Modal should appear with populated data
         const titleInput = screen.getByDisplayValue('Task 1');
-        const saveBtn = screen.getByText('Save Changes');
+        const saveBtn = screen.getByText('Save Changes').closest('button');
 
         fireEvent.change(titleInput, { target: { value: 'Updated Task' } });
         fireEvent.click(saveBtn);

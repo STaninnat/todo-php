@@ -47,7 +47,7 @@ describe('UpdateTaskModal Component', () => {
 
         const titleInput = screen.getByLabelText('Title');
         const descInput = screen.getByLabelText('Description');
-        const saveBtn = screen.getByText('Save Changes');
+        const saveBtn = screen.getByText('Save Changes').closest('button');
 
         fireEvent.change(titleInput, { target: { value: 'Updated Title' } });
         fireEvent.change(descInput, { target: { value: 'Updated Description' } });

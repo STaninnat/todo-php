@@ -45,21 +45,10 @@
     box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
 }
 
-.auth-container button {
+.btn-auth-submit {
     width: 100%;
-    padding: 0.875rem;
-    margin-top: 1rem;
-    font-weight: 600;
-    color: whitesmoke;
-    background-color: var(--accent-color);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.auth-container button:hover {
-    background-color: var(--accent-hover);
+    margin-top: 1rem !important;
+    padding: 0.875rem !important; /* Larger touch target for auth */
 }
 
 .auth-container p {

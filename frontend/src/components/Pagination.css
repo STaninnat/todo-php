@@ -7,28 +7,6 @@
     font-family: 'Inter', sans-serif;
 }
 
-.pagination-btn {
-    background-color: transparent;
-    border: 1px solid var(--border-color, #e2e8f0);
-    color: var(--text-color, #334155);
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-}
-
-.pagination-btn:hover:not(:disabled) {
-    background-color: var(--primary-color, #6366f1);
-    color: white;
-    border-color: var(--primary-color, #6366f1);
-}
-
-.pagination-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 .pagination-info {
     font-size: 0.9rem;
     color: var(--text-muted, #64748b);

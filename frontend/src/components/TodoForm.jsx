@@ -9,7 +9,7 @@ import './TodoForm.css';
  * @param {Object} props - Component props
  * @param {function} props.onAdd - Callback to add a new task {title, description}
  */
-export function TodoForm({ onAdd }) {
+export function TodoForm({ onAdd, isLoading = false }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -60,6 +60,7 @@ export function TodoForm({ onAdd }) {
                 placeholder="What needs to be done?"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                disabled={isLoading}
             />
 
             <div className={`form-expanded ${isExpanded ? 'active' : ''}`}>
@@ -68,6 +69,7 @@ export function TodoForm({ onAdd }) {
                     placeholder="Description (optional)"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    disabled={isLoading}
                 />
                 <div className="form-actions">
                     <button
@@ -80,8 +82,8 @@ export function TodoForm({ onAdd }) {
                     >
                         Cancel
                     </button>
-                    <button type="submit" className="btn-add">
-                        Add Task
+                    <button type="submit" className="btn-add" disabled={isLoading}>
+                        {isLoading ? 'Adding...' : 'Add Task'}
                     </button>
                 </div>
             </div>
@@ -91,4 +93,5 @@ export function TodoForm({ onAdd }) {
 
 TodoForm.propTypes = {
     onAdd: PropTypes.func.isRequired,
+    isLoading: PropTypes.bool,
 };

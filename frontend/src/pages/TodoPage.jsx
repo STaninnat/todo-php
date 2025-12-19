@@ -13,7 +13,7 @@ import './TodoPage.css';
  * Renders TodoList, TodoForm, and Modals for updating/deleting tasks.
  */
 export default function TodoPage() {
-    const { todos, addTodo, toggleTodo, deleteTodo, updateTodo, page, setPage, totalPages } = useTodos();
+    const { todos, addTodo, isAdding, toggleTodo, deleteTodo, updateTodo, page, setPage, totalPages } = useTodos();
 
     // Modal State
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null, taskTitle: '' });
@@ -48,7 +48,7 @@ export default function TodoPage() {
         <div className="todo-container">
             <h1>My Tasks</h1>
 
-            <TodoForm onAdd={addTodo} />
+            <TodoForm onAdd={addTodo} isLoading={isAdding} />
 
             <TodoList
                 todos={todos}

@@ -85,4 +85,20 @@ describe('TodoForm Component', () => {
         const container = textarea.parentElement;
         expect(container).not.toHaveClass('active');
     });
+
+    it('should disable inputs and button when isLoading is true', () => {
+        render(<TodoForm onAdd={mockAdd} isLoading={true} />);
+        
+        // Expand to see all elements
+        const input = screen.getByPlaceholderText('What needs to be done?');
+        fireEvent.focus(input);
+        
+        const textarea = screen.getByPlaceholderText('Description (optional)');
+        const submitBtn = screen.getByText('Adding...'); // Button text changes
+
+        expect(input).toBeDisabled();
+        
+        expect(textarea).toBeDisabled();
+        expect(submitBtn).toBeDisabled();
+    });
 });

@@ -100,9 +100,11 @@ describe('useTodos Hook', () => {
     describe('Cloud Mode (API)', () => {
         it('should fetch todos from API', async () => {
             const mockTodos = [{ id: 1, title: 'API Task', is_done: 0 }];
-            api.get.mockResolvedValue({ 
-                task: mockTodos, 
-                pagination: { total_pages: 1 } 
+            api.get.mockResolvedValue({
+                data: {
+                    task: mockTodos,
+                    pagination: { total_pages: 1 }
+                }
             });
 
             const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
@@ -110,11 +112,17 @@ describe('useTodos Hook', () => {
             await waitFor(() => expect(result.current.isGuest).toBe(false));
             expect(result.current.todos).toHaveLength(1);
             expect(result.current.todos[0].title).toBe('API Task');
+            expect(result.current.isAdding).toBeDefined();
+            expect(result.current.isAdding).toBe(false); // Default state
         });
 
         it('should call API to add task', async () => {
-            api.get.mockResolvedValue({ task: [], pagination: { total_pages: 1 } });
-            api.post.mockResolvedValue({ task: { id: 1, title: 'New', is_done: 0 } });
+            api.get.mockResolvedValue({
+                 data: { task: [], pagination: { total_pages: 1 } }
+            });
+            api.post.mockResolvedValue({
+                 data: { task: { id: 1, title: 'New', is_done: 0 } }
+            });
 
             const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
             await waitFor(() => expect(result.current.isGuest).toBe(false));

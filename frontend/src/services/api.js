@@ -56,6 +56,12 @@ async function request(endpoint, options = {}) {
                 // If 401 but not eligible for refresh (e.g. signout or unexpected), verify if we should logout
                  window.dispatchEvent(new CustomEvent('auth:unauthorized'));
             }
+            
+            if (response.status === 429) {
+                 const error = new Error('Too many requests. Please try again later.');
+                 error.status = 429;
+                 throw error;
+            }
 
             // Throw an error with the server message if available
             const error = new Error(data.message || data.error || `Request failed with status ${response.status}`);

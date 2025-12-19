@@ -91,6 +91,19 @@ describe('API Service', () => {
             .toThrow('Invalid credentials');
     });
 
+    it('should throw "Too many requests" error on 429 status', async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            status: 429,
+            headers: { get: () => 'application/json' },
+            json: async () => ({}),
+        });
+
+        await expect(api.get('/rate-limited'))
+            .rejects
+            .toThrow('Too many requests. Please try again later.');
+    });
+
     it('should methods (put, delete) call request with correct method', async () => {
         global.fetch.mockResolvedValue({
             ok: true,

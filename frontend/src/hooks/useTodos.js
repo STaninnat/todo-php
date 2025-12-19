@@ -22,7 +22,10 @@ export function useTodos() {
         queryKey: ['todos', page],
         queryFn: async () => {
             try {
-                const data = await api.get(`/tasks?page=${page}&limit=10`);
+                const response = await api.get(`/tasks?page=${page}&limit=10`);
+                // Backend returns { data: { task: [...], pagination: {...} } }
+                const data = response.data || response; 
+
                 if (data && data.task && Array.isArray(data.task)) {
                     const mappedTodos = data.task.map((t) => ({
                         id: t.id,
@@ -122,12 +125,15 @@ export function useTodos() {
                     title: newTask.title,
                     description: newTask.description,
                 });
-                if (response && response.task) {
+                
+                const task = response?.data?.task || response?.task;
+
+                if (task) {
                     return {
-                        id: response.task.id,
-                        title: response.task.title,
-                        description: response.task.description,
-                        isDone: !!response.task.is_done,
+                        id: task.id,
+                        title: task.title,
+                        description: task.description,
+                        isDone: !!task.is_done,
                     };
                 }
                 throw new Error('Invalid response from server');
@@ -223,6 +229,7 @@ export function useTodos() {
         todos,
         isGuest,
         addTodo,
+        isAdding: addMutation.isPending,
         toggleTodo,
         deleteTodo,
         updateTodo,

@@ -2,7 +2,7 @@
     width: 100%;
     max-width: 400px;
     margin: 4rem auto;
-    padding: 2rem;
+    padding: 1.5rem;
     background-color: var(--bg-card);
     border-radius: 12px;
     box-shadow: var(--shadow);
@@ -16,7 +16,7 @@
 }
 
 .auth-container form div {
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.5rem;
     text-align: left;
 }
 
@@ -49,6 +49,7 @@
     width: 100%;
     margin-top: 1rem !important;
     padding: 0.875rem !important; /* Larger touch target for auth */
+    font-size: 0.9rem;
 }
 
 .auth-container p {

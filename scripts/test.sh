@@ -160,16 +160,25 @@ run_e2e() {
   TEMP_DIR=$(mktemp -d)
   TEMP_XML="$TEMP_DIR/e2e.xml"
 
-  echo "Starting test containers..."
-  docker compose --profile test -f docker-compose.test.yml up -d
+  if [ "$FAST" = true ]; then
+    echo "Fast mode: using existing docker containers"
 
-  # Ensure migrations run via bootstrap, which happens when phpunit runs
-  docker compose --profile test -f docker-compose.test.yml run --rm \
-    -v "$TEMP_DIR":/tmp php-fpm \
-    vendor/bin/phpunit -c phpunit.e2e.xml --log-junit /tmp/e2e.xml || STATUS=$?
+    docker compose --profile test -f docker-compose.test.yml run --rm \
+      -v "$TEMP_DIR":/tmp php-fpm \
+      vendor/bin/phpunit -c phpunit.e2e.xml --log-junit /tmp/e2e.xml || STATUS=$?
 
-  echo "Stopping test containers..."
-  docker compose --profile test -f docker-compose.test.yml down -v
+  else
+    echo "Starting test containers..."
+    docker compose --profile test -f docker-compose.test.yml up -d
+
+    # Ensure migrations run via bootstrap, which happens when phpunit runs
+    docker compose --profile test -f docker-compose.test.yml run --rm \
+      -v "$TEMP_DIR":/tmp php-fpm \
+      vendor/bin/phpunit -c phpunit.e2e.xml --log-junit /tmp/e2e.xml || STATUS=$?
+
+    echo "Stopping test containers..."
+    docker compose --profile test -f docker-compose.test.yml down -v
+  fi
 
   # Read XML report from host temp folder
   if [ -f "$TEMP_XML" ]; then

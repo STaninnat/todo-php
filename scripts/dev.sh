@@ -5,7 +5,7 @@ COMMAND=$1
 PROFILE=$2
 
 if [ -z "$COMMAND" ]; then
-  echo "Usage: ./scripts/dev.sh [build|up|rebuild|down|down:clean] [test]"
+  echo "Usage: ./scripts/dev.sh [build|up|rebuild|down|down:clean|logs] [test]"
   exit 1
 fi
 
@@ -40,6 +40,10 @@ case $COMMAND in
   down:clean)
     echo "Removing containers, volumes, and images..."
     docker compose $PROFILE_ARG -f "$FILE" down -v --rmi all
+    ;;
+  logs)
+    echo "Following logs..."
+    docker compose $PROFILE_ARG -f "$FILE" logs -f
     ;;
   *)
     echo "Unknown command: $COMMAND"

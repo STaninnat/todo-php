@@ -34,6 +34,7 @@
     "test:e2e": "cd .. && scripts/test.sh e2e",
     "test:e2e:fast": "cd .. && scripts/test.sh e2e --fast",
     "clean": "cd .. && scripts/clean.sh",
+    "clean:image": "cd .. && scripts/clean.sh images",
     "phinx:migrate": "cd .. && scripts/phinx.sh migrate",
     "phinx:rollback": "cd .. && scripts/phinx.sh rollback",
     "phinx:create": "cd .. && scripts/phinx.sh create",

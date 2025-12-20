@@ -61,19 +61,26 @@ class GetTasksService
         $userId = RequestValidator::getAuthUserId($req);
 
         // Pagination parameters
-        $page = isset($req->query['page']) && is_numeric($req->query['page']) ? (int)$req->query['page'] : 1;
-        $limit = isset($req->query['limit']) && is_numeric($req->query['limit']) ? (int)$req->query['limit'] : 10;
+        $page = isset($req->query['page']) && is_numeric($req->query['page']) ? (int) $req->query['page'] : 1;
+        $limit = isset($req->query['limit']) && is_numeric($req->query['limit']) ? (int) $req->query['limit'] : 10;
 
-        if ($page < 1) $page = 1;
-        if ($limit < 1) $limit = 10;
+        if ($page < 1)
+            $page = 1;
+        if ($limit < 1)
+            $limit = 10;
+
+        // Extract search query
+        $search = isset($req->query['search']) && is_string($req->query['search']) ? trim($req->query['search']) : null;
+        if ($search === '')
+            $search = null;
 
         // Fetch tasks via TaskQueries
-        $result = $this->taskQueries->getTasksByPage($page, $limit, $userId);
+        $result = $this->taskQueries->getTasksByPage($page, $limit, $userId, $search);
         RequestValidator::ensureSuccess($result, 'retrieve tasks', false, true);
 
         // Get total count
-        $totalItems = $this->taskQueries->countTasksByUserId($userId);
-        $totalPages = (int)ceil($totalItems / $limit);
+        $totalItems = $this->taskQueries->countTasksByUserId($userId, $search);
+        $totalPages = (int) ceil($totalItems / $limit);
 
         /** @var array<int, array<string, mixed>> $tasks */
         $tasks = (array) $result->data;

@@ -212,4 +212,54 @@ class RouterAppIntegrationTest extends TestCase
         $this->assertIsArray($response);
         $this->assertTrue($response['success']);
     }
+
+    /**
+     * Test dispatch for bulk delete tasks.
+     *
+     * - Mocks TaskController::deleteTasksBulk()
+     * - Verifies correct routing and response handling for bulk delete
+     *
+     * @return void
+     */
+    public function testDeleteTasksBulkDispatch(): void
+    {
+        /** @phpstan-ignore method.notFound */
+        $this->taskController->expects($this->once())
+            ->method('deleteTasksBulk')
+            ->willReturn(['success' => true, 'data' => ['count' => 5]]);
+
+        $request = new Request('DELETE', '/v1/tasks/delete_bulk');
+        $response = $this->routerApp->dispatch($request, true);
+
+        $this->assertIsArray($response);
+        $this->assertTrue($response['success']);
+        /** @var array{count: int} $data */
+        $data = $response['data'];
+        $this->assertEquals(5, $data['count']);
+    }
+
+    /**
+     * Test dispatch for bulk mark done tasks.
+     *
+     * - Mocks TaskController::markDoneTasksBulk()
+     * - Verifies correct routing and response handling for bulk updates
+     *
+     * @return void
+     */
+    public function testMarkDoneTasksBulkDispatch(): void
+    {
+        /** @phpstan-ignore method.notFound */
+        $this->taskController->expects($this->once())
+            ->method('markDoneTasksBulk')
+            ->willReturn(['success' => true, 'data' => ['count' => 3]]);
+
+        $request = new Request('PUT', '/v1/tasks/mark_done_bulk');
+        $response = $this->routerApp->dispatch($request, true);
+
+        $this->assertIsArray($response);
+        $this->assertTrue($response['success']);
+        /** @var array{count: int} $data */
+        $data = $response['data'];
+        $this->assertEquals(3, $data['count']);
+    }
 }

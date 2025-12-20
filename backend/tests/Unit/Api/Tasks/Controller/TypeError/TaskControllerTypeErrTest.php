@@ -11,6 +11,8 @@ use App\Api\Tasks\Service\DeleteTaskService;
 use App\Api\Tasks\Service\UpdateTaskService;
 use App\Api\Tasks\Service\MarkDoneTaskService;
 use App\Api\Tasks\Service\GetTasksService;
+use App\Api\Tasks\Service\BulkDeleteTaskService;
+use App\Api\Tasks\Service\BulkMarkDoneTaskService;
 
 /**
  * Class TaskControllerTypeErrTest
@@ -40,6 +42,12 @@ class TaskControllerTypeErrTest extends TestCase
     /** @var GetTasksService&\PHPUnit\Framework\MockObject\MockObject Mocked GetTasksService */
     private $getTasksService;
 
+    /** @var BulkDeleteTaskService&\PHPUnit\Framework\MockObject\MockObject Mocked BulkDeleteTaskService */
+    private $bulkDeleteService;
+
+    /** @var BulkMarkDoneTaskService&\PHPUnit\Framework\MockObject\MockObject Mocked BulkMarkDoneTaskService */
+    private $bulkMarkDoneService;
+
     /** @var TaskController Controller instance under test */
     private TaskController $controller;
 
@@ -59,6 +67,8 @@ class TaskControllerTypeErrTest extends TestCase
         $this->updateService = $this->createMock(UpdateTaskService::class);
         $this->markDoneService = $this->createMock(MarkDoneTaskService::class);
         $this->getTasksService = $this->createMock(GetTasksService::class);
+        $this->bulkDeleteService = $this->createMock(BulkDeleteTaskService::class);
+        $this->bulkMarkDoneService = $this->createMock(BulkMarkDoneTaskService::class);
 
         // Inject mocks into the controller
         $this->controller = new TaskController(
@@ -66,7 +76,9 @@ class TaskControllerTypeErrTest extends TestCase
             $this->deleteService,
             $this->updateService,
             $this->markDoneService,
-            $this->getTasksService
+            $this->getTasksService,
+            $this->bulkDeleteService,
+            $this->bulkMarkDoneService
         );
     }
 
@@ -134,5 +146,31 @@ class TaskControllerTypeErrTest extends TestCase
 
         /** @phpstan-ignore-next-line Invalid type to confirm strict parameter expectations */
         $this->controller->getTasks('invalid type', true);
+    }
+
+    /**
+     * Test that deleteTasksBulk() throws a TypeError when receiving an invalid argument type.
+     *
+     * @return void
+     */
+    public function testDeleteTasksBulkTypeError(): void
+    {
+        $this->expectException(\TypeError::class);
+
+        /** @phpstan-ignore-next-line */
+        $this->controller->deleteTasksBulk('invalid type', true);
+    }
+
+    /**
+     * Test that markDoneTasksBulk() throws a TypeError when receiving an invalid argument type.
+     *
+     * @return void
+     */
+    public function testMarkDoneTasksBulkTypeError(): void
+    {
+        $this->expectException(\TypeError::class);
+
+        /** @phpstan-ignore-next-line */
+        $this->controller->markDoneTasksBulk('invalid type', true);
     }
 }

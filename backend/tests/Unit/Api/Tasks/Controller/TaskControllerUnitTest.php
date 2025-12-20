@@ -11,6 +11,8 @@ use App\Api\Tasks\Service\DeleteTaskService;
 use App\Api\Tasks\Service\UpdateTaskService;
 use App\Api\Tasks\Service\MarkDoneTaskService;
 use App\Api\Tasks\Service\GetTasksService;
+use App\Api\Tasks\Service\BulkDeleteTaskService;
+use App\Api\Tasks\Service\BulkMarkDoneTaskService;
 use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
 use RuntimeException;
 
@@ -45,6 +47,13 @@ class TaskControllerUnitTest extends TestCase
     /** @var GetTasksService&\PHPUnit\Framework\MockObject\MockObject Mocked get-tasks service */
     private $getTasksService;
 
+    /** @var BulkDeleteTaskService&\PHPUnit\Framework\MockObject\MockObject Mocked bulk-delete service */
+    private $bulkDeleteService;
+
+    /** @var BulkMarkDoneTaskService&\PHPUnit\Framework\MockObject\MockObject Mocked bulk-mark-done service */
+    private $bulkMarkDoneService;
+
+
     /** @var TaskController Controller under test */
     private TaskController $controller;
 
@@ -62,6 +71,8 @@ class TaskControllerUnitTest extends TestCase
         $this->updateService = $this->createMock(UpdateTaskService::class);
         $this->markDoneService = $this->createMock(MarkDoneTaskService::class);
         $this->getTasksService = $this->createMock(GetTasksService::class);
+        $this->bulkDeleteService = $this->createMock(BulkDeleteTaskService::class);
+        $this->bulkMarkDoneService = $this->createMock(BulkMarkDoneTaskService::class);
 
         // Instantiate controller with mocked dependencies
         $this->controller = new TaskController(
@@ -69,7 +80,9 @@ class TaskControllerUnitTest extends TestCase
             $this->deleteService,
             $this->updateService,
             $this->markDoneService,
-            $this->getTasksService
+            $this->getTasksService,
+            $this->bulkDeleteService,
+            $this->bulkMarkDoneService
         );
     }
 
@@ -220,7 +233,10 @@ class TaskControllerUnitTest extends TestCase
      */
     public function testGetTasksSuccess(): void
     {
-        $taskData = ['task' => [['id' => 1, 'title' => 'Task']]];
+        $taskData = [
+            'task' => [['id' => 1, 'title' => 'Task']],
+            'pagination' => ['total' => 1, 'page' => 1, 'limit' => 10, 'totalPages' => 1]
+        ];
         $this->getTasksService->method('execute')->willReturn($taskData);
 
         $req = $this->makeRequest(
@@ -242,6 +258,37 @@ class TaskControllerUnitTest extends TestCase
         $this->assertSame('Task retrieved successfully', $decoded['message']);
         $this->assertSame($taskData['task'], $decoded['data']['task']);
         $this->assertArrayNotHasKey('totalPages', $decoded);
+    }
+
+    /**
+     * Test retrieval of tasks with search parameter.
+     *
+     * @return void
+     */
+    public function testGetTasksWithSearchSuccess(): void
+    {
+        $taskData = [
+            'task' => [['id' => 1, 'title' => 'Search Match']],
+            'pagination' => ['total' => 1, 'page' => 1, 'limit' => 10, 'totalPages' => 1]
+        ];
+        $this->getTasksService->method('execute')->willReturn($taskData);
+
+        $req = $this->makeRequest(
+            query: ['page' => 1, 'search' => 'Match'],
+            params: ['user_id' => 123],
+            method: 'GET',
+            path: '/tasks'
+        );
+
+        $decoded = $this->controller->getTasks($req, true);
+
+        $this->assertIsArray($decoded);
+        $this->assertTrue($decoded['success']);
+        $this->assertSame('Task retrieved successfully', $decoded['message']);
+
+        /** @var array{task: list<array{id: int, title: string}>} $data */
+        $data = $decoded['data'];
+        $this->assertSame($taskData['task'], $data['task']);
     }
 
     /**
@@ -312,5 +359,58 @@ class TaskControllerUnitTest extends TestCase
 
         $req = $this->makeRequest(query: ['page' => 1], method: 'GET', path: '/tasks');
         $this->controller->getTasks($req, true);
+    }
+    /**
+     * Test successful bulk deletion of tasks.
+     *
+     * @return void
+     */
+    public function testDeleteTasksBulkSuccess(): void
+    {
+        $responseData = ['count' => 2];
+        $this->bulkDeleteService->method('execute')->willReturn($responseData);
+
+        $req = $this->makeRequest(
+            body: ['ids' => [1, 2]],
+            method: 'DELETE',
+            path: '/tasks/delete_bulk'
+        );
+
+        $decoded = $this->controller->deleteTasksBulk($req, true);
+
+        $this->assertIsArray($decoded);
+        $this->assertTrue($decoded['success']);
+        $this->assertSame('Tasks deleted successfully', $decoded['message']);
+
+        /** @var array{count: int} $data */
+        $data = $decoded['data'];
+        $this->assertSame($responseData['count'], $data['count']);
+    }
+
+    /**
+     * Test successful bulk marking of tasks.
+     *
+     * @return void
+     */
+    public function testMarkDoneTasksBulkSuccess(): void
+    {
+        $responseData = ['count' => 2];
+        $this->bulkMarkDoneService->method('execute')->willReturn($responseData);
+
+        $req = $this->makeRequest(
+            body: ['ids' => [1, 2], 'is_done' => true],
+            method: 'PUT',
+            path: '/tasks/mark_done_bulk'
+        );
+
+        $decoded = $this->controller->markDoneTasksBulk($req, true);
+
+        $this->assertIsArray($decoded);
+        $this->assertTrue($decoded['success']);
+        $this->assertSame('Tasks updated successfully', $decoded['message']);
+
+        /** @var array{count: int} $data */
+        $data = $decoded['data'];
+        $this->assertSame($responseData['count'], $data['count']);
     }
 }

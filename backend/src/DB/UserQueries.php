@@ -158,6 +158,33 @@ class UserQueries
     }
 
     /**
+     * Check if a user exists by username or email, excluding a specific user ID
+     * (Useful for updates where you don't want to conflict with yourself)
+     *
+     * @param string $username
+     * @param string $email
+     * @param string $excludeId
+     * 
+     * @return QueryResult
+     */
+    public function checkUserExistsExclude(string $username, string $email, string $excludeId): QueryResult
+    {
+        $query = "SELECT EXISTS(SELECT 1 FROM users WHERE (username = ? OR email = ?) AND id != ?)";
+
+        $stmt = $this->pdo->prepare($query);
+        if ($stmt === false) {
+            return $this->failFromStmt(false);
+        }
+
+        if (!$stmt->execute([$username, $email, $excludeId])) {
+            return $this->failFromStmt($stmt);
+        }
+
+        $exists = (bool) $stmt->fetchColumn();
+        return QueryResult::ok($exists, $exists ? 1 : 0);
+    }
+
+    /**
      * Update user details (username and email)
      *
      * @param string $id

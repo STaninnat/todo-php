@@ -20,6 +20,8 @@ use App\Api\Tasks\Service\DeleteTaskService;
 use App\Api\Tasks\Service\GetTasksService;
 use App\Api\Tasks\Service\MarkDoneTaskService;
 use App\Api\Tasks\Service\UpdateTaskService;
+use App\Api\Tasks\Service\BulkDeleteTaskService;
+use App\Api\Tasks\Service\BulkMarkDoneTaskService;
 use App\DB\Database;
 use App\DB\UserQueries;
 use App\DB\TaskQueries;
@@ -121,7 +123,9 @@ class RouterApp
             new DeleteTaskService($taskQueries),
             new UpdateTaskService($taskQueries),
             new MarkDoneTaskService($taskQueries),
-            new GetTasksService($taskQueries)
+            new GetTasksService($taskQueries),
+            new BulkDeleteTaskService($taskQueries),
+            new BulkMarkDoneTaskService($taskQueries)
         );
 
         // Register middlewares & routes
@@ -193,6 +197,8 @@ class RouterApp
             ['PUT', '/tasks/update', 'updateTask', $authMiddlewareFn],
             ['DELETE', '/tasks/delete', 'deleteTask', $authMiddlewareFn],
             ['GET', '/tasks', 'getTasks', $authMiddlewareFn],
+            ['DELETE', '/tasks/delete_bulk', 'deleteTasksBulk', $authMiddlewareFn],
+            ['PUT', '/tasks/mark_done_bulk', 'markDoneTasksBulk', $authMiddlewareFn],
         ];
 
         // Register all routes in batch

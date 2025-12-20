@@ -9,9 +9,7 @@ use App\Api\Tasks\Service\GetTasksService;
 use App\DB\QueryResult;
 use App\DB\TaskQueries;
 use Tests\Unit\Api\TestHelperTrait as ApiTestHelperTrait;
-use InvalidArgumentException;
 use RuntimeException;
-use Error;
 
 /**
  * Class GetTasksServiceTest
@@ -113,9 +111,36 @@ class GetTasksServiceUnitTest extends TestCase
         $this->assertCount(2, $result['task']);
         $this->assertArrayHasKey('pagination', $result);
         $this->assertEquals(1, $result['pagination']['current_page']);
-
         foreach ($result['task'] as $t) {
             $this->assertArrayNotHasKey('created_at', $t);
         }
     }
+
+    /**
+     * Test that search query is passed to TaskQueries.
+     * 
+     * @return void
+     */
+    public function testGetTasksWithSearchSuccess(): void
+    {
+        $tasks = [['id' => 10, 'title' => 'Search Result']];
+
+        // Expect getTasksByPage to be called with search term 'apple'
+        $this->taskQueries->expects($this->once())
+            ->method('getTasksByPage')
+            ->with(1, 10, 'u1', 'apple')
+            ->willReturn(QueryResult::ok($tasks, 1));
+
+        $this->taskQueries->method('countTasksByUserId')
+            ->with('u1', 'apple')
+            ->willReturn(1);
+
+        $req = $this->makeRequest([], ['search' => 'apple'], [], 'GET', '/', ['id' => 'u1']);
+
+        $result = $this->service->execute($req);
+
+        $this->assertCount(1, $result['task']);
+        $this->assertEquals('Search Result', $result['task'][0]['title']);
+    }
 }
+

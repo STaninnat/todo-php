@@ -8,7 +8,6 @@ use App\Api\Request;
 use App\Api\Tasks\Service\GetTasksService;
 use App\DB\Database;
 use App\DB\TaskQueries;
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use PDO;
@@ -234,4 +233,30 @@ final class GetTasksServiceIntegrationTest extends TestCase
         $this->assertEquals(3, $result['pagination']['current_page']);
     }
 
+    /**
+     * Test retrieval with search parameter.
+     * 
+     * @return void
+     */
+    public function testGetTasksWithSearchParam(): void
+    {
+        $this->pdo->exec("
+            INSERT INTO tasks (title, description, user_id) VALUES
+            ('Apple Pie', 'Food', 'u_search'),
+            ('Banana Split', 'Food', 'u_search'),
+            ('Apple Cider', 'Drink', 'u_search');
+        ");
+
+        $service = new GetTasksService($this->queries);
+
+        // Search for 'Apple'
+        $req = $this->makeRequest(['search' => 'Apple'], 'u_search');
+        $result = $service->execute($req);
+
+        $this->assertCount(2, $result['task']);
+        $titles = array_column($result['task'], 'title');
+        $this->assertContains('Apple Pie', $titles);
+        $this->assertContains('Apple Cider', $titles);
+        $this->assertNotContains('Banana Split', $titles);
+    }
 }

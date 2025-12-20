@@ -11,6 +11,8 @@ use App\Api\Tasks\Service\DeleteTaskService;
 use App\Api\Tasks\Service\GetTasksService;
 use App\Api\Tasks\Service\MarkDoneTaskService;
 use App\Api\Tasks\Service\UpdateTaskService;
+use App\Api\Tasks\Service\BulkDeleteTaskService;
+use App\Api\Tasks\Service\BulkMarkDoneTaskService;
 use App\DB\Database;
 use App\DB\TaskQueries;
 use InvalidArgumentException;
@@ -104,7 +106,9 @@ final class TaskControllerIntegrationTest extends TestCase
             new DeleteTaskService($this->queries),
             new UpdateTaskService($this->queries),
             new MarkDoneTaskService($this->queries),
-            new GetTasksService($this->queries)
+            new GetTasksService($this->queries),
+            new BulkDeleteTaskService($this->queries),
+            new BulkMarkDoneTaskService($this->queries)
         );
     }
 
@@ -548,5 +552,95 @@ final class TaskControllerIntegrationTest extends TestCase
         // Verify deleted
         $fetch = $this->queries->getTaskByID((int) $taskId, $this->userId);
         $this->assertNull($fetch->data);
+    }
+
+    /**
+     * Test successful bulk deletion via controller.
+     *
+     * @return void
+     */
+    public function testDeleteTasksBulkSuccess(): void
+    {
+        $res1 = $this->queries->addTask('T1', 'd', $this->userId);
+        /** @var array{id: int|string} $d1 */
+        $d1 = $res1->data;
+        $id1 = (int) $d1['id'];
+        $res2 = $this->queries->addTask('T2', 'd', $this->userId); // Added missing line
+        /** @var array{id: int|string} $d2 */
+        $d2 = $res2->data;
+        $id2 = (int) $d2['id'];
+
+        $req = $this->makeRequestFromBody([
+            'ids' => [$id1, $id2]
+        ], 'POST', $this->userId);
+
+        /** @var array{success: bool, data: array{count: int}} $res */ // Added type annotation
+        $res = $this->controller->deleteTasksBulk($req, true);
+
+        $this->assertTrue($res['success']);
+        /** @var array{count: int} $data */
+        $data = $res['data'];
+        $this->assertSame(2, $data['count']);
+
+        $this->assertNull($this->queries->getTaskByID($id1, $this->userId)->data);
+        $this->assertNull($this->queries->getTaskByID($id2, $this->userId)->data);
+    }
+
+    /**
+     * Test successful bulk mark done via controller.
+     *
+     * @return void
+     */
+    public function testMarkDoneTasksBulkSuccess(): void
+    {
+        $res1 = $this->queries->addTask('T1', 'd', $this->userId);
+        /** @var array{id: int|string} $d1 */
+        $d1 = $res1->data;
+        $id1 = (int) $d1['id'];
+        $res2 = $this->queries->addTask('T2', 'd', $this->userId); // Added missing line
+        /** @var array{id: int|string} $d2 */
+        $d2 = $res2->data;
+        $id2 = (int) $d2['id'];
+
+        $req = $this->makeRequestFromBody([
+            'ids' => [$id1, $id2],
+            'is_done' => true
+        ], 'PUT', $this->userId);
+
+        /** @var array{success: bool, data: array{count: int}} $res */ // Added type annotation
+        $res = $this->controller->markDoneTasksBulk($req, true);
+
+        $this->assertTrue($res['success']);
+        /** @var array{count: int} $data */
+        $data = $res['data'];
+        $this->assertSame(2, $data['count']);
+
+        /** @var array{is_done: int|bool} $t1 */
+        $t1 = $this->queries->getTaskByID($id1, $this->userId)->data;
+        $this->assertEquals(1, $t1['is_done']);
+    }
+
+    /**
+     * Test search functionality via getTasks.
+     *
+     * @return void
+     */
+    public function testGetTasksWithSearch(): void
+    {
+        $this->queries->addTask('Buy Milk', 'Groceries', $this->userId);
+        $this->queries->addTask('Walk Dog', 'Exercise', $this->userId);
+
+        // Search for "Milk"
+        $req = $this->makeRequestFromBody([], 'GET', $this->userId);
+        $req->query['search'] = 'Milk';
+
+        $res = $this->controller->getTasks($req, true);
+
+        $this->assertIsArray($res);
+        $this->assertTrue($res['success']);
+        /** @var array{task: list<array{title: string}>} $data */
+        $data = $res['data'];
+        $this->assertCount(1, $data['task']);
+        $this->assertSame('Buy Milk', $data['task'][0]['title']);
     }
 }

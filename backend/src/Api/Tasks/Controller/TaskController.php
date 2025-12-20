@@ -10,6 +10,8 @@ use App\Api\Tasks\Service\DeleteTaskService;
 use App\Api\Tasks\Service\UpdateTaskService;
 use App\Api\Tasks\Service\MarkDoneTaskService;
 use App\Api\Tasks\Service\GetTasksService;
+use App\Api\Tasks\Service\BulkDeleteTaskService;
+use App\Api\Tasks\Service\BulkMarkDoneTaskService;
 use App\Utils\JsonResponder;
 
 /**
@@ -44,6 +46,12 @@ class TaskController
     /** @var GetTasksService Handles retrieving tasks */
     private GetTasksService $getTasksService;
 
+    /** @var BulkDeleteTaskService Handles bulk deletion */
+    private BulkDeleteTaskService $bulkDeleteService;
+
+    /** @var BulkMarkDoneTaskService Handles bulk completion */
+    private BulkMarkDoneTaskService $bulkMarkDoneService;
+
     /**
      * Constructor
      *
@@ -54,19 +62,25 @@ class TaskController
      * @param UpdateTaskService   $updateService   Service to update a task.
      * @param MarkDoneTaskService $markDoneService Service to mark task as done.
      * @param GetTasksService     $getTasksService Service to retrieve tasks.
+     * @param BulkDeleteTaskService $bulkDeleteService Service for bulk delete.
+     * @param BulkMarkDoneTaskService $bulkMarkDoneService Service for bulk mark done.
      */
     public function __construct(
         AddTaskService $addService,
         DeleteTaskService $deleteService,
         UpdateTaskService $updateService,
         MarkDoneTaskService $markDoneService,
-        GetTasksService $getTasksService
+        GetTasksService $getTasksService,
+        BulkDeleteTaskService $bulkDeleteService,
+        BulkMarkDoneTaskService $bulkMarkDoneService
     ) {
         $this->addService = $addService;
         $this->deleteService = $deleteService;
         $this->updateService = $updateService;
         $this->markDoneService = $markDoneService;
         $this->getTasksService = $getTasksService;
+        $this->bulkDeleteService = $bulkDeleteService;
+        $this->bulkMarkDoneService = $bulkMarkDoneService;
     }
 
     /**
@@ -161,6 +175,44 @@ class TaskController
 
         $response = JsonResponder::success('Task retrieved successfully')
             ->withPayload(['task' => $data['task'], 'pagination' => $data['pagination']])
+            ->send(!$forTest, $forTest);
+
+        return $forTest ? $response : null;
+    }
+
+    /**
+     * Handle bulk deletion of tasks.
+     *
+     * @param Request $req
+     * @param bool    $forTest
+     * 
+     * @return array<string, mixed>|null
+     */
+    public function deleteTasksBulk(Request $req, bool $forTest = false): ?array
+    {
+        $data = $this->bulkDeleteService->execute($req);
+
+        $response = JsonResponder::success('Tasks deleted successfully')
+            ->withPayload(['count' => $data['count']])
+            ->send(!$forTest, $forTest);
+
+        return $forTest ? $response : null;
+    }
+
+    /**
+     * Handle bulk marking of tasks.
+     *
+     * @param Request $req
+     * @param bool    $forTest
+     * 
+     * @return array<string, mixed>|null
+     */
+    public function markDoneTasksBulk(Request $req, bool $forTest = false): ?array
+    {
+        $data = $this->bulkMarkDoneService->execute($req);
+
+        $response = JsonResponder::success('Tasks updated successfully')
+            ->withPayload(['count' => $data['count']])
             ->send(!$forTest, $forTest);
 
         return $forTest ? $response : null;

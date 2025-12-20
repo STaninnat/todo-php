@@ -335,8 +335,11 @@ final class TaskQueriesIntegrationTest extends TestCase
         /** @var array<string,mixed> $d3 */
         $d3 = $r3->data;
 
+        // @phpstan-ignore-next-line
         $id1 = (int) $d1['id'];
+        // @phpstan-ignore-next-line
         $id2 = (int) $d2['id'];
+        // @phpstan-ignore-next-line
         $id3 = (int) $d3['id'];
 
         // Delete first two
@@ -370,7 +373,9 @@ final class TaskQueriesIntegrationTest extends TestCase
         /** @var array<string,mixed> $d2 */
         $d2 = $r2->data;
 
+        // @phpstan-ignore-next-line
         $id1 = (int) $d1['id'];
+        // @phpstan-ignore-next-line
         $id2 = (int) $d2['id'];
 
         $result = $this->queries->markTasksDone([$id1, $id2], true, $this->userId);

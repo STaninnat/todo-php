@@ -58,7 +58,7 @@ class UpdateUserService
         $email = RequestValidator::getEmail($req, 'email', 'Valid email is required.');
 
         // Check for existing username or email to prevent duplication
-        $existsResult = $this->userQueries->checkUserExists($username, $email);
+        $existsResult = $this->userQueries->checkUserExistsExclude($username, $email, $userId);
         RequestValidator::ensureSuccess($existsResult, 'check user existence', false, true);
 
         if ($existsResult->data === true) {

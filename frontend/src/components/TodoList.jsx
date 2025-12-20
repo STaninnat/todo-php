@@ -12,7 +12,15 @@ import './TodoList.css';
  * @param {function} props.onDelete - Callback to delete task
  * @param {function} props.onUpdate - Callback to update task
  */
-export default function TodoList({ todos, onToggle, onDelete, onUpdate }) {
+export default function TodoList({ 
+    todos, 
+    onToggle, 
+    onDelete, 
+    onUpdate, 
+    isSelectionMode, 
+    selectedIds, 
+    onSelect 
+}) {
     if (todos.length === 0) {
         return (
             <div className="todo-list-empty">
@@ -30,6 +38,9 @@ export default function TodoList({ todos, onToggle, onDelete, onUpdate }) {
                     onToggle={onToggle}
                     onDelete={onDelete}
                     onUpdate={onUpdate}
+                    isSelectionMode={isSelectionMode}
+                    isSelected={selectedIds ? selectedIds.has(todo.id) : false}
+                    onSelect={onSelect}
                 />
             ))}
         </div>
@@ -48,4 +59,7 @@ TodoList.propTypes = {
     onToggle: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
+    isSelectionMode: PropTypes.bool,
+    selectedIds: PropTypes.instanceOf(Set),
+    onSelect: PropTypes.func,
 };

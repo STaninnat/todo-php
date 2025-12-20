@@ -13,10 +13,30 @@ import './TodoItem.css';
  * @param {function} props.onDelete - Callback to delete task
  * @param {function} props.onUpdate - Callback to initiate update
  */
-export default function TodoItem({ todo, onToggle, onDelete, onUpdate }) {
+export default function TodoItem({ 
+    todo, 
+    onToggle, 
+    onDelete, 
+    onUpdate, 
+    isSelectionMode = false, 
+    isSelected = false, 
+    onSelect 
+}) {
+    const handleCheckboxChange = () => {
+        if (isSelectionMode) {
+            onSelect(todo.id);
+        } else {
+            onToggle(todo.id);
+        }
+    };
+
     return (
-        <div className={`todo-item ${todo.isDone ? 'done' : ''}`}>
-            <input type="checkbox" checked={todo.isDone} onChange={() => onToggle(todo.id)} />
+        <div className={`todo-item ${todo.isDone ? 'done' : ''} ${isSelected ? 'selected' : ''}`}>
+            <input 
+                type="checkbox" 
+                checked={isSelectionMode ? isSelected : todo.isDone} 
+                onChange={handleCheckboxChange} 
+            />
 
             <div className="todo-content">
                 <h3 style={{ textDecoration: todo.isDone ? 'line-through' : 'none' }}>
@@ -25,24 +45,26 @@ export default function TodoItem({ todo, onToggle, onDelete, onUpdate }) {
                 <p>{todo.description}</p>
             </div>
 
-            <div className="todo-actions">
-                <Button 
-                    onClick={() => onUpdate(todo)} 
-                    variant="icon"
-                    className="btn-edit"
-                    aria-label="Edit task"
-                >
-                    <Edit size={18} />
-                </Button>
-                <Button 
-                    onClick={() => onDelete(todo.id)} 
-                    variant="icon"
-                    className="btn-delete"
-                    aria-label="Delete task"
-                >
-                    <Trash2 size={18} />
-                </Button>
-            </div>
+            {!isSelectionMode && (
+                <div className="todo-actions">
+                    <Button 
+                        onClick={() => onUpdate(todo)} 
+                        variant="icon"
+                        className="btn-edit"
+                        aria-label="Edit task"
+                    >
+                        <Edit size={18} />
+                    </Button>
+                    <Button 
+                        onClick={() => onDelete(todo.id)} 
+                        variant="icon"
+                        className="btn-delete"
+                        aria-label="Delete task"
+                    >
+                        <Trash2 size={18} />
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
@@ -57,4 +79,7 @@ TodoItem.propTypes = {
     onToggle: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
+    isSelectionMode: PropTypes.bool,
+    isSelected: PropTypes.bool,
+    onSelect: PropTypes.func,
 };

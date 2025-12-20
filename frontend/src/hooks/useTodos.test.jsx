@@ -26,7 +26,6 @@ const createWrapper = () => {
         defaultOptions: {
             queries: {
                 retry: false,
-                gcTime: 0, // Disable garbage collection to avoid caching issues between tests
             },
         },
     });
@@ -132,6 +131,60 @@ describe('useTodos Hook', () => {
             });
 
             expect(api.post).toHaveBeenCalledWith('/tasks/add', expect.objectContaining({ title: 'New' }));
+        });
+    });
+
+    describe('Pagination', () => {
+        it('should auto-navigate to previous page if current page becomes empty', async () => {
+            // 1. Setup: Start on Page 2 with data
+            // Call 1: Initial render (Page 1)
+            api.get.mockResolvedValueOnce({
+                data: {
+                    task: [{ id: 10, title: 'Task on Page 1', is_done: 0 }],
+                    pagination: { total_pages: 2 }
+                }
+            });
+
+            // Call 2: Transition to Page 2
+            api.get.mockResolvedValueOnce({
+                data: {
+                    task: [{ id: 1, title: 'Task on Page 2', is_done: 0 }],
+                    pagination: { total_pages: 2 }
+                }
+            });
+
+            const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
+
+            // Wait for initial load (Page 1 data) to settle
+            await waitFor(() => expect(result.current.totalPages).toBe(2));
+
+            // Move to Page 2
+            await act(async () => {
+                result.current.setPage(2);
+            });
+
+            // Expect to be on Page 2
+            await waitFor(() => expect(result.current.page).toBe(2));
+
+            // 2. Action: Simulate re-fetch where Page 2 is now empty (e.g. item deleted)
+            
+            // Call 3: Re-fetch triggered by delete/invalidation
+            api.get.mockResolvedValueOnce({
+                data: {
+                    task: [], // Empty now
+                    pagination: { total_pages: 1 } // Total pages drops to 1
+                }
+            });
+
+            // Force a refetch or re-render that updates the query data
+            await act(async () => {
+                await result.current.deleteTodo(1); // Triggers invalidation
+            });
+
+            // 3. Assertion: Should auto-revert to Page 1
+            await waitFor(() => {
+                expect(result.current.page).toBe(1);
+            });
         });
     });
 });

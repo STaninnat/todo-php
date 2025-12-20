@@ -1,4 +1,4 @@
-export const API_BASE = '/v1';
+export const API_BASE = process.env.BUN_PUBLIC_API_BASE || '/v1';
 
 /**
  * Generic API helper to handle requests and errors.

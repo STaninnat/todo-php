@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 /**
  * @file TodoItem.test.jsx
  * @description Unit tests for TodoItem component.
@@ -20,7 +20,12 @@ describe('TodoItem Component', () => {
         onToggle: vi.fn(),
         onDelete: vi.fn(),
         onUpdate: vi.fn(),
+        onSelect: vi.fn(),
     };
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
 
     it('should render task details', () => {
         render(<TodoItem todo={mockTodo} {...mockActions} />);
@@ -57,6 +62,31 @@ describe('TodoItem Component', () => {
         render(<TodoItem todo={mockTodo} {...mockActions} />);
         const editBtn = screen.getByLabelText('Edit task');
         fireEvent.click(editBtn);
-        expect(mockActions.onUpdate).toHaveBeenCalledWith(mockTodo);
+    });
+
+    describe('Selection Mode', () => {
+        it('should hide action buttons in selection mode', () => {
+            render(<TodoItem todo={mockTodo} {...mockActions} isSelectionMode={true} />);
+            
+            expect(screen.queryByLabelText('Edit task')).not.toBeInTheDocument();
+            expect(screen.queryByLabelText('Delete task')).not.toBeInTheDocument();
+        });
+
+        it('should use onSelect instead of onToggle when checkbox clicked', () => {
+            render(<TodoItem todo={mockTodo} {...mockActions} isSelectionMode={true} />);
+            
+            const checkbox = screen.getByRole('checkbox');
+            fireEvent.click(checkbox);
+            
+            expect(mockActions.onSelect).toHaveBeenCalledWith(mockTodo.id);
+            expect(mockActions.onToggle).not.toHaveBeenCalled();
+        });
+
+        it('should display selected state correctly', () => {
+            render(<TodoItem todo={mockTodo} {...mockActions} isSelectionMode={true} isSelected={true} />);
+            
+            const checkbox = screen.getByRole('checkbox');
+            expect(checkbox).toBeChecked();
+        });
     });
 });

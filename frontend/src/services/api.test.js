@@ -10,14 +10,16 @@ import { api, API_BASE } from './api';
 describe('API Service', () => {
     // Save original fetch
     const originalFetch = global.fetch;
+    let dispatchEventSpy;
 
     beforeEach(() => {
         global.fetch = vi.fn();
+        dispatchEventSpy = vi.spyOn(window, 'dispatchEvent');
     });
 
     afterEach(() => {
         global.fetch = originalFetch;
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should perform GET request with correct headers', async () => {
@@ -158,7 +160,7 @@ describe('API Service', () => {
         // 3. /protected-resource (200)
     });
 
-    it('should throw error if refresh fails on 401', async () => {
+    it('should throw error and dispatch event if refresh fails on 401', async () => {
         // First call returns 401
         fetch.mockResolvedValueOnce({
             ok: false,
@@ -179,7 +181,11 @@ describe('API Service', () => {
         
         expect(fetch).toHaveBeenCalledTimes(2);
         // 1. /protected-resource (401)
-        // 2. /users/refresh (401) -> Catch block logs error, then outer catch throws original 401 error
+        // 2. /users/refresh (401)
+        
+        expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent));
+        const event = dispatchEventSpy.mock.calls[0][0];
+        expect(event.type).toBe('auth:unauthorized');
     });
     
     it('should not retry if endpoint is signin', async () => {
@@ -204,5 +210,22 @@ describe('API Service', () => {
 
         await expect(api.register({ username: 'u', password: 'p' })).rejects.toThrow('Unauthorized');
         expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not retry if endpoint is refresh', async () => {
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Unauthorized' }),
+        });
+
+        await expect(api.refreshToken()).rejects.toThrow('Unauthorized');
+        expect(fetch).toHaveBeenCalledTimes(1);
+        
+        // Also verify it dispatches unauthorized event
+        expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent));
+        const event = dispatchEventSpy.mock.calls[0][0];
+        expect(event.type).toBe('auth:unauthorized');
     });
 });

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TodoForm } from '../components/TodoForm';
 import TodoList from '../components/TodoList';
 import DeleteTaskModal from '../components/DeleteTaskModal';
+import BulkDeleteModal from '../components/BulkDeleteModal';
 import UpdateTaskModal from '../components/UpdateTaskModal';
 import Pagination from '../components/Pagination';
+import ManagementBar from '../components/ManagementBar';
 import { useTodos } from '../hooks/useTodos';
 import './TodoPage.css';
 
@@ -12,12 +14,43 @@ import './TodoPage.css';
  * Orchestrates task management using `useTodos` hook.
  * Renders TodoList, TodoForm, and Modals for updating/deleting tasks.
  */
+
 export default function TodoPage() {
-    const { todos, addTodo, isAdding, toggleTodo, deleteTodo, updateTodo, page, setPage, totalPages } = useTodos();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    
+    // Debounce search query to prevent excessive API calls
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 300); // 300ms delay
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState(new Set());
+
+    const { 
+        todos, 
+        addTodo, 
+        isAdding, 
+        toggleTodo, 
+        deleteTodo, 
+        updateTodo, 
+        bulkDeleteTodos,
+        bulkMarkDoneTodos,
+        isBulkOperating,
+        page, 
+        setPage, 
+        totalPages,
+        isFetching 
+    } = useTodos(debouncedSearch);
 
     // Modal State
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null, taskTitle: '' });
     const [updateModal, setUpdateModal] = useState({ isOpen: false, task: null });
+    const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
 
     // Open Delete Modal
     const handleDeleteClick = (id) => {
@@ -44,17 +77,67 @@ export default function TodoPage() {
          setUpdateModal({ isOpen: false, task: null });
     };
 
+    // Selection Handlers
+    const toggleSelectionMode = () => {
+        setIsSelectionMode(!isSelectionMode);
+        setSelectedIds(new Set()); // Clear selection on toggle
+    };
+
+    const handleSelect = (id) => {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIds(newSelected);
+    };
+
+    const handleBulkDeleteClick = () => {
+        if (selectedIds.size > 0) {
+            setBulkDeleteModalOpen(true);
+        }
+    };
+
+    const confirmBulkDelete = async () => {
+        await bulkDeleteTodos(Array.from(selectedIds));
+        setSelectedIds(new Set());
+        setIsSelectionMode(false);
+        setBulkDeleteModalOpen(false);
+    };
+
+    const handleBulkMarkDone = async (isDone) => {
+        await bulkMarkDoneTodos(Array.from(selectedIds), isDone);
+        setSelectedIds(new Set());
+        setIsSelectionMode(false);
+    };
+
     return (
         <div className="todo-container">
             <h1>My Tasks</h1>
 
             <TodoForm onAdd={addTodo} isLoading={isAdding} />
+            
+            <ManagementBar 
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                isSelectionMode={isSelectionMode}
+                toggleSelectionMode={toggleSelectionMode}
+                selectedCount={selectedIds.size}
+                onBulkDelete={handleBulkDeleteClick}
+                onBulkMarkDone={handleBulkMarkDone}
+                isLoading={isBulkOperating}
+                isSearching={isFetching}
+            />
 
             <TodoList
                 todos={todos}
                 onToggle={toggleTodo}
                 onDelete={handleDeleteClick}
                 onUpdate={handleUpdateClick}
+                isSelectionMode={isSelectionMode}
+                selectedIds={selectedIds}
+                onSelect={handleSelect}
             />
 
             <Pagination 
@@ -69,6 +152,13 @@ export default function TodoPage() {
                 onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
                 onConfirm={confirmDelete}
                 taskTitle={deleteModal.taskTitle}
+            />
+
+            <BulkDeleteModal
+                isOpen={bulkDeleteModalOpen}
+                onClose={() => setBulkDeleteModalOpen(false)}
+                onConfirm={confirmBulkDelete}
+                count={selectedIds.size}
             />
 
             <UpdateTaskModal

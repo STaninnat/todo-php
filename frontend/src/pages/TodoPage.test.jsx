@@ -13,15 +13,59 @@ import { useTodos } from '../hooks/useTodos';
 // Mock hook
 vi.mock('../hooks/useTodos');
 
+// Mock child components to simplify integration testing
+vi.mock('../components/ManagementBar', () => ({
+    default: ({ toggleSelectionMode, onBulkDelete, onBulkMarkDone, isSelectionMode, selectedCount }) => (
+        <div data-testid="management-bar">
+            <button onClick={toggleSelectionMode}>
+                {isSelectionMode ? 'Cancel Selection' : 'Select Mode'}
+            </button>
+            <button onClick={onBulkDelete}>Bulk Delete</button>
+            <button onClick={() => onBulkMarkDone(true)}>Bulk Mark Done</button>
+            <span data-testid="selected-count">{selectedCount}</span>
+        </div>
+    ),
+}));
+
+vi.mock('../components/BulkDeleteModal', () => ({
+    default: ({ isOpen, onConfirm }) => (
+        isOpen ? (
+            <div data-testid="bulk-delete-modal">
+                <button onClick={onConfirm}>Confirm Bulk Delete</button>
+            </div>
+        ) : null
+    ),
+}));
+
+// Mock TodoList to directly trigger onSelect for checking Page logic.
+vi.mock('../components/TodoList', () => ({
+    default: ({ todos, onSelect }) => (
+        <div data-testid="todo-list">
+            {todos.map(t => (
+                <div key={t.id} data-testid="todo-item-mock">
+                    <span>{t.title}</span>
+                    <button onClick={() => onSelect(t.id)}>Select Item</button>
+                </div>
+            ))}
+        </div>
+    ),
+}));
+
+
 describe('TodoPage', () => {
     const mockUseTodos = {
         todos: [
             { id: 1, title: 'Task 1', description: 'Desc 1', isDone: false },
+            { id: 2, title: 'Task 2', description: 'Desc 2', isDone: true },
         ],
         addTodo: vi.fn(),
         toggleTodo: vi.fn(),
         deleteTodo: vi.fn(),
         updateTodo: vi.fn(),
+        bulkDeleteTodos: vi.fn(),
+        bulkMarkDoneTodos: vi.fn(),
+        isBulkOperating: false,
+        isFetching: false,
         page: 1,
         setPage: vi.fn(),
         totalPages: 1,
@@ -52,37 +96,55 @@ describe('TodoPage', () => {
         expect(mockUseTodos.addTodo).toHaveBeenCalledWith({ title: 'New Task', description: '' });
     });
 
-    it('should open delete modal and confirm deletion', async () => {
+    it('should toggle selection mode and select items', () => {
         render(<TodoPage />);
-        const deleteBtn = screen.getByLabelText('Delete task'); // Assuming aria-label from TodoItem
+        const toggleBtn = screen.getByText('Select Mode');
         
-        fireEvent.click(deleteBtn);
+        // Enter selection mode
+        fireEvent.click(toggleBtn);
+        expect(screen.getByText('Cancel Selection')).toBeInTheDocument();
 
-        // Modal should appear
-        const modalDeleteBtn = screen.getByText('Delete').closest('button');
-        expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+        // Select item 1 (using mocked TodoList button)
+        const selectItemBtns = screen.getAllByText('Select Item');
+        fireEvent.click(selectItemBtns[0]); // Select Task 1
 
-        fireEvent.click(modalDeleteBtn);
-
-        expect(mockUseTodos.deleteTodo).toHaveBeenCalledWith(1);
+        // Check count update in ManagementBar
+        expect(screen.getByTestId('selected-count')).toHaveTextContent('1');
     });
 
-    it('should open update modal and save changes', () => {
+    it('should trigger bulk delete', async () => {
         render(<TodoPage />);
-        const editBtn = screen.getByLabelText('Edit task');
+        
+        // Enter selection mode
+        fireEvent.click(screen.getByText('Select Mode'));
+        
+        // Select Task 1
+        const selectItemBtns = screen.getAllByText('Select Item');
+        fireEvent.click(selectItemBtns[0]);
 
-        fireEvent.click(editBtn);
+        // Click Bulk Delete in ManagementBar
+        fireEvent.click(screen.getByText('Bulk Delete'));
 
-        // Modal should appear with populated data
-        const titleInput = screen.getByDisplayValue('Task 1');
-        const saveBtn = screen.getByText('Save Changes').closest('button');
+        // Confirm in Modal
+        const confirmBtn = screen.getByText('Confirm Bulk Delete');
+        fireEvent.click(confirmBtn);
 
-        fireEvent.change(titleInput, { target: { value: 'Updated Task' } });
-        fireEvent.click(saveBtn);
+        expect(mockUseTodos.bulkDeleteTodos).toHaveBeenCalledWith([1]);
+    });
 
-        expect(mockUseTodos.updateTodo).toHaveBeenCalledWith(expect.objectContaining({
-            id: 1,
-            title: 'Updated Task',
-        }));
+    it('should trigger bulk mark done', () => {
+        render(<TodoPage />);
+        
+        // Enter selection mode
+        fireEvent.click(screen.getByText('Select Mode'));
+        
+        // Select Task 1
+        const selectItemBtns = screen.getAllByText('Select Item');
+        fireEvent.click(selectItemBtns[0]);
+
+        // Click Bulk Mark Done
+        fireEvent.click(screen.getByText('Bulk Mark Done'));
+
+        expect(mockUseTodos.bulkMarkDoneTodos).toHaveBeenCalledWith([1], true);
     });
 });

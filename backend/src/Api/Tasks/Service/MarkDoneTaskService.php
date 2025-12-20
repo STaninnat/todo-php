@@ -62,7 +62,6 @@ class MarkDoneTaskService
         $id = RequestValidator::getInt($req, 'id', 'Task ID must be a numeric string.');
         // Retrieve user ID from authenticated session
         $userId = RequestValidator::getAuthUserId($req);
-        $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.');
 
         // Verify that the task exists
         $taskResult = $this->taskQueries->getTaskByID($id, $userId);
@@ -70,8 +69,22 @@ class MarkDoneTaskService
             throw new RuntimeException('No task found.');
         }
 
+        // Determine request status: provided or toggle?
+        $isDoneRaw = $req->getBodyValue('is_done');
+
+        if ($isDoneRaw !== null) {
+            // If provided, ensure it's a valid boolean
+            $isDone = RequestValidator::getBool($req, 'is_done', 'Invalid status value.');
+        } else {
+            // If not provided, toggle the current status
+            // $taskResult->data['is_done'] should be 0 or 1 (int) from DB
+            $taskData = (array) $taskResult->data;
+            $currentStatus = (bool) ($taskData['is_done'] ?? false);
+            $isDone = !$currentStatus;
+        }
+
         // Update task completion status
-        $result = $this->taskQueries->markDone($id, (bool) $isDone, $userId);
+        $result = $this->taskQueries->markDone($id, $isDone, $userId);
         RequestValidator::ensureSuccess($result, 'mark task as done');
 
         $taskData = (array) $result->data;

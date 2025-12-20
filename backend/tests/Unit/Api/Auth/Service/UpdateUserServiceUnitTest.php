@@ -114,7 +114,7 @@ class UpdateUserServiceUnitTest extends TestCase
     #[DataProvider('checkUserExistsFailProvider')]
     public function testExecuteThrowsRuntimeExceptionWhenCheckUserExistsFails(QueryResult $result, string $expectedMessage): void
     {
-        $this->userQueries->method('checkUserExists')->willReturn($result);
+        $this->userQueries->method('checkUserExistsExclude')->willReturn($result);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage($expectedMessage);
@@ -131,7 +131,7 @@ class UpdateUserServiceUnitTest extends TestCase
     public function testExecuteThrowsRuntimeExceptionWhenUsernameOrEmailAlreadyExists(): void
     {
         // Simulate user already exists
-        $this->userQueries->method('checkUserExists')->willReturn(QueryResult::ok(true, 1));
+        $this->userQueries->method('checkUserExistsExclude')->willReturn(QueryResult::ok(true, 1));
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Username or email already exists.');
@@ -171,7 +171,7 @@ class UpdateUserServiceUnitTest extends TestCase
     public function testExecuteThrowsRuntimeExceptionWhenUpdateUserFails(QueryResult $result, string $expectedMessage): void
     {
         // Simulate user does not exist yet
-        $this->userQueries->method('checkUserExists')->willReturn(QueryResult::ok(false, 0));
+        $this->userQueries->method('checkUserExistsExclude')->willReturn(QueryResult::ok(false, 0));
         $this->userQueries->method('updateUser')->willReturn($result);
 
         $this->expectException(RuntimeException::class);
@@ -191,7 +191,7 @@ class UpdateUserServiceUnitTest extends TestCase
         $userData = ['username' => 'john', 'email' => 'john@example.com'];
         $result = QueryResult::ok($userData, 0); // 0 rows affected = no changes
 
-        $this->userQueries->method('checkUserExists')->willReturn(QueryResult::ok(false, 0));
+        $this->userQueries->method('checkUserExistsExclude')->willReturn(QueryResult::ok(false, 0));
         $this->userQueries->method('updateUser')->willReturn($result);
 
         $this->expectException(RuntimeException::class);
@@ -211,7 +211,7 @@ class UpdateUserServiceUnitTest extends TestCase
         $userData = ['username' => 'john', 'email' => 'john@example.com'];
         $result = QueryResult::ok($userData, 1); // 1 row affected = update success
 
-        $this->userQueries->method('checkUserExists')->willReturn(QueryResult::ok(false, 1));
+        $this->userQueries->method('checkUserExistsExclude')->willReturn(QueryResult::ok(false, 1));
         $this->userQueries->method('updateUser')->willReturn($result);
 
         $req = $this->makeRequest(['username' => 'john', 'email' => 'john@example.com'], [], [], 'POST', '/', ['id' => '1']);

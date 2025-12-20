@@ -139,7 +139,7 @@ class TaskQueries
      * 
      * @return QueryResult
      */
-    public function getTasksByPage(int $page, int $perPage = 10, ?string $userId = null, ?string $searchQuery = null): QueryResult
+    public function getTasksByPage(int $page, int $perPage = 10, ?string $userId = null, ?string $searchQuery = null, ?bool $isDone = null): QueryResult
     {
         try {
             $offset = ($page - 1) * $perPage;
@@ -153,6 +153,10 @@ class TaskQueries
 
             if ($searchQuery !== null && $searchQuery !== '') {
                 $conditions[] = "title LIKE :search";
+            }
+
+            if ($isDone !== null) {
+                $conditions[] = "is_done = :is_done";
             }
 
             if (count($conditions) > 0) {
@@ -171,6 +175,9 @@ class TaskQueries
             }
             if ($searchQuery !== null && $searchQuery !== '') {
                 $stmt->bindValue(':search', '%' . $searchQuery . '%', PDO::PARAM_STR);
+            }
+            if ($isDone !== null) {
+                $stmt->bindValue(':is_done', $isDone ? 1 : 0, PDO::PARAM_INT);
             }
             $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -310,7 +317,7 @@ class TaskQueries
      * 
      * @return int
      */
-    public function countTasksByUserId(string $userId, ?string $searchQuery = null): int
+    public function countTasksByUserId(string $userId, ?string $searchQuery = null, ?bool $isDone = null): int
     {
         $query = "SELECT COUNT(*) as total FROM tasks WHERE user_id = ?";
         $params = [$userId];
@@ -318,6 +325,11 @@ class TaskQueries
         if ($searchQuery !== null && $searchQuery !== '') {
             $query .= " AND title LIKE ?";
             $params[] = '%' . $searchQuery . '%';
+        }
+
+        if ($isDone !== null) {
+            $query .= " AND is_done = ?";
+            $params[] = $isDone ? 1 : 0;
         }
 
         $stmt = $this->pdo->prepare($query);

@@ -330,7 +330,7 @@ class UpdateUserServiceIntegrationTest extends TestCase
     public function testUpdateReturnsInvalidDataThrowsRuntimeException(): void
     {
         $mockQueries = $this->createMock(UserQueries::class);
-        $mockQueries->method('checkUserExists')->willReturn(QueryResult::ok(false, 1));
+        $mockQueries->method('checkUserExistsExclude')->willReturn(QueryResult::ok(false, 1));
         $mockQueries->method('updateUser')->willReturn(QueryResult::ok(['bad' => 'structure'], 1));
 
         $service = new UpdateUserService($mockQueries);
@@ -354,7 +354,7 @@ class UpdateUserServiceIntegrationTest extends TestCase
     public function testDatabaseFailureThrowsRuntimeException(): void
     {
         $mockQueries = $this->createMock(UserQueries::class);
-        $mockQueries->method('checkUserExists')->willReturn(QueryResult::fail(['DB error']));
+        $mockQueries->method('checkUserExistsExclude')->willReturn(QueryResult::fail(['DB error']));
         $service = new UpdateUserService($mockQueries);
 
         $req = $this->makeRequest([

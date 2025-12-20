@@ -125,14 +125,14 @@ class GetTasksServiceUnitTest extends TestCase
     {
         $tasks = [['id' => 10, 'title' => 'Search Result']];
 
-        // Expect getTasksByPage to be called with search term 'apple'
+        // Expect getTasksByPage to be called with search term 'apple' and null status
         $this->taskQueries->expects($this->once())
             ->method('getTasksByPage')
-            ->with(1, 10, 'u1', 'apple')
+            ->with(1, 10, 'u1', 'apple', null)
             ->willReturn(QueryResult::ok($tasks, 1));
 
         $this->taskQueries->method('countTasksByUserId')
-            ->with('u1', 'apple')
+            ->with('u1', 'apple', null)
             ->willReturn(1);
 
         $req = $this->makeRequest([], ['search' => 'apple'], [], 'GET', '/', ['id' => 'u1']);
@@ -141,6 +141,34 @@ class GetTasksServiceUnitTest extends TestCase
 
         $this->assertCount(1, $result['task']);
         $this->assertEquals('Search Result', $result['task'][0]['title']);
+    }
+
+    /**
+     * Test filtering by active status.
+     */
+    public function testGetTasksWithActiveStatus(): void
+    {
+        $this->taskQueries->expects($this->once())
+            ->method('getTasksByPage')
+            ->with(1, 10, 'u1', null, false) // false = active
+            ->willReturn(QueryResult::ok([], 0));
+
+        $req = $this->makeRequest([], ['status' => 'active'], [], 'GET', '/', ['id' => 'u1']);
+        $this->service->execute($req);
+    }
+
+    /**
+     * Test filtering by completed status.
+     */
+    public function testGetTasksWithCompletedStatus(): void
+    {
+        $this->taskQueries->expects($this->once())
+            ->method('getTasksByPage')
+            ->with(1, 10, 'u1', null, true) // true = completed
+            ->willReturn(QueryResult::ok([], 0));
+
+        $req = $this->makeRequest([], ['status' => 'completed'], [], 'GET', '/', ['id' => 'u1']);
+        $this->service->execute($req);
     }
 }
 

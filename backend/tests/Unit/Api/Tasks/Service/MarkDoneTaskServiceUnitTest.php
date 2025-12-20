@@ -70,6 +70,10 @@ class MarkDoneTaskServiceUnitTest extends TestCase
      */
     public function testInvalidStatusValueThrowsException(): void
     {
+        // Mock task existence as logic now checks task first
+        $this->taskQueries->method('getTaskByID')
+            ->willReturn(QueryResult::ok(['id' => 1, 'is_done' => 0], 1));
+
         $this->expectException(InvalidArgumentException::class);
 
         $req = $this->makeRequest([
@@ -254,6 +258,10 @@ class MarkDoneTaskServiceUnitTest extends TestCase
      */
     public function testIsDoneInvalidStringThrowsException(): void
     {
+        // Mock task existence
+        $this->taskQueries->method('getTaskByID')
+            ->willReturn(QueryResult::ok(['id' => 1, 'is_done' => 0], 1));
+
         $this->expectException(InvalidArgumentException::class);
 
         $req = $this->makeRequest([
@@ -268,13 +276,31 @@ class MarkDoneTaskServiceUnitTest extends TestCase
      * 
      * @return void
      */
-    public function testIsDoneMissingThrowsException(): void
+    /**
+     * Test that missing 'is_done' parameter toggles the current status.
+     * 
+     * @return void
+     */
+    public function testIsDoneMissingTogglesStatus(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        // Case 1: Current status is 0 (not done) -> should likely become 1 (done)
+        $taskNotDone = ['id' => 1, 'title' => 'Task', 'is_done' => 0, 'user_id' => 123, 'created_at' => '2023-01-01'];
+
+        // Mock getTaskByID returning not done task
+        $this->taskQueries->expects($this->atMost(2)) // We will run 2 calls potentially
+            ->method('getTaskByID')
+            ->willReturn(QueryResult::ok($taskNotDone, 1));
+
+        // Expect markDone to be called with true (toggling 0 -> 1)
+        $this->taskQueries->expects($this->once())
+            ->method('markDone')
+            ->with(1, true, 123)
+            ->willReturn(QueryResult::ok(['id' => 1, 'is_done' => 1], 1));
 
         $req = $this->makeRequest([
             'id' => '1',
         ], [], [], 'POST', '/', ['id' => '123']); // Missing 'is_done'
+
         $this->service->execute($req);
     }
 }

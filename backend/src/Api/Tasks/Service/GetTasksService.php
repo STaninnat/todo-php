@@ -74,12 +74,21 @@ class GetTasksService
         if ($search === '')
             $search = null;
 
+        // Extract 'status' filter
+        $isDone = null;
+        $status = isset($req->query['status']) && is_string($req->query['status']) ? trim($req->query['status']) : null;
+        if ($status === 'active') {
+            $isDone = false;
+        } elseif ($status === 'completed') {
+            $isDone = true;
+        }
+
         // Fetch tasks via TaskQueries
-        $result = $this->taskQueries->getTasksByPage($page, $limit, $userId, $search);
+        $result = $this->taskQueries->getTasksByPage($page, $limit, $userId, $search, $isDone);
         RequestValidator::ensureSuccess($result, 'retrieve tasks', false, true);
 
         // Get total count
-        $totalItems = $this->taskQueries->countTasksByUserId($userId, $search);
+        $totalItems = $this->taskQueries->countTasksByUserId($userId, $search, $isDone);
         $totalPages = (int) ceil($totalItems / $limit);
 
         /** @var array<int, array<string, mixed>> $tasks */

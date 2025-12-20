@@ -411,6 +411,35 @@ final class TaskQueriesIntegrationTest extends TestCase
     }
 
     /**
+     * Test: getTasksByPage performs status filtering.
+     * 
+     * @return void
+     */
+    public function testGetTasksByPageWithStatusFilter(): void
+    {
+        // 2 Active tasks
+        $this->queries->addTask('Active 1', 'desc', $this->userId);
+        $this->queries->addTask('Active 2', 'desc', $this->userId);
+
+        // 1 Completed task
+        $task = $this->queries->addTask('Done 1', 'desc', $this->userId);
+        // @phpstan-ignore-next-line
+        $this->queries->markDone((int) $task->data['id'], true, $this->userId);
+
+        // Filter Active (false)
+        $activePage = $this->queries->getTasksByPage(1, 10, $this->userId, null, false);
+        $this->assertTrue($activePage->success);
+        $this->assertCount(2, (array) $activePage->data);
+
+        // Filter Completed (true)
+        $donePage = $this->queries->getTasksByPage(1, 10, $this->userId, null, true);
+        $this->assertTrue($donePage->success);
+        $this->assertCount(1, (array) $donePage->data);
+        // @phpstan-ignore-next-line
+        $this->assertEquals('Done 1', $donePage->data[0]['title']);
+    }
+
+    /**
      * Test updating a task with an invalid ID should return null data.
      *
      * @return void

@@ -46,7 +46,7 @@ final class DatabaseConfig
         $source = getenv('DB_SOURCE') ?: $_ENV['DB_SOURCE'] ?? null;
 
         $prefix = match ($source) {
-            'local' => 'LC_',
+            'local', 'dev' => 'LC_',
             'aiven', 'cloud' => 'AIVEN_',
             default => '',
         };

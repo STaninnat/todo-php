@@ -20,7 +20,7 @@ if (file_exists($envFile)) {
 // Retrieve database credentials from environment variables
 $dbSource = $_ENV['DB_SOURCE'] ?? getenv('DB_SOURCE') ?? null;
 $prefix = '';
-if ($dbSource === 'local') {
+if ($dbSource === 'local' || $dbSource === 'dev') {
     $prefix = 'LC_';
 } elseif ($dbSource === 'aiven' || $dbSource === 'cloud') {
     $prefix = 'AIVEN_';

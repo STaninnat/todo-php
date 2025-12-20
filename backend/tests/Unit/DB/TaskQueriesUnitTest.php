@@ -344,7 +344,144 @@ class TaskQueriesUnitTest extends TestCase
         $this->assertEquals($tasks, $result->data);
     }
 
+    /**
+     * Test: getTasksByPage with search query.
+     * 
+     * @return void
+     */
+    public function testGetTasksByPageWithSearch(): void
+    {
+        $tasks = [['id' => 10, 'title' => 'Search Match']];
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('fetchAll')->willReturn($tasks);
 
+        // Call getTasksByPage with search
+        $result = $this->taskQueries->getTasksByPage(1, 5, 'u1', 'Search');
+
+        $this->assertTrue($result->success);
+        $this->assertEquals($tasks, $result->data);
+    }
+
+    /** ----------------- countTasksByUserId ----------------- */
+    /**
+     * Test: countTasksByUserId success.
+     * 
+     * @return void
+     */
+    public function testCountTasksByUserIdSuccess(): void
+    {
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('fetch')->willReturn(['total' => 5]);
+
+        $count = $this->taskQueries->countTasksByUserId('u1');
+
+        $this->assertEquals(5, $count);
+    }
+
+    /**
+     * Test: countTasksByUserId returns 0 on failure.
+     * 
+     * @return void
+     */
+    public function testCountTasksByUserIdFail(): void
+    {
+        $this->stmt->method('execute')->willReturn(false);
+
+        $count = $this->taskQueries->countTasksByUserId('u1');
+
+        $this->assertEquals(0, $count);
+    }
+
+
+    /** ----------------- deleteTasks ----------------- */
+    /**
+     * Test: deleteTasks success.
+     * 
+     * @return void
+     */
+    public function testDeleteTasksSuccess(): void
+    {
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('rowCount')->willReturn(3);
+
+        $result = $this->taskQueries->deleteTasks([1, 2, 3], 'u1');
+
+        $this->assertTrue($result->success);
+        $this->assertEquals(3, $result->affected);
+    }
+
+    /**
+     * Test: deleteTasks with empty array returns success with 0 affected.
+     * 
+     * @return void
+     */
+    public function testDeleteTasksEmpty(): void
+    {
+        $result = $this->taskQueries->deleteTasks([], 'u1');
+
+        $this->assertTrue($result->success);
+        $this->assertEquals(0, $result->affected);
+    }
+
+    /**
+     * Test: deleteTasks fail.
+     * 
+     * @return void
+     */
+    public function testDeleteTasksFail(): void
+    {
+        $this->stmt->method('execute')->willReturn(false);
+        $this->stmt->method('errorInfo')->willReturn(['err']);
+
+        $result = $this->taskQueries->deleteTasks([1], 'u1');
+
+        $this->assertFalse($result->success);
+    }
+
+    /** ----------------- markTasksDone ----------------- */
+    /**
+     * Test: markTasksDone success.
+     * 
+     * @return void
+     */
+    public function testMarkTasksDoneSuccess(): void
+    {
+        $this->stmt->method('execute')->willReturn(true);
+        $this->stmt->method('rowCount')->willReturn(2);
+
+        $result = $this->taskQueries->markTasksDone([1, 2], true, 'u1');
+
+        $this->assertTrue($result->success);
+        $this->assertEquals(2, $result->affected);
+    }
+
+    /**
+     * Test: markTasksDone empty.
+     * 
+     * @return void
+     */
+    public function testMarkTasksDoneEmpty(): void
+    {
+        $result = $this->taskQueries->markTasksDone([], true, 'u1');
+
+        $this->assertTrue($result->success);
+        $this->assertEquals(0, $result->affected);
+    }
+
+    /**
+     * Test: markTasksDone fail.
+     * 
+     * @return void
+     */
+    public function testMarkTasksDoneFail(): void
+    {
+        $this->stmt->method('execute')->willReturn(false);
+        $this->stmt->method('errorInfo')->willReturn(['err']);
+
+        $result = $this->taskQueries->markTasksDone([1], true, 'u1');
+
+        $this->assertFalse($result->success);
+    }
 
     /** ----------------- markDone ----------------- */
     /**

@@ -130,22 +130,33 @@ class TaskQueries
     }
 
     /**
-     * Get tasks for a specific page (pagination)
+     * Get tasks for a specific page (pagination) with optional search
      *
      * @param int $page
      * @param int $perPage
-     * @param string $userId
+     * @param string|null $userId
+     * @param string|null $searchQuery
      * 
      * @return QueryResult
      */
-    public function getTasksByPage(int $page, int $perPage = 10, ?string $userId = null): QueryResult
+    public function getTasksByPage(int $page, int $perPage = 10, ?string $userId = null, ?string $searchQuery = null): QueryResult
     {
         try {
             $offset = ($page - 1) * $perPage;
 
             $query = "SELECT * FROM tasks";
+            $conditions = [];
+
             if ($userId !== null) {
-                $query .= " WHERE user_id = :user_id";
+                $conditions[] = "user_id = :user_id";
+            }
+
+            if ($searchQuery !== null && $searchQuery !== '') {
+                $conditions[] = "title LIKE :search";
+            }
+
+            if (count($conditions) > 0) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
             }
 
             $query .= " ORDER BY is_done ASC, updated_at DESC LIMIT :limit OFFSET :offset";
@@ -157,6 +168,9 @@ class TaskQueries
 
             if ($userId !== null) {
                 $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+            }
+            if ($searchQuery !== null && $searchQuery !== '') {
+                $stmt->bindValue(':search', '%' . $searchQuery . '%', PDO::PARAM_STR);
             }
             $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -289,22 +303,94 @@ class TaskQueries
     }
 
     /**
-     * Count total tasks for a user
+     * Count total tasks for a user, optionally filtered by search
      *
      * @param string $userId
+     * @param string|null $searchQuery
      * 
      * @return int
      */
-    public function countTasksByUserId(string $userId): int
+    public function countTasksByUserId(string $userId, ?string $searchQuery = null): int
     {
         $query = "SELECT COUNT(*) as total FROM tasks WHERE user_id = ?";
+        $params = [$userId];
+
+        if ($searchQuery !== null && $searchQuery !== '') {
+            $query .= " AND title LIKE ?";
+            $params[] = '%' . $searchQuery . '%';
+        }
 
         $stmt = $this->pdo->prepare($query);
-        if ($stmt === false || !$stmt->execute([$userId])) {
+        if ($stmt === false || !$stmt->execute($params)) {
             return 0;
         }
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return is_array($row) && isset($row['total']) && is_numeric($row['total']) ? (int) $row['total'] : 0;
+    }
+
+    /**
+     * Delete multiple tasks by IDs
+     * 
+     * @param array<int> $ids
+     * @param string $userId
+     * 
+     * @return QueryResult
+     */
+    public function deleteTasks(array $ids, string $userId): QueryResult
+    {
+        if (empty($ids)) {
+            return QueryResult::ok(null, 0);
+        }
+
+        // Create placeholders for IN clause
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $query = "DELETE FROM tasks WHERE user_id = ? AND id IN ($placeholders)";
+
+        $stmt = $this->pdo->prepare($query);
+        if ($stmt === false) {
+            return $this->failFromStmt(false);
+        }
+
+        // Params: userId, then spread ids
+        $params = array_merge([$userId], $ids);
+
+        if (!$stmt->execute($params)) {
+            return $this->failFromStmt($stmt);
+        }
+
+        return QueryResult::ok(null, $stmt->rowCount());
+    }
+
+    /**
+     * Mark multiple tasks as done or not done
+     * 
+     * @param array<int> $ids
+     * @param bool $isDone
+     * @param string $userId
+     * 
+     * @return QueryResult
+     */
+    public function markTasksDone(array $ids, bool $isDone, string $userId): QueryResult
+    {
+        if (empty($ids)) {
+            return QueryResult::ok(null, 0);
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $query = "UPDATE tasks SET is_done = ? WHERE user_id = ? AND id IN ($placeholders)";
+
+        $stmt = $this->pdo->prepare($query);
+        if ($stmt === false) {
+            return $this->failFromStmt(false);
+        }
+
+        $params = array_merge([$isDone ? 1 : 0, $userId], $ids);
+
+        if (!$stmt->execute($params)) {
+            return $this->failFromStmt($stmt);
+        }
+
+        return QueryResult::ok(null, $stmt->rowCount());
     }
 }

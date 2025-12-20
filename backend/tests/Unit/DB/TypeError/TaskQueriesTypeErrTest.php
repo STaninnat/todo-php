@@ -112,4 +112,43 @@ class TaskQueriesTypeErrTest extends TestCase
         // Sending the id as a string instead of an int will cause a TypeError.
         $this->taskQueries->deleteTask('id', 'user');
     }
+
+    /**
+     * Test: countTasksByUserId() throws TypeError when userId is not string.
+     *
+     * @return void
+     */
+    public function testCountTasksByUserIdInvalidTypes(): void
+    {
+        $this->expectException(\TypeError::class);
+
+        $this->taskQueries->countTasksByUserId(12345);
+    }
+
+    /**
+     * Test: deleteTasks() throws TypeError when input types are invalid.
+     *
+     * @return void
+     */
+    public function testDeleteTasksInvalidTypes(): void
+    {
+        $this->expectException(\TypeError::class);
+
+        // id list must be array, and userId string
+        $this->taskQueries->deleteTasks('not-array', 123);
+    }
+
+    /**
+     * Test: markTasksDone() throws TypeError when input types are invalid.
+     *
+     * @return void
+     */
+    public function testMarkTasksDoneInvalidTypes(): void
+    {
+        $this->expectException(\TypeError::class);
+
+        // id list must be array, isDone bool, and userId string
+        $this->taskQueries->markTasksDone('not-array', 'not-bool', 123);
+    }
 }
+

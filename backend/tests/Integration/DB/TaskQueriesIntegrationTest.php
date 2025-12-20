@@ -299,7 +299,111 @@ final class TaskQueriesIntegrationTest extends TestCase
         $this->assertNull($fetch->data);
     }
 
+    /**
+     * Test: countTasksByUserId returns correct count.
+     * 
+     * @return void
+     */
+    public function testCountTasksByUserId(): void
+    {
+        $this->queries->addTask('T1', 'D1', $this->userId);
+        $this->queries->addTask('T2', 'D2', $this->userId);
+        $this->queries->addTask('T3', 'D3', 'other');
 
+        $count = $this->queries->countTasksByUserId($this->userId);
+        $this->assertEquals(2, $count);
+
+        $countOther = $this->queries->countTasksByUserId('other');
+        $this->assertEquals(1, $countOther);
+    }
+
+    /**
+     * Test: deleteTasks removes multiple tasks.
+     * 
+     * @return void
+     */
+    public function testDeleteTasksRemovesMultiple(): void
+    {
+        $r1 = $this->queries->addTask('T1', 'D1', $this->userId);
+        $r2 = $this->queries->addTask('T2', 'D2', $this->userId);
+        $r3 = $this->queries->addTask('T3', 'D3', $this->userId);
+
+        /** @var array<string,mixed> $d1 */
+        $d1 = $r1->data;
+        /** @var array<string,mixed> $d2 */
+        $d2 = $r2->data;
+        /** @var array<string,mixed> $d3 */
+        $d3 = $r3->data;
+
+        $id1 = (int) $d1['id'];
+        $id2 = (int) $d2['id'];
+        $id3 = (int) $d3['id'];
+
+        // Delete first two
+        $result = $this->queries->deleteTasks([$id1, $id2], $this->userId);
+
+        $this->assertTrue($result->success);
+        $this->assertEquals(2, $result->affected);
+
+        // Verify deletions
+        $f1 = $this->queries->getTaskByID($id1, $this->userId);
+        $f2 = $this->queries->getTaskByID($id2, $this->userId);
+        $f3 = $this->queries->getTaskByID($id3, $this->userId);
+
+        $this->assertNull($f1->data);
+        $this->assertNull($f2->data);
+        $this->assertNotNull($f3->data);
+    }
+
+    /**
+     * Test: markTasksDone updates multiple tasks.
+     * 
+     * @return void
+     */
+    public function testMarkTasksDoneUpdatesMultiple(): void
+    {
+        $r1 = $this->queries->addTask('T1', 'D1', $this->userId);
+        $r2 = $this->queries->addTask('T2', 'D2', $this->userId);
+
+        /** @var array<string,mixed> $d1 */
+        $d1 = $r1->data;
+        /** @var array<string,mixed> $d2 */
+        $d2 = $r2->data;
+
+        $id1 = (int) $d1['id'];
+        $id2 = (int) $d2['id'];
+
+        $result = $this->queries->markTasksDone([$id1, $id2], true, $this->userId);
+
+        $this->assertTrue($result->success);
+        $this->assertEquals(2, $result->affected);
+
+        $f1 = $this->queries->getTaskByID($id1, $this->userId);
+        /** @var array<string,mixed> $fd1 */
+        $fd1 = $f1->data;
+
+        $this->assertEquals(1, $fd1['is_done']);
+    }
+
+    /**
+     * Test: getTasksByPage performs search.
+     * 
+     * @return void
+     */
+    public function testGetTasksByPageWithSearch(): void
+    {
+        $this->queries->addTask('Apple', 'fruit', $this->userId);
+        $this->queries->addTask('Banana', 'fruit', $this->userId);
+        $this->queries->addTask('Apricot', 'fruit', $this->userId);
+
+        $page = $this->queries->getTasksByPage(1, 10, $this->userId, 'Ap');
+
+        $this->assertTrue($page->success);
+        $this->assertIsArray($page->data);
+
+        // Should match Apple and Apricot
+        $this->assertCount(2, $page->data);
+    }
 
     /**
      * Test updating a task with an invalid ID should return null data.

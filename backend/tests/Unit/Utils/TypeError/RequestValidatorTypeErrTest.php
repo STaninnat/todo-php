@@ -174,6 +174,44 @@ class RequestValidatorTypeErrTest extends TestCase
         RequestValidator::getBool($req, 'flag', null);
     }
 
+    // -------- getArray --------
+
+    /**
+     * Ensure getArray throws when request object is null.
+     *
+     * @return void
+     */
+    public function testGetArrayThrowsTypeErrorWhenRequestIsNull(): void
+    {
+        $this->expectException(TypeError::class);
+        RequestValidator::getArray(null, 'list', 'error');
+    }
+
+    /**
+     * Ensure getArray throws when key is not a string.
+     *
+     * @return void
+     */
+    public function testGetArrayThrowsTypeErrorWhenKeyIsNotString(): void
+    {
+        $req = $this->createMock(Request::class);
+        $this->expectException(TypeError::class);
+        RequestValidator::getArray($req, 123, 'error');
+    }
+
+    // -------- getAuthUserId --------
+
+    /**
+     * Ensure getAuthUserId throws when request object is null.
+     *
+     * @return void
+     */
+    public function testGetAuthUserIdThrowsTypeErrorWhenRequestIsNull(): void
+    {
+        $this->expectException(TypeError::class);
+        RequestValidator::getAuthUserId(null);
+    }
+
     // -------- ensureSuccess --------
 
     /**

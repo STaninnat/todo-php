@@ -199,6 +199,28 @@ class RequestValidator
     }
 
     /**
+     * Retrieve an array parameter.
+     *
+     * @param Request $req
+     * @param string  $key
+     * @param string  $errorMsg
+     *
+     * @return array<mixed>
+     *
+     * @throws InvalidArgumentException If value is not an array
+     */
+    public static function getArray(Request $req, string $key, string $errorMsg): array
+    {
+        $val = self::findRaw($req, $key);
+
+        if (!is_array($val)) {
+            throw new InvalidArgumentException($errorMsg);
+        }
+
+        return $val;
+    }
+
+    /**
      * Retrieve the authenticated user ID from the request context.
      *
      * - Expects $req->auth['id'] to be set by middleware

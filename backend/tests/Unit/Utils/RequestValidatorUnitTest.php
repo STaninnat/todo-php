@@ -45,7 +45,7 @@ class DummyResult
     {
         $this->success = $success;
         $this->changed = $changed;
-        $this->error   = $error;
+        $this->error = $error;
         $this->data = $success ? ['dummy'] : null;
     }
 
@@ -105,7 +105,7 @@ class RequestValidatorUnitTest extends TestCase
     {
         return [
             'valid int' => ['123', 123],
-            'zero'      => ['0', 0],
+            'zero' => ['0', 0],
         ];
     }
 
@@ -136,7 +136,7 @@ class RequestValidatorUnitTest extends TestCase
     {
         return [
             'non digit' => ['abc'],
-            'empty'     => [null],
+            'empty' => [null],
         ];
     }
 
@@ -170,9 +170,9 @@ class RequestValidatorUnitTest extends TestCase
     public static function boolProvider(): array
     {
         return [
-            'true string'  => ['1', true],
+            'true string' => ['1', true],
             'false string' => ['0', false],
-            'nondigit'     => ['yes', false],
+            'nondigit' => ['yes', false],
         ];
     }
 
@@ -222,7 +222,7 @@ class RequestValidatorUnitTest extends TestCase
     {
         return [
             'normal trimmed' => [' hello ', 'hello'],
-            'with tags'      => ['<b>world</b>', 'world'],
+            'with tags' => ['<b>world</b>', 'world'],
         ];
     }
 
@@ -253,8 +253,8 @@ class RequestValidatorUnitTest extends TestCase
     {
         return [
             'empty string' => [''],
-            'null value'   => [null],
-            'only tags'    => ['<i></i>'],
+            'null value' => [null],
+            'only tags' => ['<i></i>'],
         ];
     }
 
@@ -289,7 +289,7 @@ class RequestValidatorUnitTest extends TestCase
     {
         return [
             'normal email' => ['user@example.com', 'user@example.com'],
-            'with spaces'  => ['  test@foo.com ', 'test@foo.com'],
+            'with spaces' => ['  test@foo.com ', 'test@foo.com'],
         ];
     }
 
@@ -319,9 +319,9 @@ class RequestValidatorUnitTest extends TestCase
     public static function emailInvalidProvider(): array
     {
         return [
-            'missing at'   => ['invalid.com'],
-            'empty'        => [''],
-            'null'         => [null],
+            'missing at' => ['invalid.com'],
+            'empty' => [''],
+            'null' => [null],
         ];
     }
 
@@ -344,6 +344,82 @@ class RequestValidatorUnitTest extends TestCase
     }
 
     // -------------------------
+    // getArray
+    // -------------------------
+
+    /**
+     * Data provider for valid array parameters.
+     *
+     * @return array<string, array{array<mixed>}>
+     */
+    public static function arrayProvider(): array
+    {
+        return [
+            'simple array' => [['a', 'b']],
+            'assoc array' => [['key' => 'value']],
+            'empty array' => [[]],
+        ];
+    }
+
+    /**
+     * Test that getArray returns valid arrays.
+     *
+     * @param array<mixed> $input
+     *
+     * @return void
+     */
+    #[DataProvider('arrayProvider')]
+    public function testGetArrayValid(array $input): void
+    {
+        $this->req->method('getParam')->willReturn($input);
+
+        $this->assertSame($input, RequestValidator::getArray($this->req, 'list', 'Invalid list'));
+    }
+
+    /**
+     * Test: getArray throws on invalid types.
+     * 
+     * @return void
+     */
+    public function testGetArrayThrowsOnInvalid(): void
+    {
+        $this->req->method('getParam')->willReturn('not-array');
+
+        $this->expectException(InvalidArgumentException::class);
+        RequestValidator::getArray($this->req, 'list', 'Invalid list');
+    }
+
+    // -------------------------
+    // getAuthUserId
+    // -------------------------
+
+    /**
+     * Test: getAuthUserId returns id when present.
+     * 
+     * @return void
+     */
+    public function testGetAuthUserIdValid(): void
+    {
+        $this->req->auth = ['id' => 'user-123'];
+
+        $this->assertSame('user-123', RequestValidator::getAuthUserId($this->req));
+    }
+
+    /**
+     * Test: getAuthUserId throws RuntimeException when missing.
+     * 
+     * @return void
+     */
+    public function testGetAuthUserIdThrowsOnMissing(): void
+    {
+        $this->req->auth = [];
+
+        $this->expectException(RuntimeException::class);
+        RequestValidator::getAuthUserId($this->req);
+    }
+
+
+    // -------------------------
     // ensureSuccess
     // -------------------------
 
@@ -355,9 +431,9 @@ class RequestValidatorUnitTest extends TestCase
     public static function ensureSuccessProvider(): array
     {
         return [
-            'successful and changed'    => [true, true, null],
-            'failed with error'         => [false, false, RuntimeException::class],
-            'successful but no change'  => [true, false, RuntimeException::class],
+            'successful and changed' => [true, true, null],
+            'failed with error' => [false, false, RuntimeException::class],
+            'successful but no change' => [true, false, RuntimeException::class],
         ];
     }
 

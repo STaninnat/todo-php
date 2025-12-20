@@ -29,9 +29,8 @@ final class CreateTasksTable extends AbstractMigration
             ->addColumn('is_done', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0])
             ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
             ->addColumn('updated_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP', 'update' => 'CURRENT_TIMESTAMP'])
-            ->addIndex(['user_id'], ['name' => 'idx_user_id'])
             ->addIndex(['is_done'], ['name' => 'idx_is_done'])
-            ->addIndex(['user_id', 'is_done'], ['name' => 'idx_user_done'])
+            ->addIndex(['user_id', 'is_done', 'updated_at'], ['name' => 'idx_user_dashboard'])
             ->addForeignKey('user_id', 'users', 'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
             ->create();
     }

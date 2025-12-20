@@ -28,6 +28,7 @@ final class CreateRefreshTokensTable extends AbstractMigration
             ->addColumn('expires_at', 'integer', ['null' => false])
             ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
             ->addIndex(['token_hash'], ['unique' => true, 'name' => 'idx_token_hash'])
+            ->addIndex(['expires_at'], ['name' => 'idx_expires_at'])
             ->addForeignKey('user_id', 'users', 'id', ['delete' => 'CASCADE', 'update' => 'CASCADE'])
             ->create();
     }

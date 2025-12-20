@@ -37,7 +37,6 @@ vi.mock('../components/BulkDeleteModal', () => ({
     ),
 }));
 
-// Mock TodoList to directly trigger onSelect for checking Page logic.
 vi.mock('../components/TodoList', () => ({
     default: ({ todos, onSelect }) => (
         <div data-testid="todo-list">
@@ -47,6 +46,16 @@ vi.mock('../components/TodoList', () => ({
                     <button onClick={() => onSelect(t.id)}>Select Item</button>
                 </div>
             ))}
+        </div>
+    ),
+}));
+
+vi.mock('../components/FilterSidebar', () => ({
+    default: ({ currentFilter, onFilterChange }) => (
+        <div data-testid="filter-sidebar">
+            <span>Current: {currentFilter}</span>
+            <button onClick={() => onFilterChange('active')}>Filter: active</button>
+            <button onClick={() => onFilterChange('completed')}>Filter: completed</button>
         </div>
     ),
 }));
@@ -146,5 +155,22 @@ describe('TodoPage', () => {
         fireEvent.click(screen.getByText('Bulk Mark Done'));
 
         expect(mockUseTodos.bulkMarkDoneTodos).toHaveBeenCalledWith([1], true);
+    });
+
+    it('should update filter state and call useTodos with new filter', () => {
+        render(<TodoPage />);
+        
+        // Find FilterSidebar mock buttons (assuming we mock it shortly)
+        // or if using real component, use text.
+        // Let's add the mock for FilterSidebar first
+        const activeFilterBtn = screen.getByText('Filter: active');
+        fireEvent.click(activeFilterBtn);
+
+        // useTodos is called on render with default 'all'
+        // After click, it should be called with 'active'
+        // Since useTodos is a hook, checking its calls is tricky directly in this setup 
+        // without a specialized test helper or checking the hook mock calls.
+        
+        expect(useTodos).toHaveBeenLastCalledWith('', 'active');
     });
 });

@@ -22,12 +22,35 @@
 
 .todo-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 0;
 }
 
 .todo-content h3 {
     font-size: 1rem;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0; /* Remove margin to fix centering */
     color: var(--text-primary);
+    position: relative;
+    width: fit-content;
+}
+
+.todo-item.done .todo-content h3 {
+    color: var(--text-secondary);
+}
+
+.todo-item.done .todo-content h3::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background-color: var(--text-secondary);
+    transform: translateY(-50%);
+    pointer-events: none;
 }
 
 .todo-content p {
@@ -37,6 +60,7 @@
     /* The Line Clamp Magic */
     display: -webkit-box;
     -webkit-line-clamp: 2; /* Limit to 2 lines */
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

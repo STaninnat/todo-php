@@ -6,6 +6,7 @@ import BulkDeleteModal from '../components/BulkDeleteModal';
 import UpdateTaskModal from '../components/UpdateTaskModal';
 import Pagination from '../components/Pagination';
 import ManagementBar from '../components/ManagementBar';
+import FilterSidebar from '../components/FilterSidebar';
 import { useTodos } from '../hooks/useTodos';
 import './TodoPage.css';
 
@@ -18,6 +19,7 @@ import './TodoPage.css';
 export default function TodoPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [filter, setFilter] = useState('all');
     
     // Debounce search query to prevent excessive API calls
     useEffect(() => {
@@ -45,7 +47,7 @@ export default function TodoPage() {
         setPage, 
         totalPages,
         isFetching 
-    } = useTodos(debouncedSearch);
+    } = useTodos(debouncedSearch, filter);
 
     // Modal State
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null, taskTitle: '' });
@@ -113,38 +115,42 @@ export default function TodoPage() {
     };
 
     return (
-        <div className="todo-container">
-            <h1>My Tasks</h1>
-
-            <TodoForm onAdd={addTodo} isLoading={isAdding} />
+        <div className="todo-page-wrapper">
+            <FilterSidebar currentFilter={filter} onFilterChange={setFilter} />
             
-            <ManagementBar 
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                isSelectionMode={isSelectionMode}
-                toggleSelectionMode={toggleSelectionMode}
-                selectedCount={selectedIds.size}
-                onBulkDelete={handleBulkDeleteClick}
-                onBulkMarkDone={handleBulkMarkDone}
-                isLoading={isBulkOperating}
-                isSearching={isFetching}
-            />
+            <main className="todo-container">
+                <h1>My Tasks</h1>
 
-            <TodoList
-                todos={todos}
-                onToggle={toggleTodo}
-                onDelete={handleDeleteClick}
-                onUpdate={handleUpdateClick}
-                isSelectionMode={isSelectionMode}
-                selectedIds={selectedIds}
-                onSelect={handleSelect}
-            />
+                <TodoForm onAdd={addTodo} isLoading={isAdding} />
+                
+                <ManagementBar 
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    isSelectionMode={isSelectionMode}
+                    toggleSelectionMode={toggleSelectionMode}
+                    selectedCount={selectedIds.size}
+                    onBulkDelete={handleBulkDeleteClick}
+                    onBulkMarkDone={handleBulkMarkDone}
+                    isLoading={isBulkOperating}
+                    isSearching={isFetching && !!debouncedSearch}
+                />
 
-            <Pagination 
-                currentPage={page} 
-                totalPages={totalPages} 
-                onPageChange={setPage} 
-            />
+                <TodoList
+                    todos={todos}
+                    onToggle={toggleTodo}
+                    onDelete={handleDeleteClick}
+                    onUpdate={handleUpdateClick}
+                    isSelectionMode={isSelectionMode}
+                    selectedIds={selectedIds}
+                    onSelect={handleSelect}
+                />
+
+                <Pagination 
+                    currentPage={page} 
+                    totalPages={totalPages} 
+                    onPageChange={setPage} 
+                />
+            </main>
 
             {/* Modals */}
             <DeleteTaskModal 

@@ -13,6 +13,7 @@
         "prepare": "cd .. && git config core.hooksPath frontend/.husky"
     },
     "dependencies": {
+        "@formkit/auto-animate": "^0.9.0",
         "@tanstack/react-query": "^5.90.12",
         "lucide-react": "^0.556.0",
         "prop-types": "^15.8.1",

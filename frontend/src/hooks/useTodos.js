@@ -12,14 +12,14 @@ const GUEST_KEY = 'guest_todos';
  * Handles pagination and optimistic updates/invalidations.
  * @returns {Object} Todos state and actions
  */
-export function useTodos(searchQuery = '') {
+export function useTodos(searchQuery = '', filter = 'all') {
     const queryClient = useQueryClient();
 
     const [page, setPage] = useState(1);
 
     // --- Query: Fetch Todos ---
     const { data: queryData, isFetching } = useQuery({
-        queryKey: ['todos', page, searchQuery],
+        queryKey: ['todos', page, searchQuery, filter],
         queryFn: async () => {
             try {
                 const queryParams = new URLSearchParams({
@@ -29,6 +29,10 @@ export function useTodos(searchQuery = '') {
                 if (searchQuery) {
                     queryParams.append('search', searchQuery);
                 }
+                if (filter !== 'all') {
+                    queryParams.append('status', filter);
+                }
+
                 const response = await api.get(`/tasks?${queryParams.toString()}`);
                 // Backend returns { data: { task: [...], pagination: {...} } }
                 const data = response.data || response; 
@@ -68,6 +72,13 @@ export function useTodos(searchQuery = '') {
                             t.title.toLowerCase().includes(lowerQuery) ||
                             (t.description && t.description.toLowerCase().includes(lowerQuery))
                         );
+                    }
+
+                    // Filter by status if present
+                    if (filter === 'active') {
+                        allTodos = allTodos.filter(t => !t.isDone);
+                    } else if (filter === 'completed') {
+                        allTodos = allTodos.filter(t => t.isDone);
                     }
 
                     // Sort to match backend: isDone ASC, then Created/ID DESC

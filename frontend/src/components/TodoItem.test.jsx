@@ -41,7 +41,8 @@ describe('TodoItem Component', () => {
         expect(checkbox).toBeChecked();
         
         const title = screen.getByText('Test Task');
-        expect(title).toHaveStyle('text-decoration: line-through');
+        const todoItem = title.closest('.todo-item');
+        expect(todoItem).toHaveClass('done');
     });
 
     it('should call onToggle when checkbox is clicked', () => {

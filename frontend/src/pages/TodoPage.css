@@ -1,8 +1,29 @@
+.todo-page-wrapper {
+    max-width: 100%;
+    margin: 0;
+    padding: 2rem 1rem;
+}
+
 .todo-container {
     width: 100%;
     max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    margin: 0 auto;
+    padding-left: 3rem; 
+}
+
+@media (max-width: 1024px) {
+    .todo-container {
+        padding-left: 0;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .todo-page-wrapper {
+        flex-direction: column-reverse;
+        padding-bottom: 80px;
+        gap: 1rem;
+    }
 }
 
 .todo-container h1{

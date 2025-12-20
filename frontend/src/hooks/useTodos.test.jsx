@@ -94,6 +94,79 @@ describe('useTodos Hook', () => {
             const saved = JSON.parse(localStorage.getItem('guest_todos'));
             expect(saved[0].isDone).toBe(true);
         });
+
+        it('should filter todos by search query in guest mode', async () => {
+            const task1 = { id: 1, title: 'Apple', isDone: false };
+            const task2 = { id: 2, title: 'Banana', isDone: false };
+            localStorage.setItem('guest_todos', JSON.stringify([task1, task2]));
+            
+            api.get.mockRejectedValue(new Error('Network Error'));
+
+            // Render hook with search query 'App'
+            const { result } = renderHook(() => useTodos('App'), { wrapper: createWrapper() });
+            
+            await waitFor(() => {
+                expect(result.current.isGuest).toBe(true);
+                expect(result.current.todos).toHaveLength(1);
+            });
+            expect(result.current.todos[0].title).toBe('Apple');
+        });
+
+        it('should filter todos by status in guest mode', async () => {
+             const task1 = { id: 1, title: 'Active Task', isDone: false };
+             const task2 = { id: 2, title: 'Done Task', isDone: true };
+             localStorage.setItem('guest_todos', JSON.stringify([task1, task2]));
+             
+             api.get.mockRejectedValue(new Error('Network Error'));
+ 
+             // Render hook with filter 'completed'
+             const { result } = renderHook(() => useTodos('', 'completed'), { wrapper: createWrapper() });
+             
+             await waitFor(() => {
+                expect(result.current.isGuest).toBe(true);
+                expect(result.current.todos).toHaveLength(1);
+             });
+             expect(result.current.todos[0].title).toBe('Done Task');
+        });
+
+        it('should bulk delete todos in guest mode', async () => {
+            const task1 = { id: 1, title: 'One', isDone: false };
+            const task2 = { id: 2, title: 'Two', isDone: false };
+            const task3 = { id: 3, title: 'Three', isDone: false };
+            localStorage.setItem('guest_todos', JSON.stringify([task1, task2, task3]));
+
+            api.get.mockRejectedValue(new Error('Network Error'));
+            
+            const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
+            await waitFor(() => expect(result.current.isGuest).toBe(true));
+
+            await act(async () => {
+                await result.current.bulkDeleteTodos([1, 3]);
+            });
+
+            const saved = JSON.parse(localStorage.getItem('guest_todos'));
+            expect(saved).toHaveLength(1);
+            expect(saved[0].id).toBe(2);
+        });
+
+        it('should bulk mark todos as done in guest mode', async () => {
+            const task1 = { id: 1, title: 'One', isDone: false };
+            const task2 = { id: 2, title: 'Two', isDone: false };
+            localStorage.setItem('guest_todos', JSON.stringify([task1, task2]));
+
+            api.get.mockRejectedValue(new Error('Network Error'));
+            
+            const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
+            await waitFor(() => expect(result.current.isGuest).toBe(true));
+
+            await act(async () => {
+                await result.current.bulkMarkDoneTodos([1, 2], true);
+            });
+
+            const saved = JSON.parse(localStorage.getItem('guest_todos'));
+            expect(saved[0].isDone).toBe(true);
+            expect(saved[1].isDone).toBe(true);
+        });
     });
 
     describe('Cloud Mode (API)', () => {
@@ -131,6 +204,51 @@ describe('useTodos Hook', () => {
             });
 
             expect(api.post).toHaveBeenCalledWith('/tasks/add', expect.objectContaining({ title: 'New' }));
+        });
+
+        it('should include search and filter params in API call', async () => {
+            api.get.mockResolvedValue({
+                data: { task: [], pagination: { total_pages: 1 } }
+            });
+
+            renderHook(() => useTodos('searchterm', 'active'), { wrapper: createWrapper() });
+
+            await waitFor(() => {
+                expect(api.get).toHaveBeenCalledWith(expect.stringContaining('search=searchterm'));
+                expect(api.get).toHaveBeenCalledWith(expect.stringContaining('status=active'));
+            });
+        });
+
+        it('should call API to bulk delete tasks', async () => {
+            api.get.mockResolvedValue({
+                 data: { task: [], pagination: { total_pages: 1 } }
+            });
+            api.delete.mockResolvedValue({ count: 2 });
+
+            const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
+            await waitFor(() => expect(result.current.isGuest).toBe(false));
+
+            await act(async () => {
+                await result.current.bulkDeleteTodos([1, 2]);
+            });
+
+            expect(api.delete).toHaveBeenCalledWith('/tasks/delete_bulk', { ids: [1, 2] });
+        });
+
+        it('should call API to bulk mark tasks as done', async () => {
+            api.get.mockResolvedValue({
+                 data: { task: [], pagination: { total_pages: 1 } }
+            });
+            api.put.mockResolvedValue({ count: 2 });
+
+            const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
+            await waitFor(() => expect(result.current.isGuest).toBe(false));
+
+            await act(async () => {
+                await result.current.bulkMarkDoneTodos([1, 2], true);
+            });
+
+            expect(api.put).toHaveBeenCalledWith('/tasks/mark_done_bulk', { ids: [1, 2], is_done: true });
         });
     });
 

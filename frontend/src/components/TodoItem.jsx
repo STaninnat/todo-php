@@ -39,10 +39,10 @@ export default function TodoItem({
             />
 
             <div className="todo-content">
-                <h3 style={{ textDecoration: todo.isDone ? 'line-through' : 'none' }}>
+                <h3>
                     {todo.title}
                 </h3>
-                <p>{todo.description}</p>
+                {todo.description && <p>{todo.description}</p>}
             </div>
 
             {!isSelectionMode && (

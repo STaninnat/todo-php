@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import TodoItem from './TodoItem';
 import './TodoList.css';
 
@@ -21,6 +22,8 @@ export default function TodoList({
     selectedIds, 
     onSelect 
 }) {
+    const [listRef] = useAutoAnimate();
+
     if (todos.length === 0) {
         return (
             <div className="todo-list-empty">
@@ -30,7 +33,7 @@ export default function TodoList({
     }
 
     return (
-        <div className="todo-list">
+        <div className="todo-list" ref={listRef}>
             {todos.map((todo) => (
                 <TodoItem
                     key={todo.id}

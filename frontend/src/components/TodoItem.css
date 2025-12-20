@@ -10,8 +10,8 @@
 }
 
 .todo-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
 }
 
 .todo-item input[type="checkbox"] {

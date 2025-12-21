@@ -47,11 +47,14 @@
     text-decoration: none;
     font-size: 0.95rem;
     font-weight: 500;
-    transition: color 0.2s;
+    transition: all 0.2s ease;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
 }
 
 .nav-link:hover {
     color: var(--text-primary);
+    background-color: var(--bg-primary);
 }
 
 .btn-auth {

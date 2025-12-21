@@ -7,6 +7,7 @@ import UpdateTaskModal from '../components/UpdateTaskModal';
 import Pagination from '../components/Pagination';
 import ManagementBar from '../components/ManagementBar';
 import FilterSidebar from '../components/FilterSidebar';
+import TaskSkeletonList from '../components/TaskSkeleton';
 import { useTodos } from '../hooks/useTodos';
 import './TodoPage.css';
 
@@ -119,7 +120,7 @@ export default function TodoPage() {
             <FilterSidebar currentFilter={filter} onFilterChange={setFilter} />
             
             <main className="todo-container">
-                <h1>My Tasks</h1>
+                <h1>Focus</h1>
 
                 <TodoForm onAdd={addTodo} isLoading={isAdding} />
                 
@@ -135,15 +136,19 @@ export default function TodoPage() {
                     isSearching={isFetching && !!debouncedSearch}
                 />
 
-                <TodoList
-                    todos={todos}
-                    onToggle={toggleTodo}
-                    onDelete={handleDeleteClick}
-                    onUpdate={handleUpdateClick}
-                    isSelectionMode={isSelectionMode}
-                    selectedIds={selectedIds}
-                    onSelect={handleSelect}
-                />
+                {isFetching && todos.length === 0 ? (
+                    <TaskSkeletonList count={4} />
+                ) : (
+                    <TodoList
+                        todos={todos}
+                        onToggle={toggleTodo}
+                        onDelete={handleDeleteClick}
+                        onUpdate={handleUpdateClick}
+                        isSelectionMode={isSelectionMode}
+                        selectedIds={selectedIds}
+                        onSelect={handleSelect}
+                    />
+                )}
 
                 <Pagination 
                     currentPage={page} 

@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './Auth.css';
 import { validateEmail, validatePassword, validateConfirmPassword } from '../utils/validation';
@@ -85,7 +84,7 @@ export default function SignUp() {
     return (
         <div className="auth-container">
             <h2>Sign Up</h2>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} autoComplete="off">
                 <div>
                     <label htmlFor="username">Username:</label>
                     <input
@@ -95,6 +94,7 @@ export default function SignUp() {
                         value={formData.username}
                         onChange={handleChange}
                         required
+                        autoComplete="username"
                     />
                 </div>
                 <div>
@@ -106,6 +106,7 @@ export default function SignUp() {
                         value={formData.email}
                         onChange={handleChange}
                         required
+                        autoComplete="email"
                     />
                 </div>
                 <div>
@@ -117,6 +118,7 @@ export default function SignUp() {
                         value={formData.password}
                         onChange={handleChange}
                         required
+                        autoComplete="new-password"
                     />
                 </div>
                 <div>
@@ -128,6 +130,7 @@ export default function SignUp() {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         required
+                        autoComplete="new-password"
                     />
                 </div>
                 {error && <div className="auth-error">{error}</div>}

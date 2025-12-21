@@ -47,9 +47,9 @@ async function request(endpoint, options = {}) {
 
                     // Retry original request
                     return request(endpoint, { ...options, _retry: true });
-                } catch (refreshError) {
-                    console.error('Token refresh failed:', refreshError);
-                    // Dispatch event to trigger global logout
+                } catch {
+                    // Refresh failed - session represents guest or expired.
+                    // Dispatch event to trigger global logout/guest mode
                     window.dispatchEvent(new CustomEvent('auth:unauthorized'));
                 }
             } else if (response.status === 401 && !endpoint.includes('/signin')) {
@@ -71,7 +71,8 @@ async function request(endpoint, options = {}) {
 
         return data;
     } catch (error) {
-        if (process.env.NODE_ENV !== 'production') {
+        // Only log errors that are NOT auth related (since we handle those gracefully in useAuth)
+        if (process.env.NODE_ENV !== 'production' && error.status !== 401 && error.status !== 403) {
             console.error('API Error:', error);
         }
         throw error;

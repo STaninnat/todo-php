@@ -32,7 +32,7 @@ export function useAuth() {
                  }
                  
                  // For other errors (500, Network Error), log and fall back to guest mode
-                 toast.error("Backend unavailable. Switching to Guest Mode.", { id: 'backend-error' });
+                 toast.error("Offline Mode Active. Changes are saved locally.", { id: 'backend-error' });
                  return null;
              }
         },

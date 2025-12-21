@@ -27,7 +27,27 @@ export default function TodoList({
     if (todos.length === 0) {
         return (
             <div className="todo-list-empty">
-                <p>No tasks yet!...enjoy this rare moment.</p>
+                <div className="empty-icon-container">
+                    <svg 
+                        width="64" 
+                        height="64" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="1.5" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        className="empty-icon"
+                    >
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        <path d="M9 14h6" />
+                        <path d="M9 10h6" />
+                        <path d="M9 18h6" />
+                    </svg>
+                </div>
+                <h3>No tasks yet</h3>
+                <p>Enjoy your free time, or create a new task to get started!</p>
             </div>
         );
     }

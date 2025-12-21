@@ -84,9 +84,6 @@ describe('useAuth Hook', () => {
         await result.current.login({ username: 'test', password: 'password' });
 
         expect(api.login.mock.calls[0][0]).toEqual({ username: 'test', password: 'password' });
-        // After login, we might check if user is updated via cache update in mutation setup
-        // But since we are mocking api.me rejected, manual queryClient.setQueryData in hook logic
-        // should update it.
     });
 
     it('should handle logout successfully', async () => {

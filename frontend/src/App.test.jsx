@@ -18,6 +18,6 @@ test('renders Todo App header', () => {
       <App />
     </QueryClientProvider>
   );
-  const headerElement = screen.getByText(/My Tasks/i);
+  const headerElement = screen.getByText(/Focus/i);
   expect(headerElement).toBeInTheDocument();
 });

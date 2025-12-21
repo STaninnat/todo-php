@@ -87,7 +87,7 @@ describe('TodoPage', () => {
 
     it('should render todos and form', () => {
         render(<TodoPage />);
-        expect(screen.getByText('My Tasks')).toBeInTheDocument();
+        expect(screen.getByText('Focus')).toBeInTheDocument();
         expect(screen.getByText('Task 1')).toBeInTheDocument();
         // Form input
         expect(screen.getByPlaceholderText('What needs to be done?')).toBeInTheDocument();

@@ -63,7 +63,7 @@ describe('useAuth Fallback Logic', () => {
 
         // Assert: Toast error was shown
         expect(toast.error).toHaveBeenCalledWith(
-            "Backend unavailable. Switching to Guest Mode.",
+            "Offline Mode Active. Changes are saved locally.",
             expect.objectContaining({ id: 'backend-error' })
         );
         
@@ -81,7 +81,7 @@ describe('useAuth Fallback Logic', () => {
 
         expect(result.current.user).toBeNull();
         expect(toast.error).toHaveBeenCalledWith(
-            "Backend unavailable. Switching to Guest Mode.",
+            "Offline Mode Active. Changes are saved locally.",
             expect.objectContaining({ id: 'backend-error' })
         );
     });

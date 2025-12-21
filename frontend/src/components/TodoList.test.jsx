@@ -35,7 +35,8 @@ describe('TodoList Component', () => {
 
     it('should render empty state message when no todos', () => {
         render(<TodoList todos={[]} {...mockActions} />);
-        expect(screen.getByText(/No tasks yet/i)).toBeInTheDocument();
+        expect(screen.getByText('No tasks yet')).toBeInTheDocument();
+        expect(screen.getByText(/Enjoy your free time/i)).toBeInTheDocument();
     });
 
     it('should render list of todos', () => {

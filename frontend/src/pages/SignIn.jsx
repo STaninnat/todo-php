@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import './Auth.css';
 import { useAuth } from '../hooks/useAuth';
@@ -18,9 +17,16 @@ export default function SignIn() {
     // Check for flash message from registration
     const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || '');
 
-    const [formData, setFormData] = useState({
-        username: '',
-        password: '',
+    const [rememberMe, setRememberMe] = useState(() => {
+        return !!localStorage.getItem('rememberedUsername');
+    });
+
+    const [formData, setFormData] = useState(() => {
+        const remembered = localStorage.getItem('rememberedUsername');
+        return {
+            username: remembered || '',
+            password: '',
+        };
     });
     const [error, setError] = useState('');
 
@@ -43,6 +49,12 @@ export default function SignIn() {
 
         setError('');
         setSuccessMessage(''); // Clear success msg on submit attempt
+
+        if (rememberMe) {
+            localStorage.setItem('rememberedUsername', formData.username);
+        } else {
+            localStorage.removeItem('rememberedUsername');
+        }
 
         try {
             const data = await login({
@@ -71,7 +83,7 @@ export default function SignIn() {
         <div className="auth-container">
             <h2>Sign In</h2>
             {successMessage && <div className="auth-success">{successMessage}</div>}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} autoComplete="off">
                 <div>
                     <label htmlFor="username">Username:</label>
                     <input
@@ -81,6 +93,7 @@ export default function SignIn() {
                         value={formData.username}
                         onChange={handleChange}
                         required
+                        autoComplete="off"
                     />
                 </div>
                 <div>
@@ -92,8 +105,21 @@ export default function SignIn() {
                         value={formData.password}
                         onChange={handleChange}
                         required
+                        autoComplete="new-password"
                     />
                 </div>
+                
+                <div className="remember-me-container">
+                    <label className="remember-me-label">
+                        <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                        />
+                        Remember me
+                    </label>
+                </div>
+
                 {error && <div className="auth-error">{error}</div>}
 
                 <Button type="submit" className="btn-auth-submit">Sign In</Button>

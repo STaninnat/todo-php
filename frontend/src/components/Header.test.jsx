@@ -52,7 +52,6 @@ describe('Header Component', () => {
             </MemoryRouter>
         );
 
-        expect(screen.getByText('Todo App')).toBeInTheDocument();
         expect(screen.getByText('Sign In')).toBeInTheDocument();
         expect(screen.queryByText('Log Out')).not.toBeInTheDocument();
     });

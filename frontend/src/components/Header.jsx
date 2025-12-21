@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { CheckSquare, LogOut, LogIn } from 'lucide-react';
+import { LogOut, LogIn } from 'lucide-react';
+import { useLenis } from 'lenis/react';
 import Button from './Button';
 import './Header.css';
 
@@ -14,6 +15,7 @@ export default function Header() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const lenis = useLenis();
 
     const handleLogout = async () => {
         try {
@@ -29,13 +31,31 @@ export default function Header() {
     // Don't show header on auth pages
     const isAuthPage = ['/signin', '/signup'].includes(location.pathname);
 
+    const handleLogoClick = (e) => {
+        const targetPath = user ? `/${user.username}` : '/';
+        if (location.pathname === targetPath) {
+            e.preventDefault();
+            if (lenis) {
+                lenis.scrollTo(0);
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    };
+
     if (isAuthPage) return null;
 
     return (
         <header className="header">
-            <Link to={user ? `/${user.username}` : '/'} className="header-logo">
-                <CheckSquare size={24} strokeWidth={2.5} />
-                Todo App
+            <Link 
+                to={user ? `/${user.username}` : '/'} 
+                className="header-logo"
+                onClick={handleLogoClick}
+            >
+                <picture>
+                    <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
+                    <img src="/logo-light.svg" alt="Todo Logo" className="logo-icon" />
+                </picture>
             </Link>
 
             <div className="header-actions">
@@ -51,8 +71,8 @@ export default function Header() {
                         <>
                             {location.pathname !== '/signin' && (
                                 <Link to="/signin" className="btn-auth btn-signin">
-                                    <LogIn size={16} style={{ marginRight: '6px' }} />
-                                    Sign In
+                                    <LogIn size={16} />
+                                    <span>Sign In</span>
                                 </Link>
                             )}
                         </>

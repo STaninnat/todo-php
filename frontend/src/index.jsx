@@ -21,6 +21,12 @@ const server = serve({
         '/favicon.svg': async () => {
             return new Response(file(join(import.meta.dir, '../public/favicon.svg')));
         },
+        '/logo-light.svg': async () => {
+            return new Response(file(join(import.meta.dir, '../public/logo-light.svg')));
+        },
+        '/logo-dark.svg': async () => {
+            return new Response(file(join(import.meta.dir, '../public/logo-dark.svg')));
+        },
 
         // Serve index.html for all unmatched routes.
         '/*': index,

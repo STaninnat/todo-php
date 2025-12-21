@@ -1,4 +1,5 @@
-import { serve } from 'bun';
+import { serve, file } from 'bun';
+import { join } from 'path';
 import index from './index.html';
 
 const server = serve({
@@ -14,6 +15,11 @@ const server = serve({
                 headers: req.headers,
                 body: req.body,
             });
+        },
+
+        // Serve favicon
+        '/favicon.svg': async () => {
+            return new Response(file(join(import.meta.dir, '../public/favicon.svg')));
         },
 
         // Serve index.html for all unmatched routes.

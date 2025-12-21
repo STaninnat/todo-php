@@ -57,24 +57,25 @@ a:hover {
     text-decoration: underline;
 }
 
-html.lenis, html.lenis body {
-  height: auto;
+html.lenis,
+html.lenis body {
+    height: auto;
 }
 
 .lenis.lenis-smooth {
-  scroll-behavior: auto !important;
+    scroll-behavior: auto !important;
 }
 
 .lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
+    overscroll-behavior: contain;
 }
 
 .lenis.lenis-stopped {
-  overflow: hidden;
+    overflow: hidden;
 }
 
 .lenis.lenis-smooth iframe {
-  pointer-events: none;
+    pointer-events: none;
 }
 
 ::-webkit-scrollbar {
@@ -82,7 +83,7 @@ html.lenis, html.lenis body {
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent; 
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -95,4 +96,68 @@ html.lenis, html.lenis body {
 ::-webkit-scrollbar-thumb:hover {
     background: #95a5a6;
     background: var(--text-primary);
+}
+
+/* Responsive Global adjustments */
+
+/* Mobile: 320px – 480px */
+@media screen and (max-width: 480px) {
+    html {
+        font-size: 14px;
+    }
+
+    ::-webkit-scrollbar {
+        width: 3px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-width: 0;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        margin: 1rem;
+    }
+
+    .responsive-toaster {
+        align-items: center !important;
+    }
+}
+
+/* Tablet: 481px – 768px */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+    html {
+        font-size: 15px;
+    }
+}
+
+/* Desktop: 769px – 1200px */
+@media screen and (min-width: 769px) and (max-width: 1200px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+/* Extra Large Screens: 1201px+ */
+@media screen and (min-width: 1201px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+/* Toast Icon Sizing Override */
+.app-toast svg {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+}
+
+/* Override the wrapper div that usually has fixed 20px size */
+.app-toast > div:first-child {
+    width: 16px !important;
+    height: 16px !important;
+    flex: 0 0 16px !important;
+    min-width: 16px !important;
 }

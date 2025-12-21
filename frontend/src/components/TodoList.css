@@ -46,3 +46,16 @@
     margin: 0 auto;
     opacity: 0.8;
 }
+
+/* Responsive TodoList */
+@media screen and (max-width: 480px) {
+    .todo-list-empty {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-icon-container {
+        width: 72px;
+        height: 72px;
+    }
+}
+

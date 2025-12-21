@@ -85,8 +85,7 @@
 
 /* Loading State Handling */
 .btn-loading {
-    /* Maintain width/height structure but content is handled by children */
-    pointer-events: none; /* Prevent clicks while loading */
+    pointer-events: none;
 }
 
 .btn-spinner-wrapper {
@@ -120,3 +119,12 @@
     gap: 0.5rem;
     width: 100%;
 }
+
+/* Responsive Button Touch Targets */
+@media screen and (max-width: 480px) {
+    .btn {
+        min-height: 44px;
+    }
+}
+
+

@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import LoadingSpinner from './LoadingSpinner';
 import Button from './Button';
 import './ManagementBar.css';
@@ -30,10 +31,12 @@ export default function ManagementBar({
     isLoading,
     isSearching = false
 }) {
-    if (isSelectionMode) {
-        return (
-            <div className="management-bar">
-                <div className="bulk-actions">
+    const [parent] = useAutoAnimate();
+
+    return (
+        <div className="management-bar" ref={parent}>
+            {isSelectionMode ? (
+                <div className="bulk-actions" key="bulk-actions">
                     <span className="selected-count">{selectedCount} selected</span>
                     
                     {selectedCount > 0 && (
@@ -61,46 +64,44 @@ export default function ManagementBar({
                         Cancel
                     </Button>
                 </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="management-bar">
-            <div className="search-container">
-                {isSearching ? (
-                    <div className="search-spinner">
-                        <LoadingSpinner size="small" />
+            ) : (
+                <>
+                    <div className="search-container" key="search-container">
+                        {isSearching ? (
+                            <div className="search-spinner">
+                                <LoadingSpinner size="small" />
+                            </div>
+                        ) : (
+                            <svg 
+                                className="search-icon" 
+                                width="20" 
+                                height="20" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                            >
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        )}
+                        <input
+                            type="text"
+                            className="search-input"
+                            placeholder="Search tasks..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
-                ) : (
-                    <svg 
-                        className="search-icon" 
-                        width="20" 
-                        height="20" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                    >
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                )}
-                <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Search tasks..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-            </div>
-            <div className="management-actions">
-                <Button variant="secondary" onClick={toggleSelectionMode}>
-                    Select
-                </Button>
-            </div>
+                    <div className="management-actions" key="management-actions">
+                        <Button variant="secondary" onClick={toggleSelectionMode}>
+                            Select
+                        </Button>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

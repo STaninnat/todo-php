@@ -73,3 +73,26 @@
     50% { opacity: 0.7; }
     100% { opacity: 1; }
 }
+
+/* Responsive Skeleton */
+@media screen and (max-width: 480px) {
+    .task-skeleton {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .skeleton-checkbox {
+        display: none;
+    }
+
+    .skeleton-content {
+        width: 100%;
+    }
+
+    .skeleton-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+

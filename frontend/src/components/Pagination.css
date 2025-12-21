@@ -7,8 +7,27 @@
     font-family: 'Inter', sans-serif;
 }
 
+
 .pagination-info {
     font-size: 0.9rem;
     color: var(--text-muted, #64748b);
     font-weight: 500;
 }
+
+/* Responsive Pagination */
+@media screen and (max-width: 480px) {
+    .pagination {
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap; 
+    }
+    
+    .pagination-info {
+        width: 100%;
+        text-align: center;
+        order: -1;
+        margin-bottom: 0.5rem;
+    }
+}
+
+

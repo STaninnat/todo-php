@@ -3,8 +3,9 @@ import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import SignUp from '../pages/SignUp';
 import SignIn from '../pages/SignIn';
 import TodoPage from '../pages/TodoPage';
-import Header from './Header'; // Restored
-import { useAuth } from '../hooks/useAuth'; // Restored
+import Header from './Header';
+import { useAuth } from '../hooks/useAuth';
+import Footer from './Footer';
 import LoadingSpinner from './LoadingSpinner';
 
 /**
@@ -45,26 +46,29 @@ export default function AppRoutes() {
     }
 
     return (
-        <>
+        <div className="app-wrapper">
             <Header />
-            <Routes>
-                <Route
-                    path="/signup"
-                    element={user ? <Navigate to={`/${user.username}`} replace /> : <SignUp />}
-                />
-                <Route
-                    path="/signin"
-                    element={user ? <Navigate to={`/${user.username}`} replace /> : <SignIn />}
-                />
-                <Route
-                    path="/"
-                    element={user ? <Navigate to={`/${user.username}`} replace /> : <TodoPage />}
-                />
-                <Route
-                    path="/:username"
-                    element={user ? <AuthenticatedTodoPage /> : <Navigate to="/" replace />}
-                />
-            </Routes>
-        </>
+            <main className="main-content">
+                <Routes>
+                    <Route
+                        path="/signup"
+                        element={user ? <Navigate to={`/${user.username}`} replace /> : <SignUp />}
+                    />
+                    <Route
+                        path="/signin"
+                        element={user ? <Navigate to={`/${user.username}`} replace /> : <SignIn />}
+                    />
+                    <Route
+                        path="/"
+                        element={user ? <Navigate to={`/${user.username}`} replace /> : <TodoPage />}
+                    />
+                    <Route
+                        path="/:username"
+                        element={user ? <AuthenticatedTodoPage /> : <Navigate to="/" replace />}
+                    />
+                </Routes>
+            </main>
+            <Footer />
+        </div>
     );
 }

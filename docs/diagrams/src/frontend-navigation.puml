@@ -1,0 +1,39 @@
+@startuml frontend-navigation
+title Application Navigation Flow
+skinparam state {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+allow_mixing
+
+' Define Key States
+state "Guest Home (/)" as Home
+state "Sign In (/signin)" as SignIn
+state "Sign Up (/signup)" as SignUp
+state "User Dashboard (/:username)" as Dashboard
+
+' Actors
+actor "Guest" as GuestUser
+actor "Returning User" as ReturnUser
+
+' Initial Landing
+GuestUser --> Home : Visit App
+ReturnUser --> Dashboard : Session Active
+
+' Main Flow
+Home --> SignIn : Click "Sign In"
+Home --> SignUp : Click "Get Started"
+
+SignIn --> Dashboard : Login Success
+SignUp --> Dashboard : Register Success
+
+' Auth Redirections (Guards)
+SignIn --> Dashboard : Already Logged In
+SignUp --> Dashboard : Already Logged In
+Home --> Dashboard : Already Logged In
+
+Dashboard --> SignIn : Not Logged In
+Dashboard --> Dashboard : Wrong Username -> Correct Username
+
+@enduml

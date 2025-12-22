@@ -1,0 +1,47 @@
+@startuml frontend-state
+title Frontend State & Logic Flow
+
+|Auth Context (useAuth)|
+start
+:Initialize Auth;
+:Call **api.me()**;
+
+if (Response?) then (200 OK)
+  :Set **User Data**;
+  :State = **LoggedIn**;
+else (401 / Error)
+  :Set User = null;
+  :State = **Guest**;
+endif
+
+|Data Context (useTodos)|
+:Initialize Todos(page, filter);
+if (Auth State?) then (LoggedIn)
+    :Call **api.get('/tasks')**;
+    if (Success?) then (Yes)
+        :Set **Cloud Data**;
+        :Mode = **Cloud**;
+    else (No / Network Error)
+        :Fallback to **Local Storage**;
+        :Mode = **Guest (Offline)**;
+    endif
+else (Guest)
+    :Read **Local Storage**;
+    :Mode = **Guest**;
+endif
+
+partition "User Action: Add Task" {
+    if (Mode?) then (Cloud)
+        :Call **api.post()**;
+        :Invalidate Query;
+        :Refetch List;
+    else (Guest)
+        :Read LS;
+        :Append New Task;
+        :Write LS;
+        :Update View;
+    endif
+}
+
+stop
+@enduml

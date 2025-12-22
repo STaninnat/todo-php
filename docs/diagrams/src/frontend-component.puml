@@ -1,0 +1,68 @@
+@startuml frontend-component
+title Frontend Component Hierarchy
+
+' Layout Configuration
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+package "Core Application" {
+  component "App" as App
+  component "AppRoutes" as Routes
+  component "AppToaster" as Toaster
+}
+
+package "Global Layout" {
+  component "Header" as Header
+  component "Footer" as Footer
+}
+
+package "Pages (Routing Targets)" {
+  component "TodoPage" as TodoPage
+  component "AuthenticatedTodoPage" as AuthTodo
+  component "SignIn" as SignIn
+  component "SignUp" as SignUp
+}
+
+package "Todo Management Features" {
+  component "TodoList" as List
+  component "TodoItem" as Item
+  component "TodoForm" as Form
+  
+  component "ManagementBar" as MgmtBar
+  component "FilterSidebar" as Sidebar
+  component "Pagination" as Pager
+
+  package "Modals" {
+    component "DeleteTaskModal" as DelModal
+    component "BulkDeleteModal" as BulkDelModal
+    component "UpdateTaskModal" as UpdModal
+  }
+}
+
+' Relationships
+App --> Toaster
+App --> Routes
+
+Routes -down-> SignIn : /signin
+Routes -down-> SignUp : /signup
+Routes -down-> TodoPage : / (Guest)
+Routes -down-> AuthTodo : /:username
+AuthTodo -down-> TodoPage
+
+' TodoPage Composition
+TodoPage ..> Header : contains
+TodoPage ..> Footer : contains
+TodoPage -down-> Sidebar
+TodoPage -down-> Form
+TodoPage -down-> MgmtBar
+TodoPage -down-> List
+TodoPage -down-> Pager
+
+' Action Components
+TodoPage -down-> DelModal
+TodoPage -down-> BulkDelModal
+TodoPage -down-> UpdModal
+
+List -right-> Item
+
+@enduml

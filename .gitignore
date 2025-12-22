@@ -26,6 +26,7 @@ backend/vendor/
 # Build output
 dist/
 out/
+!docs/diagrams/out
 *.tgz
 
 # Testing & Coverage

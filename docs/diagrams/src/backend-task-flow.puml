@@ -4,7 +4,7 @@ title Task Operations Flow (Add/Update/Delete)
 actor Client
 participant "Router" as Router
 participant "TaskController" as Ctrl
-participant "TaskService" as Service
+participant "SpecificTaskService" as Service
 participant "TaskQueries" as DB
 
 note right of Client
@@ -20,7 +20,7 @@ Router -> Router: AuthMiddleware\n(Verify JWT & Set User in Req)
 Router -> Ctrl: addTask(req)
 activate Ctrl
 
-Ctrl -> Service: execute(req)
+Ctrl -> Service: AddTaskService->execute(req)
 activate Service
 
 Service -> Service: Validate Input
@@ -39,19 +39,36 @@ deactivate Ctrl
 Router --> Client: 200 OK (Task JSON)
 deactivate Router
 
-== Other Operations (Similar Flow) ==
+== Delete Operation ==
 
 Client -> Router: DELETE /tasks/delete\n(id)
 activate Router
 Router -> Ctrl: deleteTask(req)
 activate Ctrl
-Ctrl -> Service: execute(req)
+Ctrl -> Service: DeleteTaskService->execute(req)
 activate Service
 Service -> DB: deleteTask(id, userId)
 activate DB
 DB --> Service: Success
 deactivate DB
 Service --> Ctrl: Success
+deactivate Service
+Ctrl --> Router: 200 OK
+deactivate Router
+
+== Mark Done Operation ==
+
+Client -> Router: PUT /tasks/mark_done\n(id, is_done)
+activate Router
+Router -> Ctrl: markDoneTask(req)
+activate Ctrl
+Ctrl -> Service: MarkDoneTaskService->execute(req)
+activate Service
+Service -> DB: markDone(id, isDone, userId)
+activate DB
+DB --> Service: Updated Task
+deactivate DB
+Service --> Ctrl: Task Data
 deactivate Service
 Ctrl --> Router: 200 OK
 deactivate Router

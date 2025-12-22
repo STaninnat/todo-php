@@ -40,5 +40,15 @@ entity "tasks" as tasks {
     updated_at : TIMESTAMP
 }
 
+entity "refresh_tokens" as refresh_tokens {
+    *id : INT <<PK>> <<AUTO_INCREMENT>> (Implicit)
+    --
+    *user_id : VARCHAR(64) <<FK>>
+    *token_hash : VARCHAR(64) <<UNIQUE>>
+    *expires_at : INTEGER
+    created_at : TIMESTAMP
+}
+
 users ||..o{ tasks : "has many"
+users ||..o{ refresh_tokens : "has many"
 @enduml

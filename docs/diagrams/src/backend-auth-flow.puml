@@ -4,10 +4,12 @@ title User Authentication Flows
 actor Client
 participant "Router" as Router
 participant "UserController" as Ctrl
-participant "AuthService" as Service
+participant "Sign(up|in|out)Service" as Service
 participant "UserQueries" as DB
 participant "JwtService" as JWT
 participant "CookieManager" as Cookie
+participant "RefreshTokenService" as RefreshSvc
+participant "RefreshTokenQueries" as RefreshDB
 
 == User Sign-Up Flow ==
 
@@ -35,19 +37,38 @@ else New User
     DB --> Service: User Data
     deactivate DB
 
-    Service -> JWT: create(['id' => user.id])
+    Service -> JWT: createAccess(['id' => user.id])
     activate JWT
-    JWT --> Service: JWT Token
+    JWT --> Service: Access Token
     deactivate JWT
+
+    Service -> JWT: createRefresh(['id' => user.id])
+    activate JWT
+    JWT --> Service: Refresh Token
+    deactivate JWT
+
+    Service -> RefreshSvc: create(user.id, token, expiresAt)
+    activate RefreshSvc
+    RefreshSvc -> RefreshDB: create(...)
+    activate RefreshDB
+    RefreshDB --> RefreshSvc: void
+    deactivate RefreshDB
+    RefreshSvc --> Service: void
+    deactivate RefreshSvc
 
     Service -> Cookie: setAccessToken(token, expiry)
     activate Cookie
     Cookie --> Service: void
     deactivate Cookie
 
+    Service -> Cookie: setRefreshToken(token, expiry)
+    activate Cookie
+    Cookie --> Service: void
+    deactivate Cookie
+
     Service --> Ctrl: void
     Ctrl --> Router: JsonResponder::quickSuccess()
-    Router --> Client: 200 OK (Set-Cookie: access_token)
+    Router --> Client: 200 OK (Set-Cookie: access_token, refresh_token)
 end
 deactivate Service
 deactivate Ctrl
@@ -75,19 +96,38 @@ alt Invalid Credentials
     Ctrl --> Router: Throw Exception
     Router --> Client: 400 Bad Request
 else Valid Credentials
-    Service -> JWT: create(['id' => user.id])
+    Service -> JWT: createAccess(['id' => user.id])
     activate JWT
-    JWT --> Service: JWT Token
+    JWT --> Service: Access Token
     deactivate JWT
+    
+    Service -> JWT: createRefresh(['id' => user.id])
+    activate JWT
+    JWT --> Service: Refresh Token
+    deactivate JWT
+
+    Service -> RefreshSvc: create(user.id, token, expiresAt)
+    activate RefreshSvc
+    RefreshSvc -> RefreshDB: create(...)
+    activate RefreshDB
+    RefreshDB --> RefreshSvc: void
+    deactivate RefreshDB
+    RefreshSvc --> Service: void
+    deactivate RefreshSvc
 
     Service -> Cookie: setAccessToken(token, expiry)
     activate Cookie
     Cookie --> Service: void
     deactivate Cookie
 
+    Service -> Cookie: setRefreshToken(token, expiry)
+    activate Cookie
+    Cookie --> Service: void
+    deactivate Cookie
+
     Service --> Ctrl: void
     Ctrl --> Router: JsonResponder::quickSuccess()
-    Router --> Client: 200 OK (Set-Cookie: access_token)
+    Router --> Client: 200 OK (Set-Cookie: access_token, refresh_token)
 end
 deactivate Service
 deactivate Ctrl
@@ -107,11 +147,16 @@ activate Cookie
 Cookie --> Service: void
 deactivate Cookie
 
+Service -> Cookie: clearRefreshToken()
+activate Cookie
+Cookie --> Service: void
+deactivate Cookie
+
 Service --> Ctrl: void
 deactivate Service
 Ctrl --> Router: JsonResponder::quickSuccess()
 deactivate Ctrl
-Router --> Client: 200 OK (Set-Cookie: access_token=deleted)
+Router --> Client: 200 OK (Set-Cookie: keys deleted)
 deactivate Router
 
 @enduml

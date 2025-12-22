@@ -6,7 +6,8 @@ participant "index.php" as Index
 participant "RouterApp" as App
 participant "Router" as Router
 participant "Request" as Req
-participant "Middlewares" as MW
+participant "Global Middlewares" as GMW
+participant "AuthMiddleware" as AuthMW
 participant "Controller" as Ctrl
 participant "Service" as Svc
 database "Database" as DB
@@ -16,6 +17,7 @@ activate Index
 
 Index -> App: new RouterApp(router, logger, db)
 activate App
+App -> App: // Setup DI & Controllers //
 App -> App: registerMiddlewares()
 App -> App: registerRoutes()
 deactivate App
@@ -36,22 +38,27 @@ deactivate Req
 Router -> Router: Match Route
 
 group Global Middlewares
-    Router -> MW: DebugMiddleware(req)
-    activate MW
-    MW --> Router
-    deactivate MW
+    Router -> GMW: CorsMiddleware(req)
+    activate GMW
+    GMW --> Router
+    deactivate GMW
 
-    Router -> MW: AuthMiddleware->refreshJwt(req)
-    activate MW
-    MW --> Router
-    deactivate MW
+    Router -> GMW: DebugMiddleware(req)
+    activate GMW
+    GMW --> Router
+    deactivate GMW
+
+    Router -> AuthMW: refreshJwt(req)
+    activate AuthMW
+    AuthMW --> Router
+    deactivate AuthMW
 end
 
-group Route Middlewares (if applicable)
-    Router -> MW: AuthMiddleware->requireAuth(req)
-    activate MW
-    MW --> Router
-    deactivate MW
+group Route Middlewares (Protected Routes)
+    Router -> AuthMW: requireAuth(req)
+    activate AuthMW
+    AuthMW --> Router
+    deactivate AuthMW
 end
 
 Router -> Ctrl: handle(req)
@@ -59,6 +66,7 @@ activate Ctrl
 
 Ctrl -> Svc: execute business logic
 activate Svc
+Svc -> Svc: validate / process
 Svc -> DB: query
 activate DB
 DB --> Svc: result

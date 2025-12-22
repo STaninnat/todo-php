@@ -58,8 +58,9 @@ services:
       
       APP_ENV: ${APP_ENV:-development}
       APP_DEBUG: ${APP_DEBUG:-true}
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: "test-secret-key-123"
       COOKIE_SECURE: "false"
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     depends_on:
       - db
     networks:

@@ -115,6 +115,9 @@ class Router
         $responderClass = $this->responderClass;
 
         try {
+            // Run global middlewares first
+            $this->runMiddlewares($this->globalMiddlewares, $request);
+
             // Ensure route exists for this method/path
             if (!isset($this->routes[$method][$path])) {
                 throw new InvalidArgumentException("Route not found: $method $path");
@@ -122,8 +125,7 @@ class Router
 
             $route = $this->routes[$method][$path];
 
-            // Run global middlewares first, then route-specific ones
-            $this->runMiddlewares($this->globalMiddlewares, $request);
+            // Run route-specific middlewares
             $this->runMiddlewares($route['middlewares'], $request);
 
             // Execute route handler

@@ -9,8 +9,10 @@ logs/
 *.txt
 note*
 .env*
-cmds.md
+*.md
 ca.pem
+!README.md
+!LICENSE
 
 # =========================
 # Dependencies

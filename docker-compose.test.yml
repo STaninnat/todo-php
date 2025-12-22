@@ -42,6 +42,18 @@ services:
       - app_test_network
     profiles: ["test"]
 
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx_test
+    volumes:
+      - ./backend/nginx-integration.conf:/etc/nginx/nginx.conf:ro
+      - ./backend/public:/app/public
+    depends_on:
+      - php-fpm
+    networks:
+      - app_test_network
+    profiles: ["test"]
+
 volumes:
   db_test_data:
 

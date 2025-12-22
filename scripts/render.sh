@@ -4,12 +4,11 @@ set -e
 COMMAND=$1
 
 if [ -z "$COMMAND" ]; then
-  echo "Usage: ./scripts/prod.sh [up|down|build|rebuild|logs]"
+  echo "Usage: ./scripts/render.sh [up|down|build|rebuild|logs|shell]"
   exit 1
 fi
 
-# Use docker-compose.prod.yml only (Standalone Production Config)
-FILES="-f docker-compose.prod.yml"
+FILES="-f docker-compose.render.yml"
 
 echo "Executing: docker compose $FILES $COMMAND ..."
 
@@ -29,8 +28,10 @@ case $COMMAND in
   logs)
     docker compose $FILES logs -f
     ;;
+  shell)
+    docker exec -it backend_deploy /bin/sh
+    ;;
   *)
-    # Pass through other commands
     docker compose $FILES $@
     ;;
 esac

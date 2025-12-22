@@ -24,8 +24,11 @@ RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
 # Install dependencies including dev
 RUN composer install --prefer-dist --no-interaction
 
-# --- Production Stage ---
-FROM base AS prod
+# --- Deployment Stage (Render/Koyeb) ---
+FROM base AS render
+
+# Install Nginx and Supervisor
+RUN apk add --no-cache nginx supervisor
 
 # Install production dependencies only
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
@@ -37,5 +40,17 @@ COPY phinx.php ./phinx.php
 COPY db ./db
 COPY ca.pem /app/ca.pem
 
+# Copy Configs
+COPY nginx-deploy.conf /etc/nginx/nginx.conf
+COPY supervisord.conf /etc/supervisord.conf
+COPY entrypoint.sh /app/entrypoint.sh
+
 # Set permissions
-RUN chown -R www-data:www-data /app
+RUN chown -R www-data:www-data /app \
+    && chmod +x /app/entrypoint.sh \
+    && mkdir -p /run/nginx /var/log/supervisor
+
+# Expose Render's default port (will be overridden by $PORT)
+EXPOSE 8080
+
+ENTRYPOINT ["/app/entrypoint.sh"]

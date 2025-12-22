@@ -29,6 +29,7 @@ use App\DB\RefreshTokenQueries;
 use App\Utils\CookieManager;
 use App\Utils\JsonResponder;
 use App\Utils\JwtService;
+use App\Api\Middlewares\CorsMiddleware;
 use App\Utils\Logger;
 use Throwable;
 
@@ -145,7 +146,10 @@ class RouterApp
      */
     private function registerMiddlewares(): void
     {
-        // Global middleware
+        // Global middleware: CORS first
+        $this->router->addMiddleware(new CorsMiddleware());
+
+        // Global middleware: JWT Refresh
         $this->router->addMiddleware(function (Request $req) {
             try {
                 $this->authMiddleware->refreshJwt($req);

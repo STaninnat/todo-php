@@ -1,140 +1,138 @@
-# todo-php
+# Todo
 
-**NOTICE: This project is currently under active development.**
+> **Note:** This is a **personal project** built primarily for my own daily task management and learning. While it is open source, features are prioritized based on my personal needs and workflows.
 
-This repository contains the source code for a PHP-based to-do list application. The primary objective of this project is to provide a robust personal task management system. Please be advised that many features are still in the implementation phase, and significant changes to the codebase are to be expected.
+A robust, full-stack to-do list application built with a modern PHP backend and a reactive frontend. It demonstrates a clean architecture without relying on heavy frameworks, focusing on performance, maintainability, and a premium user experience.
 
-## Project Status
+## Deployment
 
-The project is currently divided into two main components with varying levels of completion:
+This application is built for personal use and is currently running in production on free-tier providers:
 
-### Backend Development
+- **Frontend**: Hosted on Vercel.
+- **Backend**: Hosted on Render.
 
-The backend infrastructure is in an advanced state of development. Key achievements include:
+While I do not maintain public demo links, the codebase is production-ready. You can refer to `./scripts/render.sh` or the Docker configurations if you wish to deploy your own instance.
 
-- **Authentication & Security:**
+## Features
 
-  - Secure user authentication using JWT (JSON Web Tokens).
-  - HttpOnly cookie management for token storage.
-  - Middleware-based route protection.
+### Authentication & Security
 
-- **API Endpoints:**
+- **Secure Session Management**: Uses **HTTP-only cookies** for storing JWTs (Access & Refresh tokens), preventing XSS attacks.
+- **Auto-Refresh Strategy**: Seamlessly refreshes access tokens in the background, keeping users logged in without interruption.
+- **Robust Auth Flow**: Signup, Signin, and Signout with comprehensive validation.
 
-  - **User Management:**
-    - `POST /users/signup`: Register a new user account.
-    - `POST /users/signin`: Authenticate and retrieve session tokens.
-    - `POST /users/signout`: Terminate the current session.
-    - `GET /users/me`: Retrieve current user profile.
-    - `PUT /users/update`: Update user profile information.
-    - `DELETE /users/delete`: Permanently remove a user account.
-  - **Task Management:**
-    - `GET /tasks`: Retrieve a list of tasks.
-    - `POST /tasks/add`: Create a new task.
-    - `PUT /tasks/update`: Modify an existing task.
-    - `PUT /tasks/mark_done`: Update task completion status.
-    - `DELETE /tasks/delete`: Remove a task.
+### Task Management
 
-- **Database Integration:** Seamless connectivity with the MySQL database has been established and verified.
+- **Optimistic UI**: Interface updates instantly for adding, deleting, and completing tasks, providing a snappy experience.
+- **Batch Operations**: Support for bulk deletion and bulk status updates.
+- **Persistence**: Data is reliably stored in a MySQL database.
 
-### Frontend Development
+### User Experience (UI/UX)
 
-The frontend user interface has **not yet been started**.
-
-- There is currently no graphical user interface (GUI) available for this application.
-- All interactions with the application must be performed directly through the API or via command-line tools.
+- **Modern Design**: Built with **React 19** and vanilla CSS variables for a clean, custom aesthetic.
+- **Responsive Layout**: Fully responsive design that works on desktop, tablet, and mobile.
+- **Dark Mode**: Native support for system color schemes (Light/Dark).
+- **Smooth Interactions**: Integrated **Lenis** for smooth scrolling and **React Hot Toast** for non-intrusive notifications.
 
 ## Technology Stack
 
-This project utilizes a modern PHP stack to ensure reliability and maintainability:
+### Frontend
 
-- **Language:** PHP (Latest Stable Version)
-- **Dependency Manager:** Composer
-- **Database:** MySQL (Containerized via Docker)
-- **Containerization:** Docker & Docker Compose
-- **Testing Framework:** PHPUnit for unit and integration testing
-- **Static Analysis:** PHPStan for code quality assurance
+![Frontend Components](docs/diagrams/out/frontend-component.svg)
 
-## Usage Instructions
+- **Runtime**: [Bun](https://bun.sh) (Fast JavaScript runtime & package manager)
+- **Framework**: [React 19](https://react.dev)
+- **Build Tool**: [Vite](https://vitejs.dev)
+- **State & Networking**: [TanStack Query](https://tanstack.com/query/latest) (for efficient data fetching and caching)
+- **Routing**: [React Router v7](https://reactrouter.com)
+- **Styling**: Vanilla CSS (CSS Modules/Variables) - No heavy CSS frameworks.
+- **Testing**: [Vitest](https://vitest.dev) + React Testing Library
 
-Due to the absence of a frontend, current usage is limited to backend operations, testing, and development tasks.
+### Backend
+
+![Backend Request Loop](docs/diagrams/out/backend-request-diagram.svg)
+
+- **Language**: PHP 8.3+
+- **Architecture**: Custom lightweight **Router**, Dependency Injection, and Middleware system (no framework).
+- **Database**: MySQL 8.0
+- **Migrations**: [Phinx](https://phinx.org)
+- **Testing**: PHPUnit 12 (Unit, Integration, E2E)
+- **Static Analysis**: PHPStan (Level Max)
+
+### Infrastructure
+
+- **Docker**: Full containerization for Dev and Test environments.
+- **Nginx**: Serves as the web server and reverse proxy.
+- **Shell Scripts**: Custom utility scripts (`scripts/*.sh`) for simplified management.
+
+## Getting Started (Development)
+
+This project uses Docker to ensure a consistent development environment.
 
 ### Prerequisites
 
-Ensure that **Docker** and **Docker Compose** are installed and running on your system before proceeding.
+- Docker & Docker Compose
+- Bun (for local frontend tooling, optional if using Docker for everything)
 
-### 1. Environment Initialization
+### 1. Start the Environment
 
-To set up the development environment and start the necessary Docker containers, execute the following command:
+The project is managed via a helper script in the root directory. This command spins up the MySQL database, PHP backend, Nginx, and PHPMyAdmin containers.
 
 ```bash
+cd backend
+
 composer up
+# OR manually: ./scripts/dev.sh up
 ```
 
-> **Note:** This script orchestrates the creation and configuration of the application's containerized environment.
+### 2. Run Database Migrations
 
-### 2. Database Migrations
-
-After starting the environment, you must run the database migrations to set up the schema:
+Once the containers are running, you need to set up the database schema:
 
 ```bash
+cd backend
+
 composer phinx:migrate
 ```
 
-To stop the Docker containers when you're done:
+### 3. Frontend Setup
+
+The frontend is located in the `frontend/` directory.
 
 ```bash
-composer down
+cd frontend
+
+# Install dependencies
+bun install
+
+# Start the dev server
+bun dev
 ```
 
-### 3. Running the Test Suite
+The frontend will be available at `http://localhost:5173` and acts as a proxy to the backend API.
 
-To verify the integrity of the codebase and ensure that all implemented features are functioning correctly, run the test suite from the `backend` directory:
+## Testing
+
+The project emphasizes high test coverage to ensure stability.
+
+### Backend Tests
+
+Runs Unit, Integration, and E2E tests within the Docker environment.
 
 ```bash
 cd backend
 composer test
 ```
 
-> **Note:** This command performs the following operations:
->
-> - Executes **unit tests** against the application logic.
-> - Executes **integration tests** by automatically starting the test Docker containers, running the tests, and then stopping the containers.
->
-> The integration tests handle the Docker environment lifecycle automatically, so you don't need to manually run `composer up:test` beforehand.
+### Frontend Tests
 
-You can also run specific test types:
+Runs component and logic tests using Vitest.
 
 ```bash
-cd backend
-composer test                   # Run all tests (unit + integration + e2e)
-composer test:unit              # Run only unit tests
-composer test:integration       # Run only integration tests
-composer test:integration:fast  # Run integration tests using existing containers
-composer test:e2e               # Run end-to-end tests (full stack with real DB)
+cd frontend
+bun test
 ```
 
-### 4. Code Quality Verification
+## License
 
-To maintain high code quality standards, run the static analysis and linting tools from the `backend` directory:
-
-```bash
-cd backend
-composer check:hard
-```
-
-This will perform a rigorous check of the codebase using PHPStan and standard PHP linters, reporting any potential issues or deviations from coding standards.
-
-## Project Structure
-
-The codebase is organized as follows:
-
-- `backend/`: This directory contains all backend-related code and configuration:
-  - `backend/src/`: Core application source code, including API controllers, business logic, and database interaction layers.
-  - `backend/tests/`: Comprehensive test suite, ensuring coverage for unit, integration, and E2E flows.
-  - `backend/db/`: Database migrations (Phinx) and seeds.
-  - `backend/vendor/`: Composer dependencies.
-  - Backend configuration files: `composer.json`, `phpstan.neon`, `phpunit.*.xml*`, `phinx.php`.
-- `frontend/`: This directory is prepared for future frontend development:
-  - `frontend/public/`: Frontend assets (currently empty, ready for future use).
-- `scripts/`: Utility shell scripts used to automate Docker management, testing procedures, and maintenance tasks.
-- Root directory: Docker configuration, environment files, and other infrastructure files.
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

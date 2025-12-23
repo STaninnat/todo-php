@@ -28,8 +28,18 @@ const server = serve({
             return new Response(file(join(import.meta.dir, '../public/logo-dark.svg')));
         },
 
-        // Serve index.html for all unmatched routes.
-        '/*': index,
+        // Serve static files if they exist, otherwise fallback to index.html
+        '/*': async (req) => {
+            const url = new URL(req.url);
+            const filePath = join(import.meta.dir, url.pathname);
+            const f = file(filePath);
+            
+            if (await f.exists()) {
+                return new Response(f);
+            }
+            
+            return new Response(index, { headers: { "Content-Type": "text/html" } });
+        },
     },
 
     development: process.env.NODE_ENV !== 'production' && {

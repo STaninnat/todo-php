@@ -4,6 +4,10 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --ignore-scripts
 COPY . .
+# Accept build argument for API URL
+ARG BUN_PUBLIC_API_URL
+ENV BUN_PUBLIC_API_URL=$BUN_PUBLIC_API_URL
+
 # Ensure production build
 RUN bun run build
 

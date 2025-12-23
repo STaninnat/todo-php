@@ -8,7 +8,7 @@ if [ -z "$COMMAND" ]; then
   exit 1
 fi
 
-FILES="-f docker-compose.render.yml"
+FILES="--env-file backend/.env -f docker-compose.render.yml"
 
 echo "Executing: docker compose $FILES $COMMAND ..."
 

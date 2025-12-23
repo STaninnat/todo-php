@@ -5,15 +5,15 @@ COMMAND=$1
 PROFILE=$2
 
 if [ -z "$COMMAND" ]; then
-  echo "Usage: ./scripts/dev.sh [build|up|rebuild|down|down:clean|logs] [test]"
+  echo "Usage: ./scripts/dev.sh [build|up|rebuild|down|down:clean|logs|config] [test]"
   exit 1
 fi
 
-FILE="docker-compose.yml"
+FILE="backend/docker-compose.yml"
 PROFILE_ARG=""
 
 if [ "$PROFILE" = "test" ]; then
-  FILE="docker-compose.test.yml"
+  FILE="backend/docker-compose.test.yml"
   PROFILE_ARG="--profile test"
   echo "Using test environment..."
 else
@@ -44,6 +44,10 @@ case $COMMAND in
   logs)
     echo "Following logs..."
     docker compose $PROFILE_ARG -f "$FILE" logs -f
+    ;;
+  config)
+    echo "Configuring environment..."
+    docker compose $PROFILE_ARG -f "$FILE" config
     ;;
   *)
     echo "Unknown command: $COMMAND"

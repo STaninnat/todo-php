@@ -92,8 +92,8 @@ run_integration() {
   echo "Running integration tests..."
   STATUS=0
 
-  if [ ! -f ".env.test" ] && [ ! -f "../.env.test" ]; then
-      echo "Error: .env.test file not found in current or parent directory."
+  if [ ! -f "backend/.env.test" ] && [ ! -f "../backend/.env.test" ]; then
+      echo "Error: backend/.env.test file not found."
       exit 1
   fi
 
@@ -105,20 +105,20 @@ run_integration() {
     echo "Fast mode: using existing docker containers"
 
     # Mount temp folder to /tmp in container
-    docker compose --profile test -f docker-compose.test.yml run --rm \
+    docker compose --profile test -f backend/docker-compose.test.yml run --rm \
       -v "$TEMP_DIR":/tmp php-fpm \
       vendor/bin/phpunit -c phpunit.integration.xml.dist --log-junit /tmp/integration.xml || STATUS=$?
 
   else
     echo "Starting test containers..."
-    docker compose --profile test -f docker-compose.test.yml up -d
+    docker compose --profile test -f backend/docker-compose.test.yml up -d
 
-    docker compose --profile test -f docker-compose.test.yml run --rm \
+    docker compose --profile test -f backend/docker-compose.test.yml run --rm \
       -v "$TEMP_DIR":/tmp php-fpm \
       vendor/bin/phpunit -c phpunit.integration.xml.dist --log-junit /tmp/integration.xml || STATUS=$?
 
     echo "Stopping test containers..."
-    docker compose --profile test -f docker-compose.test.yml down -v
+    docker compose --profile test -f backend/docker-compose.test.yml down -v
   fi
 
   # Read XML report from host temp folder
@@ -151,8 +151,8 @@ run_e2e() {
   echo "Running E2E tests..."
   STATUS=0
 
-  if [ ! -f ".env.test" ] && [ ! -f "../.env.test" ]; then
-      echo "Error: .env.test file not found in current or parent directory."
+  if [ ! -f "backend/.env.test" ] && [ ! -f "../backend/.env.test" ]; then
+      echo "Error: backend/.env.test file not found."
       exit 1
   fi
 
@@ -163,21 +163,21 @@ run_e2e() {
   if [ "$FAST" = true ]; then
     echo "Fast mode: using existing docker containers"
 
-    docker compose --profile test -f docker-compose.test.yml run --rm \
+    docker compose --profile test -f backend/docker-compose.test.yml run --rm \
       -v "$TEMP_DIR":/tmp php-fpm \
       vendor/bin/phpunit -c phpunit.e2e.xml --log-junit /tmp/e2e.xml || STATUS=$?
 
   else
     echo "Starting test containers..."
-    docker compose --profile test -f docker-compose.test.yml up -d
+    docker compose --profile test -f backend/docker-compose.test.yml up -d
 
     # Ensure migrations run via bootstrap, which happens when phpunit runs
-    docker compose --profile test -f docker-compose.test.yml run --rm \
+    docker compose --profile test -f backend/docker-compose.test.yml run --rm \
       -v "$TEMP_DIR":/tmp php-fpm \
       vendor/bin/phpunit -c phpunit.e2e.xml --log-junit /tmp/e2e.xml || STATUS=$?
 
     echo "Stopping test containers..."
-    docker compose --profile test -f docker-compose.test.yml down -v
+    docker compose --profile test -f backend/docker-compose.test.yml down -v
   fi
 
   # Read XML report from host temp folder

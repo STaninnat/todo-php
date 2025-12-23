@@ -42,7 +42,23 @@ class UserManagementTest extends TestCase
         parent::setUp();
 
         $router = new Router();
-        $logger = new Logger(new NativeFileSystem(), new SystemClock(), true);
+        // Use a silent FileSystem mock to prevent logs from interfering with headers
+        $silentFs = new class implements \App\Utils\FileSystemInterface {
+            public function write(string $path, string $content, bool $append = true): void
+            {
+            }
+            public function delete(string $path): void
+            {
+            }
+            public function listFiles(string $pattern): array
+            {
+                return [];
+            }
+            public function ensureDir(string $path): void
+            {
+            }
+        };
+        $logger = new Logger($silentFs, new SystemClock(), false);
         $database = new Database();
 
         $this->cookieStorage = new TestCookieStorage();

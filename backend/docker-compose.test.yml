@@ -1,0 +1,61 @@
+services:
+  php-fpm:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: todo-backend:test
+    container_name: backend_dev_test
+    env_file:
+      - .env.test
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./tests:/app/tests
+      - ./vendor:/app/vendor
+      - ./composer.json:/app/composer.json
+      - ./composer.lock:/app/composer.lock
+      - ./phpunit.integration.xml.dist:/app/phpunit.integration.xml.dist
+      - ./phpunit.unit.xml.dist:/app/phpunit.unit.xml.dist
+      - ./phpunit.xml.dist:/app/phpunit.xml.dist
+      - ./phpunit.e2e.xml:/app/phpunit.e2e.xml
+      - ./phinx.php:/app/phinx.php
+      - ./db:/app/db
+    environment:
+      APP_ENV: ${APP_ENV:-testing}
+      APP_DEBUG: false
+    depends_on:
+      - db_test
+    networks:
+      - app_test_network
+    profiles: ["test"]
+
+  db_test:
+    image: mysql:8.0
+    container_name: mysql_db_test
+    env_file:
+      - .env.test
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_test_data:/var/lib/mysql
+    networks:
+      - app_test_network
+    profiles: ["test"]
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx_test
+    volumes:
+      - ./nginx-integration.conf:/etc/nginx/nginx.conf:ro
+      - ./public:/app/public
+    depends_on:
+      - php-fpm
+    networks:
+      - app_test_network
+    profiles: ["test"]
+
+volumes:
+  db_test_data:
+
+networks:
+  app_test_network:

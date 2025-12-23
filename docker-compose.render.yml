@@ -15,7 +15,7 @@ services:
     environment:
       PORT: 8080
       APP_ENV: production
-      APP_DEBUG: "true"
+      APP_DEBUG: "false"
       COOKIE_SECURE: "false"
 
       DB_SOURCE: ${DB_SOURCE:-}
@@ -36,23 +36,24 @@ services:
       CORS_ALLOWED_ORIGINS: "http://localhost:5173"
     ports:
       - "8080:8080"
-    depends_on:
-      - db
     networks:
       - render_sim_net
+    depends_on:
+      - db
 
   db:
     image: mysql:8.0
-    container_name: mysql_db
+    container_name: db_deploy
+    restart: always
     ports:
       - "${DB_PORT:-3306}:3306"
     volumes:
       - db_data:/var/lib/mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-tododb}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tododb}
+      MYSQL_USER: ${MYSQL_USER:-user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     networks:
       - render_sim_net
 

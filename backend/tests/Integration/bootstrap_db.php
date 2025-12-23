@@ -36,7 +36,7 @@ function waitForDatabase(string $host, int $port, int $retries = 10, int $delayS
             $connected = true;
             break;
         }
-        echo "Waiting for database to be ready... (attempt " . ($i + 1) . ")\n";
+        // fwrite(STDERR, "Waiting for database to be ready... (attempt " . ($i + 1) . ")\n");
 
         // Pause before the next retry
         sleep($delaySeconds);

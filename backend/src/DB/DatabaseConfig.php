@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\DB;
 
-use Dotenv\Dotenv;
 
 /**
  * Class DatabaseConfig
@@ -16,21 +15,6 @@ use Dotenv\Dotenv;
  */
 final class DatabaseConfig
 {
-    /**
-     * DatabaseConfig constructor.
-     * 
-     * Automatically loads environment variables from .env file if running outside
-     * of a containerized environment (indicated by missing DB_HOST).
-     */
-    public function __construct()
-    {
-        // Load .env only if running outside Docker (no DB_HOST env set)
-        if (!getenv('DB_HOST') && file_exists(dirname(__DIR__) . '/.env')) {
-            $envFile = getenv('APP_ENV') === 'testing' ? '.env.test' : '.env';
-            Dotenv::createImmutable(dirname(__DIR__), $envFile)->safeLoad();
-        }
-    }
-
     /**
      * Retrieve a configuration value by name.
      * 

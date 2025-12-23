@@ -56,8 +56,10 @@ class Logger
      */
     private function write(string $level, string $message): void
     {
-        if (!$this->debug) {
-            return; // Skip logging if debug mode is disabled
+        // Always log ERROR, WARNING, FATAL
+        // Only log other levels (INFO, etc.) if debug mode is enabled
+        if (!$this->debug && !in_array($level, ['ERROR', 'WARNING'], true)) {
+            return;
         }
 
         // Format log entry with timestamp and level

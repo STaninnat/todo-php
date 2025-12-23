@@ -1,19 +1,19 @@
 services:
   php-fpm:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
       target: dev
     image: todo-backend:dev
     container_name: backend_dev
     volumes:
-      - ./backend/src:/app/src
-      - ./backend/public:/app/public
-      - ./backend/vendor:/app/vendor
-      - ./backend/composer.json:/app/composer.json
-      - ./backend/composer.lock:/app/composer.lock
-      - ./backend/phinx.php:/app/phinx.php
-      - ./backend/db:/app/db
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./vendor:/app/vendor
+      - ./composer.json:/app/composer.json
+      - ./composer.lock:/app/composer.lock
+      - ./phinx.php:/app/phinx.php
+      - ./db:/app/db
     logging:
       driver: "json-file"
       options:
@@ -73,7 +73,7 @@ services:
       - "${APP_PORT:-8085}:80"
     volumes:
       # Reuse the frontend Nginx config for consistency (Dev Gateway role)
-      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - php-fpm
     networks:

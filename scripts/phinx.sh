@@ -22,10 +22,6 @@ if [ "$PROFILE" = "test" ]; then
   COMPOSE_FLAGS="-f docker-compose.test.yml"
   PROFILE_ARG="--profile test"
   echo "Using test environment..."
-elif [ "$PROFILE" = "prod" ]; then
-  # For prod, we use only the production file so it matches scripts/prod.sh
-  COMPOSE_FLAGS="-f docker-compose.prod.yml"
-  echo "Using production environment..."
 else
   COMPOSE_FLAGS="-f docker-compose.yml"
   echo "Using main environment..."

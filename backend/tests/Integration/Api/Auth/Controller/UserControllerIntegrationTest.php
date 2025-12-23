@@ -95,6 +95,7 @@ class UserControllerIntegrationTest extends TestCase
         // Recreate users table to ensure test isolation
         $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
         $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
+        $this->pdo->exec('DROP TABLE IF EXISTS tasks');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
         $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         $this->pdo->exec("
@@ -148,6 +149,7 @@ class UserControllerIntegrationTest extends TestCase
     {
         $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
         $this->pdo->exec('DROP TABLE IF EXISTS refresh_tokens');
+        $this->pdo->exec('DROP TABLE IF EXISTS tasks');
         $this->pdo->exec('DROP TABLE IF EXISTS users');
         $this->pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         parent::tearDown();

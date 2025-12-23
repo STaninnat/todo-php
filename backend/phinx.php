@@ -10,12 +10,10 @@
 
 require __DIR__ . '/vendor/autoload.php';
 
+use App\Utils\EnvLoader;
+
 // Load environment variables from .env file if it exists
-$envFile = __DIR__ . '/../.env';
-if (file_exists($envFile)) {
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
-    $dotenv->load();
-}
+EnvLoader::load(__DIR__);
 
 // Retrieve database credentials from environment variables
 $dbSource = $_ENV['DB_SOURCE'] ?? getenv('DB_SOURCE') ?? null;

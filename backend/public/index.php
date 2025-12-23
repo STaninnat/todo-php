@@ -12,12 +12,21 @@ use App\Utils\SystemClock;
 use App\Utils\NativeFileSystem;
 use App\Utils\JsonResponder;
 use App\Api\Middlewares\DebugMiddleware;
+use App\Utils\EnvLoader;
+
+
+// Load environment variables if running locally (not in Docker/Render)
+if (!getenv('APP_ENV')) {
+    EnvLoader::load(dirname(__DIR__));
+}
+
+$debug = filter_var(getenv('APP_DEBUG') ?? true, FILTER_VALIDATE_BOOL);
 
 try {
     $logger = new Logger(
         new NativeFileSystem(),
         new SystemClock(),
-        true
+        $debug
     );
     $router = new Router();
     $database = new Database();

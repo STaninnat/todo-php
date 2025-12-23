@@ -19,11 +19,11 @@ COMPOSE_FLAGS=""
 PROFILE_ARG=""
 
 if [ "$PROFILE" = "test" ]; then
-  COMPOSE_FLAGS="-f docker-compose.test.yml"
+  COMPOSE_FLAGS="-f backend/docker-compose.test.yml"
   PROFILE_ARG="--profile test"
   echo "Using test environment..."
 else
-  COMPOSE_FLAGS="-f docker-compose.yml"
+  COMPOSE_FLAGS="-f backend/docker-compose.yml"
   echo "Using main environment..."
 fi
 

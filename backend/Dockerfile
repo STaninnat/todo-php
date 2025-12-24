@@ -28,7 +28,8 @@ RUN composer install --prefer-dist --no-interaction
 FROM base AS render
 
 # Install Nginx and Supervisor
-RUN apk add --no-cache nginx supervisor
+RUN apk add --no-cache nginx supervisor \
+    && echo "clear_env = no" >> /usr/local/etc/php-fpm.d/www.conf
 
 # Install production dependencies only
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader

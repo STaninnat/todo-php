@@ -11,10 +11,14 @@ describe('API Service', () => {
     // Save original fetch
     const originalFetch = global.fetch;
     let dispatchEventSpy;
+    let store = {};
 
     beforeEach(() => {
         global.fetch = vi.fn();
         dispatchEventSpy = vi.spyOn(window, 'dispatchEvent');
+        
+        store = { auth_status: 'logged_in' };
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => store[key] || null);
     });
 
     afterEach(() => {
@@ -155,9 +159,6 @@ describe('API Service', () => {
         
         expect(result).toEqual({ success: true, data: 'retried' });
         expect(fetch).toHaveBeenCalledTimes(3); 
-        // 1. /protected-resource (401)
-        // 2. /users/refresh (200)
-        // 3. /protected-resource (200)
     });
 
     it('should throw error and dispatch event if refresh fails on 401', async () => {
@@ -180,9 +181,29 @@ describe('API Service', () => {
         await expect(api.get('/protected-resource')).rejects.toThrow('Token expired');
         
         expect(fetch).toHaveBeenCalledTimes(2);
-        // 1. /protected-resource (401)
-        // 2. /users/refresh (401)
         
+        expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent));
+        const event = dispatchEventSpy.mock.calls[0][0];
+        expect(event.type).toBe('auth:unauthorized');
+    });
+
+    it('should NOT attempt refresh if auth_status is missing (Guest Mode)', async () => {
+        // Mock as guest
+        store['auth_status'] = null;
+
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Token expired' }),
+        });
+
+        // Should throw, but NOT call refresh
+        await expect(api.get('/protected-resource')).rejects.toThrow('Token expired');
+
+        expect(fetch).toHaveBeenCalledTimes(1); 
+        // Only 1 call (Original). No /users/refresh call.
+
         expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent));
         const event = dispatchEventSpy.mock.calls[0][0];
         expect(event.type).toBe('auth:unauthorized');

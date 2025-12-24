@@ -39,9 +39,23 @@ const createWrapper = () => {
 };
 
 describe('useTodos Hook', () => {
+    let store = {};
+
     beforeEach(() => {
         vi.clearAllMocks();
-        localStorage.clear();
+        store = {};
+
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => {
+            return store[key] || null;
+        });
+
+        vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+            store[key] = value.toString();
+        });
+
+        vi.spyOn(Storage.prototype, 'clear').mockImplementation(() => {
+            store = {};
+        });
     });
 
     afterEach(() => {
@@ -49,19 +63,18 @@ describe('useTodos Hook', () => {
     });
 
     describe('Guest Mode (LocalStorage)', () => {
-        it('should default to guest mode on 401/Network Error', async () => {
-            const error = new Error('Network Error');
-            // Trigger guest mode logic
-            api.get.mockRejectedValue(error);
-
+        it('should default to guest mode immediately if not logged in', async () => {
+            // store['auth_status'] is undefined (null) by default
+            
             const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
 
             await waitFor(() => expect(result.current.isGuest).toBe(true));
+            expect(api.get).not.toHaveBeenCalled(); // New optimization check
             expect(result.current.todos).toEqual([]);
         });
 
         it('should add task to localStorage in guest mode', async () => {
-            api.get.mockRejectedValue(new Error('Network Error'));
+            // Auth status is null by default
             
             const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
             await waitFor(() => expect(result.current.isGuest).toBe(true));
@@ -70,7 +83,7 @@ describe('useTodos Hook', () => {
                 await result.current.addTodo({ title: 'Guest Task', description: 'Desc' });
             });
 
-            const saved = JSON.parse(localStorage.getItem('guest_todos'));
+            const saved = JSON.parse(store['guest_todos']);
             expect(saved).toHaveLength(1);
             expect(saved[0].title).toBe('Guest Task');
             // Check that the hook state updated (via query invalidation)
@@ -78,11 +91,8 @@ describe('useTodos Hook', () => {
         });
 
         it('should toggle task in guest mode', async () => {
-            // Setup initial LS data
             const task = { id: 123, title: 'Task', isDone: false };
-            localStorage.setItem('guest_todos', JSON.stringify([task]));
-            
-            api.get.mockRejectedValue(new Error('Network Error'));
+            store['guest_todos'] = JSON.stringify([task]);
 
             const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
             await waitFor(() => expect(result.current.todos).toHaveLength(1));
@@ -91,16 +101,14 @@ describe('useTodos Hook', () => {
                 await result.current.toggleTodo(123);
             });
 
-            const saved = JSON.parse(localStorage.getItem('guest_todos'));
+            const saved = JSON.parse(store['guest_todos']);
             expect(saved[0].isDone).toBe(true);
         });
 
         it('should filter todos by search query in guest mode', async () => {
             const task1 = { id: 1, title: 'Apple', isDone: false };
             const task2 = { id: 2, title: 'Banana', isDone: false };
-            localStorage.setItem('guest_todos', JSON.stringify([task1, task2]));
-            
-            api.get.mockRejectedValue(new Error('Network Error'));
+            store['guest_todos'] = JSON.stringify([task1, task2]);
 
             // Render hook with search query 'App'
             const { result } = renderHook(() => useTodos('App'), { wrapper: createWrapper() });
@@ -115,9 +123,7 @@ describe('useTodos Hook', () => {
         it('should filter todos by status in guest mode', async () => {
              const task1 = { id: 1, title: 'Active Task', isDone: false };
              const task2 = { id: 2, title: 'Done Task', isDone: true };
-             localStorage.setItem('guest_todos', JSON.stringify([task1, task2]));
-             
-             api.get.mockRejectedValue(new Error('Network Error'));
+             store['guest_todos'] = JSON.stringify([task1, task2]);
  
              // Render hook with filter 'completed'
              const { result } = renderHook(() => useTodos('', 'completed'), { wrapper: createWrapper() });
@@ -133,9 +139,7 @@ describe('useTodos Hook', () => {
             const task1 = { id: 1, title: 'One', isDone: false };
             const task2 = { id: 2, title: 'Two', isDone: false };
             const task3 = { id: 3, title: 'Three', isDone: false };
-            localStorage.setItem('guest_todos', JSON.stringify([task1, task2, task3]));
-
-            api.get.mockRejectedValue(new Error('Network Error'));
+            store['guest_todos'] = JSON.stringify([task1, task2, task3]);
             
             const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
             await waitFor(() => expect(result.current.isGuest).toBe(true));
@@ -144,7 +148,7 @@ describe('useTodos Hook', () => {
                 await result.current.bulkDeleteTodos([1, 3]);
             });
 
-            const saved = JSON.parse(localStorage.getItem('guest_todos'));
+            const saved = JSON.parse(store['guest_todos']);
             expect(saved).toHaveLength(1);
             expect(saved[0].id).toBe(2);
         });
@@ -152,9 +156,7 @@ describe('useTodos Hook', () => {
         it('should bulk mark todos as done in guest mode', async () => {
             const task1 = { id: 1, title: 'One', isDone: false };
             const task2 = { id: 2, title: 'Two', isDone: false };
-            localStorage.setItem('guest_todos', JSON.stringify([task1, task2]));
-
-            api.get.mockRejectedValue(new Error('Network Error'));
+            store['guest_todos'] = JSON.stringify([task1, task2]);
             
             const { result } = renderHook(() => useTodos(), { wrapper: createWrapper() });
             await waitFor(() => expect(result.current.isGuest).toBe(true));
@@ -163,7 +165,7 @@ describe('useTodos Hook', () => {
                 await result.current.bulkMarkDoneTodos([1, 2], true);
             });
 
-            const saved = JSON.parse(localStorage.getItem('guest_todos'));
+            const saved = JSON.parse(store['guest_todos']);
             expect(saved[0].isDone).toBe(true);
             expect(saved[1].isDone).toBe(true);
         });
@@ -171,6 +173,8 @@ describe('useTodos Hook', () => {
 
     describe('Cloud Mode (API)', () => {
         it('should fetch todos from API', async () => {
+            store['auth_status'] = 'logged_in';
+
             const mockTodos = [{ id: 1, title: 'API Task', is_done: 0 }];
             api.get.mockResolvedValue({
                 data: {
@@ -189,6 +193,7 @@ describe('useTodos Hook', () => {
         });
 
         it('should call API to add task', async () => {
+            store['auth_status'] = 'logged_in';
             api.get.mockResolvedValue({
                  data: { task: [], pagination: { total_pages: 1 } }
             });
@@ -207,6 +212,7 @@ describe('useTodos Hook', () => {
         });
 
         it('should include search and filter params in API call', async () => {
+             store['auth_status'] = 'logged_in';
             api.get.mockResolvedValue({
                 data: { task: [], pagination: { total_pages: 1 } }
             });
@@ -220,6 +226,7 @@ describe('useTodos Hook', () => {
         });
 
         it('should call API to bulk delete tasks', async () => {
+            store['auth_status'] = 'logged_in';
             api.get.mockResolvedValue({
                  data: { task: [], pagination: { total_pages: 1 } }
             });
@@ -236,6 +243,7 @@ describe('useTodos Hook', () => {
         });
 
         it('should call API to bulk mark tasks as done', async () => {
+            store['auth_status'] = 'logged_in';
             api.get.mockResolvedValue({
                  data: { task: [], pagination: { total_pages: 1 } }
             });
@@ -254,6 +262,8 @@ describe('useTodos Hook', () => {
 
     describe('Pagination', () => {
         it('should auto-navigate to previous page if current page becomes empty', async () => {
+            store['auth_status'] = 'logged_in';
+
             // 1. Setup: Start on Page 2 with data
             // Call 1: Initial render (Page 1)
             api.get.mockResolvedValueOnce({

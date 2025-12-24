@@ -41,6 +41,9 @@ describe('useAuth Fallback Logic', () => {
     );
 
     it('should return null (Guest Mode) and show toast on 500 Backend Error', async () => {
+        // Must be logged in to attempt the call that fails
+        vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('logged_in');
+        
         // Mock api.me to fail with 500
         const error = new Error('Internal Server Error');
         error.status = 500;
@@ -71,6 +74,8 @@ describe('useAuth Fallback Logic', () => {
     });
 
     it('should return null (Guest Mode) on Network Error', async () => {
+        vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('logged_in');
+        
         // Mock api.me to fail with generic network error (no status)
         const error = new Error('Network Error');
         api.me.mockRejectedValue(error);

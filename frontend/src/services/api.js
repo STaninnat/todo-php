@@ -41,16 +41,21 @@ async function request(endpoint, options = {}) {
         if (!response.ok) {
             // Handle 401 Unauthorized (Token Expiry)
             if (response.status === 401 && !options._retry && !endpoint.includes('/signin') && !endpoint.includes('/signup') && !endpoint.includes('/refresh')) {
-                try {
+                // If not marked as logged in locally, don't attempt refresh
+                if (localStorage.getItem('auth_status') !== 'logged_in') {
+                     window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+                } else {
+                    try {
                     // Attempt to refresh token
                     await api.refreshToken();
 
-                    // Retry original request
-                    return request(endpoint, { ...options, _retry: true });
-                } catch {
-                    // Refresh failed - session represents guest or expired.
-                    // Dispatch event to trigger global logout/guest mode
-                    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+                        // Retry original request
+                        return request(endpoint, { ...options, _retry: true });
+                    } catch {
+                        // Refresh failed - session represents guest or expired.
+                        // Dispatch event to trigger global logout/guest mode
+                        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+                    }
                 }
             } else if (response.status === 401 && !endpoint.includes('/signin')) {
                 // If 401 but not eligible for refresh (e.g. signout or unexpected), verify if we should logout

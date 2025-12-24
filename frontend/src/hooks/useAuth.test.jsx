@@ -55,6 +55,7 @@ describe('useAuth Hook', () => {
     });
 
     it('should return user data when logged in', async () => {
+        vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('logged_in');
         const mockUser = { id: 1, username: 'testuser' };
         api.me.mockResolvedValue({ user: mockUser });
 
@@ -64,7 +65,20 @@ describe('useAuth Hook', () => {
         expect(result.current.isLoading).toBe(false);
     });
 
-    it('should return null when not logged in (401)', async () => {
+    it('should NOT call api.me when not logged in (Guest)', async () => {
+         vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null); // No auth flag
+
+         const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
+         
+         await waitFor(() => expect(result.current.isLoading).toBe(false));
+         expect(api.me).not.toHaveBeenCalled();
+         expect(result.current.user).toBeNull();
+    });
+
+    it('should return null when 401 occurs and clear auth flag', async () => {
+        vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('logged_in');
+        const setItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+
         const error = new Error('Unauthorized');
         error.status = 401;
         api.me.mockRejectedValue(error);
@@ -72,31 +86,41 @@ describe('useAuth Hook', () => {
         const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
 
         await waitFor(() => expect(result.current.user).toBeNull());
+        expect(setItemSpy).toHaveBeenCalledWith('auth_status');
     });
 
     it('should handle login successfully', async () => {
+        const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
         const mockUser = { id: 1, username: 'testuser' };
-        api.me.mockRejectedValue({ status: 401 }); // Initially not logged in
+        api.me.mockReturnValue(Promise.resolve({ user: mockUser })); // api.me used in query refetch
+
         api.login.mockResolvedValue({ user: mockUser });
 
         const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
 
         await result.current.login({ username: 'test', password: 'password' });
 
-        expect(api.login.mock.calls[0][0]).toEqual({ username: 'test', password: 'password' });
+        expect(api.login).toHaveBeenCalledWith(
+            expect.objectContaining({ username: 'test', password: 'password' }),
+            expect.anything() // Ignore second arg (variables/options)
+        );
+        expect(setItemSpy).toHaveBeenCalledWith('auth_status', 'logged_in');
     });
 
     it('should handle logout successfully', async () => {
-        api.me.mockResolvedValue({ user: { id: 1 } }); // Initially logged in
+        vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('logged_in');
+        const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+        
+        api.me.mockResolvedValue({ user: { id: 1 } }); 
         api.logout.mockResolvedValue({});
 
         const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
 
-        // Wait for initial load
         await waitFor(() => expect(result.current.user).toBeTruthy());
 
         await result.current.logout();
 
         expect(api.logout).toHaveBeenCalled();
+        expect(removeItemSpy).toHaveBeenCalledWith('auth_status');
     });
 });

@@ -21,13 +21,20 @@ export function useAuth() {
     const { data: user, isLoading, error } = useQuery({
         queryKey: ['auth', 'user'],
         queryFn: async () => {
+             // Guest Check: If no auth flag, don't even try the backend
+             const authStatus = localStorage.getItem('auth_status');
+             if (authStatus !== 'logged_in') {
+                 return null;
+             }
+
              try {
                  const data = await api.me();
-
                  return data.data || data.user || null;
              } catch (err) {
-                 // 401/403 just means not logged in, return null
+                 // 401/403: Session expired or invalid
                  if (err.status === 401 || err.status === 403) {
+                     // Clear the flag so we don't keep retrying
+                     localStorage.removeItem('auth_status');
                      return null;
                  }
                  
@@ -51,6 +58,7 @@ export function useAuth() {
             const userData = data?.user || data?.data?.user;
 
             if (userData) {
+                localStorage.setItem('auth_status', 'logged_in');
                 queryClient.setQueryData(['auth', 'user'], userData);
             } else {
                 queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
@@ -71,6 +79,7 @@ export function useAuth() {
              const userData = data?.user || data?.data?.user;
 
              if (userData) {
+                localStorage.setItem('auth_status', 'logged_in');
                 queryClient.setQueryData(['auth', 'user'], userData);
              } else {
                 queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
@@ -86,6 +95,7 @@ export function useAuth() {
         mutationFn: api.logout,
         onSuccess: () => {
             toast.success("Logged out");
+            localStorage.removeItem('auth_status');
             queryClient.setQueryData(['auth', 'user'], null);
             queryClient.clear(); // Clear all data (todos, etc)
         },
@@ -101,6 +111,7 @@ export function useAuth() {
              const currentUser = queryClient.getQueryData(['auth', 'user']);
              if (!currentUser) return;
 
+             localStorage.removeItem('auth_status');
              queryClient.setQueryData(['auth', 'user'], null);
              
              // clear() is appropriate here to ensure no sensitive task data remains

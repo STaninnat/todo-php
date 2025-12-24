@@ -68,14 +68,32 @@ async function request(endpoint, options = {}) {
                  throw error;
             }
 
-            // Throw an error with the server message if available
-            const error = new Error(data.message || data.error || `Request failed with status ${response.status}`);
+            // Sanitize technical messages
+            let errorMessage = data.message || data.error || `Request failed with status ${response.status}`;
+            
+            // Hide "Route not found" (404)
+            if (response.status === 404 && (errorMessage.includes('Route not found') || errorMessage.includes('Not Found'))) {
+                 errorMessage = 'Service endpoint not found or unavailable.';
+            }
+
+            // Hide generic Server Errors (500+)
+            if (response.status >= 500) {
+                 errorMessage = 'Something went wrong on the server. Please try again later.';
+            }
+
+            // Throw the sanitized error
+            const error = new Error(errorMessage);
             error.status = response.status;
             throw error;
         }
 
         return data;
     } catch (error) {
+        // Sanitize Network Errors (when fetch fails completely)
+        if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
+             error.message = 'Unable to connect to the server. Please check your internet connection.';
+        }
+
         // Only log errors that are NOT auth related (since we handle those gracefully in useAuth)
         if (process.env.NODE_ENV !== 'production' && error.status !== 401 && error.status !== 403) {
             console.error('API Error:', error);

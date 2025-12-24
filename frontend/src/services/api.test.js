@@ -110,6 +110,40 @@ describe('API Service', () => {
             .toThrow('Too many requests. Please try again later.');
     });
 
+    it('should sanitize 404 "Route not found" error', async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            status: 404,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Route not found: POST /users/signup' }),
+        });
+
+        await expect(api.post('/users/signup', {}))
+            .rejects
+            .toThrow('Service endpoint not found or unavailable.');
+    });
+
+    it('should sanitize 500 Server Error', async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            status: 500,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'SQLSTATE[HY000]: General error' }),
+        });
+
+        await expect(api.get('/users/me'))
+            .rejects
+            .toThrow('Something went wrong on the server. Please try again later.');
+    });
+
+    it('should sanitize Network Error', async () => {
+        global.fetch.mockRejectedValue(new Error('Failed to fetch'));
+
+        await expect(api.get('/users/me'))
+            .rejects
+            .toThrow('Unable to connect to the server. Please check your internet connection.');
+    });
+
     it('should methods (put, delete) call request with correct method', async () => {
         global.fetch.mockResolvedValue({
             ok: true,

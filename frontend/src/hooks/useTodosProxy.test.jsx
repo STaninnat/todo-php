@@ -44,12 +44,23 @@ const createWrapper = () => {
 };
 
 describe('useTodos Proxy Error Handling', () => {
+    let store = {};
+
     beforeEach(() => {
         vi.clearAllMocks();
-        localStorage.clear();
+        store = {};
+
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => store[key] || null);
+        vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+            store[key] = value.toString();
+        });
+        vi.spyOn(Storage.prototype, 'clear').mockImplementation(() => {
+            store = {};
+        });
     });
 
     test('falls back to Guest Mode on 500 Proxy Error', async () => {
+        store['auth_status'] = 'logged_in';
         // Mock a 500 error effectively
         const proxyError = new Error("Proxy Error");
         proxyError.status = 500;
@@ -69,6 +80,7 @@ describe('useTodos Proxy Error Handling', () => {
     });
 
      test('falls back to Guest Mode on 503 Service Unavailable', async () => {
+        store['auth_status'] = 'logged_in';
         const proxyError = new Error("Service Unavailable");
         proxyError.status = 503;
         api.get.mockRejectedValue(proxyError);

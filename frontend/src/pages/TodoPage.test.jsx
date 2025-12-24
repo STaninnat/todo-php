@@ -136,12 +136,14 @@ describe('TodoPage', () => {
 
         // Confirm in Modal
         const confirmBtn = screen.getByText('Confirm Bulk Delete');
-        fireEvent.click(confirmBtn);
+        await React.act(async () => {
+             fireEvent.click(confirmBtn);
+        });
 
         expect(mockUseTodos.bulkDeleteTodos).toHaveBeenCalledWith([1]);
     });
 
-    it('should trigger bulk mark done', () => {
+    it('should trigger bulk mark done', async () => {
         render(<TodoPage />);
         
         // Enter selection mode
@@ -152,7 +154,9 @@ describe('TodoPage', () => {
         fireEvent.click(selectItemBtns[0]);
 
         // Click Bulk Mark Done
-        fireEvent.click(screen.getByText('Bulk Mark Done'));
+        await React.act(async () => {
+             fireEvent.click(screen.getByText('Bulk Mark Done'));
+        });
 
         expect(mockUseTodos.bulkMarkDoneTodos).toHaveBeenCalledWith([1], true);
     });

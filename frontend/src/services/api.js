@@ -41,16 +41,21 @@ async function request(endpoint, options = {}) {
         if (!response.ok) {
             // Handle 401 Unauthorized (Token Expiry)
             if (response.status === 401 && !options._retry && !endpoint.includes('/signin') && !endpoint.includes('/signup') && !endpoint.includes('/refresh')) {
-                try {
+                // If not marked as logged in locally, don't attempt refresh
+                if (localStorage.getItem('auth_status') !== 'logged_in') {
+                     window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+                } else {
+                    try {
                     // Attempt to refresh token
                     await api.refreshToken();
 
-                    // Retry original request
-                    return request(endpoint, { ...options, _retry: true });
-                } catch {
-                    // Refresh failed - session represents guest or expired.
-                    // Dispatch event to trigger global logout/guest mode
-                    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+                        // Retry original request
+                        return request(endpoint, { ...options, _retry: true });
+                    } catch {
+                        // Refresh failed - session represents guest or expired.
+                        // Dispatch event to trigger global logout/guest mode
+                        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+                    }
                 }
             } else if (response.status === 401 && !endpoint.includes('/signin')) {
                 // If 401 but not eligible for refresh (e.g. signout or unexpected), verify if we should logout
@@ -63,14 +68,32 @@ async function request(endpoint, options = {}) {
                  throw error;
             }
 
-            // Throw an error with the server message if available
-            const error = new Error(data.message || data.error || `Request failed with status ${response.status}`);
+            // Sanitize technical messages
+            let errorMessage = data.message || data.error || `Request failed with status ${response.status}`;
+            
+            // Hide "Route not found" (404)
+            if (response.status === 404 && (errorMessage.includes('Route not found') || errorMessage.includes('Not Found'))) {
+                 errorMessage = 'Service endpoint not found or unavailable.';
+            }
+
+            // Hide generic Server Errors (500+)
+            if (response.status >= 500) {
+                 errorMessage = 'Something went wrong on the server. Please try again later.';
+            }
+
+            // Throw the sanitized error
+            const error = new Error(errorMessage);
             error.status = response.status;
             throw error;
         }
 
         return data;
     } catch (error) {
+        // Sanitize Network Errors (when fetch fails completely)
+        if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
+             error.message = 'Unable to connect to the server. Please check your internet connection.';
+        }
+
         // Only log errors that are NOT auth related (since we handle those gracefully in useAuth)
         if (process.env.NODE_ENV !== 'production' && error.status !== 401 && error.status !== 403) {
             console.error('API Error:', error);

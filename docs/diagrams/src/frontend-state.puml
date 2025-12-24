@@ -4,12 +4,20 @@ title Frontend State & Logic Flow
 |Auth Context (useAuth)|
 start
 :Initialize Auth;
-:Call **api.me()**;
+:Check **localStorage('auth_status')**;
 
-if (Response?) then (200 OK)
-  :Set **User Data**;
-  :State = **LoggedIn**;
-else (401 / Error)
+if (Status == 'logged_in'?) then (Yes)
+  :Call **api.me()**;
+  
+  if (Response?) then (200 OK)
+    :Set **User Data**;
+    :State = **LoggedIn**;
+  else (401 / Error)
+    :Clear 'auth_status';
+    :Set User = null;
+    :State = **Guest**;
+  endif
+else (No / Missing)
   :Set User = null;
   :State = **Guest**;
 endif

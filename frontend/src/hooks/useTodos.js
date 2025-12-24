@@ -5,6 +5,50 @@ import { api } from '../services/api';
 
 const GUEST_KEY = 'guest_todos';
 
+// Helper to fetch guest todos from LS (simulating an async fetch)
+const fetchGuestTodos = (searchQuery, filter, page) => {
+    const saved = localStorage.getItem(GUEST_KEY);
+    let allTodos = saved ? JSON.parse(saved) : [];
+
+    // Filter by search query if present
+    if (searchQuery) {
+        const lowerQuery = searchQuery.toLowerCase();
+        allTodos = allTodos.filter(t => 
+            t.title.toLowerCase().includes(lowerQuery) ||
+            (t.description && t.description.toLowerCase().includes(lowerQuery))
+        );
+    }
+
+    // Filter by status if present
+    if (filter === 'active') {
+        allTodos = allTodos.filter(t => !t.isDone);
+    } else if (filter === 'completed') {
+        allTodos = allTodos.filter(t => t.isDone);
+    }
+
+    // Sort to match backend: isDone ASC, then Created/ID DESC
+    allTodos.sort((a, b) => {
+        if (a.isDone === b.isDone) {
+            return b.id - a.id;
+        }
+        return a.isDone ? 1 : -1;
+    });
+
+    // Client-side pagination
+    const limit = 10;
+    const totalItems = allTodos.length;
+    const totalPages = Math.ceil(totalItems / limit) || 1;
+
+    const startIndex = (page - 1) * limit;
+    const slicedTodos = allTodos.slice(startIndex, startIndex + limit);
+
+    return {
+        todos: slicedTodos,
+        isGuest: true,
+        pagination: { totalPages },
+    };
+};
+
 /**
  * Custom hook for managing todos with dual-mode support (Cloud vs Guest).
  * - Cloud Mode: Fetches/Persists data to backend API.
@@ -21,6 +65,12 @@ export function useTodos(searchQuery = '', filter = 'all') {
     const { data: queryData, isFetching } = useQuery({
         queryKey: ['todos', page, searchQuery, filter],
         queryFn: async () => {
+            // Guest Check: If not logged in, throw "Guest" error immediately to trigger catch block logic
+            const authStatus = localStorage.getItem('auth_status');
+            if (authStatus !== 'logged_in') {
+                return fetchGuestTodos(searchQuery, filter, page);
+            }
+
             try {
                 const queryParams = new URLSearchParams({
                     page,
@@ -62,46 +112,7 @@ export function useTodos(searchQuery = '', filter = 'all') {
                 // - Network Error (no status)
                 const isBackendDown = !err.status || err.status >= 500;
                 if (err.status === 401 || isBackendDown) {
-                    const saved = localStorage.getItem(GUEST_KEY);
-                    let allTodos = saved ? JSON.parse(saved) : [];
-
-                    // Filter by search query if present
-                    if (searchQuery) {
-                        const lowerQuery = searchQuery.toLowerCase();
-                        allTodos = allTodos.filter(t => 
-                            t.title.toLowerCase().includes(lowerQuery) ||
-                            (t.description && t.description.toLowerCase().includes(lowerQuery))
-                        );
-                    }
-
-                    // Filter by status if present
-                    if (filter === 'active') {
-                        allTodos = allTodos.filter(t => !t.isDone);
-                    } else if (filter === 'completed') {
-                        allTodos = allTodos.filter(t => t.isDone);
-                    }
-
-                    // Sort to match backend: isDone ASC, then Created/ID DESC
-                    allTodos.sort((a, b) => {
-                        if (a.isDone === b.isDone) {
-                            return b.id - a.id;
-                        }
-                        return a.isDone ? 1 : -1;
-                    });
-
-                    // Client-side pagination
-                    const limit = 10;
-                    const totalItems = allTodos.length;
-                    const totalPages = Math.ceil(totalItems / limit) || 1;
-
-                    const startIndex = (page - 1) * limit;
-                    const slicedTodos = allTodos.slice(startIndex, startIndex + limit);
-
-                    return {
-                        todos: slicedTodos,
-                        isGuest: true,
-                        pagination: { totalPages },
-                    };
+                    return fetchGuestTodos(searchQuery, filter, page);
                 }
                 throw err;
             }

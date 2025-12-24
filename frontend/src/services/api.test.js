@@ -11,10 +11,14 @@ describe('API Service', () => {
     // Save original fetch
     const originalFetch = global.fetch;
     let dispatchEventSpy;
+    let store = {};
 
     beforeEach(() => {
         global.fetch = vi.fn();
         dispatchEventSpy = vi.spyOn(window, 'dispatchEvent');
+        
+        store = { auth_status: 'logged_in' };
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => store[key] || null);
     });
 
     afterEach(() => {
@@ -106,6 +110,40 @@ describe('API Service', () => {
             .toThrow('Too many requests. Please try again later.');
     });
 
+    it('should sanitize 404 "Route not found" error', async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            status: 404,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Route not found: POST /users/signup' }),
+        });
+
+        await expect(api.post('/users/signup', {}))
+            .rejects
+            .toThrow('Service endpoint not found or unavailable.');
+    });
+
+    it('should sanitize 500 Server Error', async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            status: 500,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'SQLSTATE[HY000]: General error' }),
+        });
+
+        await expect(api.get('/users/me'))
+            .rejects
+            .toThrow('Something went wrong on the server. Please try again later.');
+    });
+
+    it('should sanitize Network Error', async () => {
+        global.fetch.mockRejectedValue(new Error('Failed to fetch'));
+
+        await expect(api.get('/users/me'))
+            .rejects
+            .toThrow('Unable to connect to the server. Please check your internet connection.');
+    });
+
     it('should methods (put, delete) call request with correct method', async () => {
         global.fetch.mockResolvedValue({
             ok: true,
@@ -155,9 +193,6 @@ describe('API Service', () => {
         
         expect(result).toEqual({ success: true, data: 'retried' });
         expect(fetch).toHaveBeenCalledTimes(3); 
-        // 1. /protected-resource (401)
-        // 2. /users/refresh (200)
-        // 3. /protected-resource (200)
     });
 
     it('should throw error and dispatch event if refresh fails on 401', async () => {
@@ -180,9 +215,29 @@ describe('API Service', () => {
         await expect(api.get('/protected-resource')).rejects.toThrow('Token expired');
         
         expect(fetch).toHaveBeenCalledTimes(2);
-        // 1. /protected-resource (401)
-        // 2. /users/refresh (401)
         
+        expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent));
+        const event = dispatchEventSpy.mock.calls[0][0];
+        expect(event.type).toBe('auth:unauthorized');
+    });
+
+    it('should NOT attempt refresh if auth_status is missing (Guest Mode)', async () => {
+        // Mock as guest
+        store['auth_status'] = null;
+
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ message: 'Token expired' }),
+        });
+
+        // Should throw, but NOT call refresh
+        await expect(api.get('/protected-resource')).rejects.toThrow('Token expired');
+
+        expect(fetch).toHaveBeenCalledTimes(1); 
+        // Only 1 call (Original). No /users/refresh call.
+
         expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent));
         const event = dispatchEventSpy.mock.calls[0][0];
         expect(event.type).toBe('auth:unauthorized');

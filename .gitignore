@@ -13,6 +13,7 @@ note*
 ca.pem
 !README.md
 !LICENSE
+!.env.example
 
 # =========================
 # Dependencies

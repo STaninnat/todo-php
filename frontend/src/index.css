@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wdth,wght@0,75..100,100..900;1,75..100,100..900&display=swap');
 
+/* Light Mode (Default) */
 :root {
-    /* Light Mode (Default) */
     --bg-primary: #f8f9fa;
     --bg-surface-alt: #e9ecef;
     --bg-card: #ffffff;
@@ -13,9 +13,9 @@
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
+/* Dark Mode (System) */
 @media (prefers-color-scheme: dark) {
     :root {
-        /* Dark Mode Overrides */
         --bg-primary: #121212;
         --bg-surface-alt: #191919;
         --bg-card: #1e1e1e;

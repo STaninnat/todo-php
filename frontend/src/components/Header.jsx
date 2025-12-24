@@ -2,6 +2,8 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogOut, LogIn } from 'lucide-react';
+import logoLight from '../../public/logo-light.svg';
+import logoDark from '../../public/logo-dark.svg';
 import { useLenis } from 'lenis/react';
 import Button from './Button';
 import './Header.css';
@@ -53,8 +55,8 @@ export default function Header() {
                 onClick={handleLogoClick}
             >
                 <picture>
-                    <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
-                    <img src="/logo-light.svg" alt="Todo Logo" className="logo-icon" />
+                    <source srcSet={logoDark} media="(prefers-color-scheme: dark)" />
+                    <img src={logoLight} alt="Todo Logo" className="logo-icon" />
                 </picture>
             </Link>
 

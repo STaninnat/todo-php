@@ -1,0 +1,53 @@
+# =========================
+# General / OS / IDE
+# =========================
+.git
+.gitignore
+.DS_Store
+.vscode/
+*.log
+*.txt
+note*
+.env*
+README.md
+cmds.md
+docs/
+*.puml
+*.tmp
+ca.pem
+
+# =========================
+# Dependencies
+# =========================
+backend/vendor/
+frontend/node_modules/
+
+# =========================
+# Frontend (Bun/React)
+# =========================
+# Build output
+frontend/dist/
+frontend/out/
+frontend/*.tgz
+
+# Testing & Coverage
+frontend/coverage/
+frontend/*.lcov
+frontend/report.*.json
+
+# Caches & Metadata
+frontend/.eslintcache
+frontend/.cache/
+frontend/*.tsbuildinfo
+
+# =========================
+# Backend (PHP)
+# =========================
+backend/phpunit.xml
+backend/phpunit.xml.dist
+backend/.phpunit.result.cache
+backend/tests/bootstrap.php
+Logs/
+.phpunit.cache/
+*.opcache
+*.cache
